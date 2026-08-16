@@ -14,6 +14,9 @@ redistribute your new version, it MUST be open source.
 #include "stdafx.h"
 #include "AppDelegate.h"
 
+#include <algorithm>
+#include <cctype>
+
 #pragma comment(lib, "imm32")
 #define IMC_GETOPENSTATUS 0x0005
 
@@ -29,9 +32,26 @@ redistribute your new version, it MUST be open source.
 #define DYNA_DATA(macro, pos) (macro ? pData->macroData[pos] : pData->charData[pos])
 #define EMPTY_HOTKEY 0xFE0000FE
 
+//Chromium based browsers, which need the selection workaround instead of the
+//empty character one. Windows filenames are case insensitive, so the compare
+//below lowercases before matching.
 static vector<string> _chromiumBrowser = {
-	"chrome.exe", "brave.exe", "msedge.exe"
+	"chrome.exe",     //Chrome and every channel, plus plain Chromium
+	"chromium.exe",
+	"msedge.exe",     //Edge and every channel
+	"brave.exe",
+	"vivaldi.exe",
+	"opera.exe", "opera_gx.exe",
+	"browser.exe",    //Cốc Cốc
+	"arc.exe"
 };
+
+static bool isChromiumBrowser(const string& exeName) {
+	string lowered = exeName;
+	std::transform(lowered.begin(), lowered.end(), lowered.begin(),
+		[](unsigned char c) { return (char)std::tolower(c); });
+	return std::find(_chromiumBrowser.begin(), _chromiumBrowser.end(), lowered) != _chromiumBrowser.end();
+}
 
 extern int vSendKeyStepByStep;
 extern int vUseGrayIcon;
@@ -603,7 +623,7 @@ LRESULT CALLBACK keyboardHookProcess(int nCode, WPARAM wParam, LPARAM lParam) {
 		} else if (pData->code == vWillProcess || pData->code == vRestore || pData->code == vRestoreAndStartNewSession) { //handle result signal
 			//fix autocomplete
 			if (vFixRecommendBrowser && pData->extCode != 4) {
-				if (std::find(_chromiumBrowser.begin(), _chromiumBrowser.end(), OpenKeyHelper::getLastAppExecuteName()) != _chromiumBrowser.end()) {
+				if (isChromiumBrowser(OpenKeyHelper::getLastAppExecuteName())) {
 					SendCombineKey(KEY_LEFT_SHIFT, KEY_LEFT, 0, KEYEVENTF_EXTENDEDKEY);
 					if (pData->backspaceCount == 1)
 						pData->backspaceCount--;
