@@ -4,9 +4,52 @@ LibreKey là bản fork của [OpenKey](https://github.com/tuyenvm/OpenKey) do M
 Tuyên viết, phát hành theo giấy phép GPL v3. Nhật ký thay đổi của OpenKey nằm ở
 kho gốc; file này chỉ ghi những gì LibreKey khác đi.
 
+## 1.1.0 — 16/08/2026
+
+Bổ sung bản Windows. Số phiên bản đồng nhất giữa hai nền tảng.
+
+### Bản Windows
+
+Mã nguồn `win32/` trước đây giữ nguyên của OpenKey, fork không đụng tới. Bản này
+đưa nó về đúng thương hiệu LibreKey và port các bản vá đã làm ở macOS.
+
+- **Gỡ bỏ hoàn toàn hệ thống cập nhật tự động.** Cùng lý do như bản macOS:
+  `OpenKeyManager::checkUpdate` đọc manifest ở
+  `raw.githubusercontent.com/tuyenvm/OpenKey/master/version.json`, nên một bản
+  LibreKey sẽ báo người dùng rằng có "OpenKey mới" rồi rủ họ thay ứng dụng bằng
+  một sản phẩm khác. Gỡ project `OpenKeyUpdate`, hai hàm `checkUpdate`, hai
+  handler nút bấm, tuỳ chọn `vCheckNewVersion` và các control liên quan.
+- **Đổi ba định danh hệ thống**, không phải để cho đẹp mà vì nếu giữ nguyên thì
+  LibreKey và OpenKey sẽ chặn lẫn nhau không cho chạy — đúng loại lỗi mà fork này
+  sinh ra để sửa: window class `APP_CLASS` mà `FindWindow` dùng để dò instance
+  đang chạy, khoá registry `SOFTWARE\TuyenMai\OpenKey` → `SOFTWARE\LibreKey`, và
+  tên giá trị run-at-startup.
+- **Sửa lỗi đúp từ trên Chromium** — port từ macOS: luôn bật thay vì ô tích beta
+  mặc định tắt; nhận thêm Chromium, Vivaldi, Opera/GX, Cốc Cốc, Arc và khớp không
+  phân biệt hoa thường (tên file Windows vốn không phân biệt); thêm guard
+  `backspaceCount > 0` mà bản Windows thiếu — không có nó, khi không cần xoá gì
+  thì Shift+Left vẫn bôi đen một ký tự rồi bị chuỗi mới ghi đè, tức là xoá mất
+  một ký tự lẽ ra không được đụng tới.
+- **Hết lệch `_syncKey`** khi gõ VNI / Unicode tổ hợp, và thêm guard vector rỗng.
+- **Build tự động bằng GitHub Actions**, x86 và x64, có bước kiểm tra binary đúng
+  tên, và tự đính kèm vào release khi push tag `v*`.
+
+### Ghi công
+
+Ghi công OpenKey và Mai Vũ Tuyên giữ nguyên và bổ sung ở bản Windows: header bản
+quyền trong từng file mã nguồn không đụng tới, hộp thoại Giới thiệu và tab Thông
+tin ghi rõ đây là tác phẩm phái sinh theo GPL v3, trường `LegalCopyright` ghi cả
+hai bên, và liên kết fanpage OpenKey đổi thành liên kết "Bản gốc" trỏ về kho mã
+nguồn gốc.
+
+### Chưa kiểm chứng
+
+Bản Windows build sạch trên CI và các chuỗi thương hiệu đã được kiểm tra trực
+tiếp trong binary, nhưng **chưa ai chạy thử nó trên một máy Windows thật**.
+
 ## 1.0.0 — 16/08/2026
 
-Bản đầu tiên. Tách ra từ OpenKey 2.0.4.
+Bản đầu tiên. Tách ra từ OpenKey 2.0.4. Chỉ có macOS.
 
 ### Sửa lỗi đa người dùng
 

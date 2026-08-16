@@ -3,13 +3,15 @@
 [![Phiên bản](https://img.shields.io/github/v/release/viethoavnm/LibreKey?label=phi%C3%AAn%20b%E1%BA%A3n&color=c2185b)](https://github.com/viethoavnm/LibreKey/releases/latest)
 [![Lượt tải](https://img.shields.io/github/downloads/viethoavnm/LibreKey/total?label=l%C6%B0%E1%BB%A3t%20t%E1%BA%A3i)](https://github.com/viethoavnm/LibreKey/releases)
 [![Giấy phép](https://img.shields.io/badge/gi%E1%BA%A5y%20ph%C3%A9p-GPL%20v3-blue)](LICENSE)
-[![macOS](https://img.shields.io/badge/macOS-10.13%2B-lightgrey)](#cài-đặt)
+[![macOS](https://img.shields.io/badge/macOS-10.13%2B-lightgrey)](#cài-đặt-trên-macos)
+[![Windows](https://img.shields.io/badge/Windows-x86%20%7C%20x64-lightgrey)](#windows)
 
 **[⬇ Tải bản mới nhất](https://github.com/viethoavnm/LibreKey/releases/latest)**
 
-**Bộ gõ tiếng Việt cho macOS, chạy được trên máy có nhiều tài khoản người dùng.**
+**Bộ gõ tiếng Việt cho macOS và Windows. Bản macOS chạy được trên máy có nhiều
+tài khoản người dùng.**
 
-Phiên bản hiện tại: **1.0.0** · macOS 10.13 trở lên · Universal (Apple Silicon + Intel) · GPL v3
+Phiên bản hiện tại: **1.1.0** · macOS 10.13+ (Universal) và Windows (x86/x64) · GPL v3
 
 ![Bảng điều khiển LibreKey](docs/screenshots/panel-bo-go.png)
 
@@ -19,16 +21,21 @@ Phiên bản hiện tại: **1.0.0** · macOS 10.13 trở lên · Universal (App
 > **[OpenKey](https://github.com/tuyenvm/OpenKey)** — bộ gõ tiếng Việt nguồn mở
 > do **Mai Vũ Tuyên** viết và phát hành theo giấy phép **GPL v3**.
 >
-> Gần như toàn bộ công sức thuộc về tác giả OpenKey. Fork này chỉ sửa một nhóm
-> lỗi ở phần vỏ macOS để ứng dụng dùng được trên máy có nhiều tài khoản, và thêm
-> vài tính năng nhỏ.
+> Gần như toàn bộ công sức thuộc về tác giả OpenKey. Fork này chỉ sửa phần vỏ:
+> nhóm lỗi đa người dùng trên macOS, đổi thương hiệu bản Windows, và thêm vài
+> tính năng nhỏ. Engine tiếng Việt giữ nguyên không sửa một dòng.
 
 ---
 
 ## Tải về
 
-Vào [Releases](https://github.com/viethoavnm/LibreKey/releases/latest) tải file
-`.zip` phiên bản mới nhất, giải nén rồi kéo `LibreKey.app` vào `/Applications`.
+Vào [Releases](https://github.com/viethoavnm/LibreKey/releases/latest) và tải file
+tương ứng:
+
+| Nền tảng | File | Cách dùng |
+|---|---|---|
+| macOS | `LibreKey-x.y.z-macOS.zip` | Giải nén, kéo `LibreKey.app` vào `/Applications` |
+| Windows | `LibreKey-x.y.z-windows.zip` | Giải nén, chạy `LibreKey64.exe` (hoặc `LibreKey32.exe` cho Windows 32-bit) |
 
 > ### ⚠️ Bản phát hành đang ký ad-hoc
 >
@@ -46,7 +53,7 @@ Vào [Releases](https://github.com/viethoavnm/LibreKey/releases/latest) tải fi
 > Nếu không muốn tin bản build sẵn, hãy [build từ mã nguồn](#build) — mất khoảng
 > một phút và không cần tài khoản Apple nào.
 
-## Cài đặt
+## Cài đặt trên macOS
 
 1. Kéo `LibreKey.app` vào thư mục `/Applications`.
 2. Vào *System Settings → Privacy & Security → Accessibility* và bật LibreKey.
@@ -59,6 +66,24 @@ quyền cho mình được — phải nhờ quản trị viên. Khi đã cấp c
 
 Nếu bạn đang dùng bộ gõ khác (kể cả OpenKey gốc), hãy tắt hẳn nó. Hai bộ gõ cùng
 chạy sẽ tranh nhau sửa phím và làm hỏng chữ.
+
+## Windows
+
+Giải nén rồi chạy `LibreKey64.exe`. Không cần cài đặt, không cần quyền quản trị
+trừ khi bạn muốn gõ được trong game — khi đó bật "Chạy với quyền Admin" trong
+bảng điều khiển.
+
+Bản Windows dùng chung engine tiếng Việt với bản macOS, nên kiểu gõ, bảng mã,
+gõ tắt và công cụ chuyển mã hoạt động như nhau. Khác biệt:
+
+- **Chưa có tính năng Loại trừ ứng dụng** — mới chỉ làm ở bản macOS
+- **Không có các bản vá đa người dùng** — Windows không có cơ chế tương tự nên
+  vấn đề đó không tồn tại
+- **Đã gỡ kênh cập nhật tự động**, giống bản macOS và cùng một lý do
+
+> ⚠️ **Bản Windows chưa được chạy thử trên máy Windows thật.** Nó build sạch trên
+> GitHub Actions và các chuỗi thương hiệu đã được kiểm tra trực tiếp trong binary,
+> nhưng chưa ai mở lên gõ thử. Nếu bạn dùng thử và gặp lỗi, hãy mở issue.
 
 ## Ảnh màn hình
 
@@ -88,14 +113,15 @@ Kết quả đo A/B trên cùng một máy, cùng thời điểm, cùng hai tài
 | Bản | `LSMultipleInstancesProhibited` | Khi tài khoản khác đang giữ ứng dụng |
 |---|---|---|
 | OpenKey 2.0.5 | `true` | ❌ `-10829`, bị chặn hoàn toàn |
-| LibreKey 1.0.0 | `false` | ✅ chạy song song bình thường |
+| LibreKey 1.1.0 | `false` | ✅ chạy song song bình thường |
 
 ## Fork này lấy gì và sửa gì
 
 | Thành phần | Nguồn gốc |
 |---|---|
 | `Sources/OpenKey/engine/` — toàn bộ engine tiếng Việt: bỏ dấu, kiểm tra chính tả, bảng mã, gõ tắt, chuyển mã | **Của OpenKey, giữ nguyên không sửa một dòng** |
-| `Sources/OpenKey/win32/`, `Sources/OpenKey/linux/` | **Của OpenKey**, fork này không đụng tới |
+| `Sources/OpenKey/win32/` | Của OpenKey, đã đổi thương hiệu, gỡ kênh cập nhật và port các bản vá Chromium |
+| `Sources/OpenKey/linux/` | **Của OpenKey** — thực ra chỉ có một file README ghi "Coming soon", không có mã nguồn nào |
 | Giao diện macOS, storyboard, luồng khởi động | Của OpenKey, đã sửa phần đa người dùng và thêm tab Loại trừ |
 | Vòng đời ứng dụng, event tap, login item, khoá một-instance | Sửa và viết thêm trong fork này |
 | Danh sách loại trừ ứng dụng | Của fork này |
@@ -195,20 +221,23 @@ Nói thẳng để bạn biết chỗ nào chắc chắn, chỗ nào chưa.
 - Tab Loại trừ: thêm ứng dụng, ghi xuống `NSUserDefaults`, hiện đúng trong bảng
 - **38 unit test** (`LibreKeyTests`) — kho gốc không có test nào
 
-**Chưa kiểm chứng** — cần một bản có chữ ký hợp lệ và một máy có hai tài khoản
+**Chưa kiểm chứng** — cần một bản có chữ ký hợp lệ, một máy có hai tài khoản, và
+một máy Windows
 - Event tap phục hồi sau khi Fast User Switching
 - Gõ tiếng Việt trên chính bản LibreKey
 - Cổng chặn phím trong ứng dụng bị loại trừ (logic quyết định đã có test, nhưng
   phần nối vào event tap thì chưa chạy thật)
+- **Toàn bộ bản Windows** — build sạch trên CI và đã kiểm tra chuỗi trong binary,
+  nhưng chưa ai chạy thử
 
 ## Phát hành
 
 | | |
 |---|---|
-| Phiên bản | **1.0.0** (build 1) |
+| Phiên bản | **1.1.0** (build 2) |
 | Ngày phát hành | 16/08/2026 |
-| Yêu cầu | macOS 10.13 (High Sierra) trở lên |
-| Kiến trúc | Universal — `arm64` (Apple Silicon) + `x86_64` (Intel) |
+| Yêu cầu | macOS 10.13 (High Sierra) trở lên · Windows 7 trở lên |
+| Kiến trúc | macOS: Universal (`arm64` + `x86_64`) · Windows: `x86` và `x64` |
 | Bundle ID | `vn.viethoavnm.librekey` |
 | Giấy phép | GPL v3 |
 | Bản build sẵn | [Releases](https://github.com/viethoavnm/LibreKey/releases/latest) — ký ad-hoc, xem lưu ý ở phần [Tải về](#tải-về) |
@@ -221,6 +250,8 @@ Nhật ký thay đổi đầy đủ: [CHANGELOG.md](CHANGELOG.md).
 ---
 
 ## Build
+
+### macOS
 
 Yêu cầu: **Xcode 15 trở lên** (đã kiểm tra với Xcode 26.3). Không cần tài khoản
 Apple Developer — project ký ad-hoc sẵn.
@@ -259,6 +290,26 @@ codesign --verify --deep --strict "$APP"            # không in gì là hợp l�
 Thiếu `LibreKeyHelper.app` nghĩa là login item chưa được nhúng, và tính năng chạy
 cùng hệ thống sẽ hỏng âm thầm — đây đúng là lỗi mà fork này sinh ra để sửa, nên
 đáng kiểm tra mỗi lần đóng gói.
+
+### Windows
+
+Yêu cầu: **Visual Studio 2022** với workload "Desktop development with C++"
+(platform toolset v143). Mở `Sources/OpenKey/win32/OpenKey/OpenKey.sln`, chọn
+cấu hình `Release` và nền tảng `x64` hoặc `x86`, rồi Build.
+
+Hoặc bằng dòng lệnh:
+
+```cmd
+msbuild -m -target:Rebuild -p:Configuration=Release -p:Platform=x64 Sources\OpenKey\win32\OpenKey
+```
+
+Kết quả: `Sources\OpenKey\win32\OpenKey\x64\Release\LibreKey64.exe` (bản x86
+nằm ở `Release\LibreKey32.exe`).
+
+Không có máy Windows cũng build được: workflow
+[`.github/workflows/msbuild.yml`](.github/workflows/msbuild.yml) build cả hai
+kiến trúc trên GitHub Actions, kiểm tra binary ra đúng tên, và tự đính kèm vào
+release khi push tag `v*`.
 
 ### Build bằng chữ ký của bạn
 
@@ -325,16 +376,20 @@ rm -rf ModernKey/Resources/Icon.iconset
   tiên và người dùng phải bấm Open Anyway. Cần tài khoản Apple Developer trả phí
   mới xử lý dứt điểm được.
 - Không có kênh cập nhật tự động, và toàn bộ mã liên quan đã được gỡ bỏ. Cố ý
-  như vậy: nếu trỏ về manifest của OpenKey thì LibreKey 1.0.0 sẽ thấy OpenKey
+  như vậy: nếu trỏ về manifest của OpenKey thì LibreKey sẽ thấy OpenKey
   2.0.3 là "bản mới" và rủ người dùng thay ứng dụng bằng một sản phẩm khác.
 - Bảng trong tab Loại trừ không có tiêu đề cột. Storyboard dùng toạ độ tuyệt đối
   chứ không có Auto Layout, và cách thêm `tableHeaderView` bằng tay vào XML không
   ăn — cần mở Xcode kéo thả.
 - Nút OK trong Bảng điều khiển đã được đặt làm nút mặc định (phím Return), nhưng
   chưa hiển thị màu nhấn như nút mặc định chuẩn. Chưa tìm ra nguyên nhân.
-- Mã nguồn Windows và Linux trong repo là của OpenKey gốc, fork này không đụng tới.
-  Bản Windows vẫn còn ô tích "Sửa lỗi trên Chromium" mặc định tắt và vẫn so khớp
-  tên `.exe` tuyệt đối — cùng loại lỗi đã sửa ở bản macOS.
+- **Bản Windows chưa được chạy thử trên máy Windows thật.** Nó build sạch trên
+  GitHub Actions và các chuỗi thương hiệu đã được kiểm tra trực tiếp trong
+  binary, nhưng chưa ai mở nó lên gõ thử.
+- Bản Windows chưa có tính năng Loại trừ ứng dụng, và các bản vá đa người dùng
+  không áp dụng được vì Windows không có cơ chế tương tự.
+- Thư mục `linux/` chỉ có một file README ghi "Coming soon" — OpenKey chưa bao
+  giờ có mã nguồn Linux, nên LibreKey cũng không có gì để fork.
 - Tên file và tên lớp bên trong (`OpenKeyManager`, `OpenKey.mm`, thư mục
   `ModernKey/`) vẫn giữ tên cũ. Đây chỉ là vấn đề nội bộ, người dùng không thấy.
 
