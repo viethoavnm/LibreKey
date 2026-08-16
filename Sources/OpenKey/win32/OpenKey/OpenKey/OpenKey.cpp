@@ -108,7 +108,6 @@ void OpenKeyInit() {
 	APP_GET_DATA(vRememberCode, 1);
 	APP_GET_DATA(vOtherLanguage, 1);
 	APP_GET_DATA(vTempOffOpenKey, 0);
-	APP_GET_DATA(vFixChromiumBrowser, 0);
 
 	//init convert tool
 	APP_GET_DATA(convertToolDontAlertWhenCompleted, 0);
@@ -604,8 +603,7 @@ LRESULT CALLBACK keyboardHookProcess(int nCode, WPARAM wParam, LPARAM lParam) {
 		} else if (pData->code == vWillProcess || pData->code == vRestore || pData->code == vRestoreAndStartNewSession) { //handle result signal
 			//fix autocomplete
 			if (vFixRecommendBrowser && pData->extCode != 4) {
-				if (vFixChromiumBrowser && 
-					std::find(_chromiumBrowser.begin(), _chromiumBrowser.end(), OpenKeyHelper::getLastAppExecuteName()) != _chromiumBrowser.end()) {
+				if (std::find(_chromiumBrowser.begin(), _chromiumBrowser.end(), OpenKeyHelper::getLastAppExecuteName()) != _chromiumBrowser.end()) {
 					SendCombineKey(KEY_LEFT_SHIFT, KEY_LEFT, 0, KEYEVENTF_EXTENDEDKEY);
 					if (pData->backspaceCount == 1)
 						pData->backspaceCount--;

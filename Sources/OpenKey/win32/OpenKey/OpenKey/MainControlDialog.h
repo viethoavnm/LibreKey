@@ -26,7 +26,7 @@ private:
 		checkAllowZWJF, checkTempOffSpelling, checkQuickStartConsonant, checkQuickEndConsonant;
 	HWND checkSmartSwitchKey, checkCapsFirstChar, checkQuickTelex, checkUseMacro, checkUseMacroInEnglish;
 	HWND checkCreateDesktopShortcut, checkRunAsAdmin, checkSupportMetroApp, checkMacroAutoCaps;
-	HWND checkFixChromium, checkRememberTableCode, checkTempOffOpenKey, checkAllowOtherLanguages;
+	HWND checkRememberTableCode, checkTempOffOpenKey, checkAllowOtherLanguages;
 private:
 	void initDialog();
 	void onComboBoxSelected(const HWND& hCombobox, const int& comboboxId);

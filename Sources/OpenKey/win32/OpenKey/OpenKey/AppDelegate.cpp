@@ -49,7 +49,6 @@ int vSupportMetroApp = 1;
 int vCreateDesktopShortcut = 0;
 int vRunAsAdmin = 0;
 //beta feature
-int vFixChromiumBrowser = 0; //new on version 2.0
 
 bool AppDelegate::isDialogMsg(MSG & msg) const {
 	return (mainDialog != NULL && IsDialogMessage(mainDialog->getHwnd(), &msg)) ||
@@ -165,7 +164,6 @@ void AppDelegate::onDefaultConfig() {
 	APP_SET_DATA(vRememberCode, 1);
 	APP_SET_DATA(vOtherLanguage, 1);
 	APP_SET_DATA(vTempOffOpenKey, 0);
-	APP_SET_DATA(vFixChromiumBrowser, 0);
 
 	if (mainDialog) {
 		mainDialog->fillData();

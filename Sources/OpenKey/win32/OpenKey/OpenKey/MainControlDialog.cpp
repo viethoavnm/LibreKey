@@ -191,8 +191,6 @@ void MainControlDialog::initDialog() {
     checkUseClipboard = GetDlgItem(hTabPage3, IDC_CHECK_USE_CLIPBOARD);
     createToolTip(checkUseClipboard, IDS_STRING_USE_CLIPBOARD);
 
-    checkFixChromium = GetDlgItem(hTabPage3, IDC_CHECK_FIX_CHROMIUM);
-    createToolTip(checkFixChromium, IDS_STRING_FIX_CHROMIUM);
 
     /*------------end tab 3----------------*/
 
@@ -356,12 +354,10 @@ void MainControlDialog::fillData() {
     SendMessage(checkCreateDesktopShortcut, BM_SETCHECK, vCreateDesktopShortcut ? 1 : 0, 0);
     SendMessage(checkRunAsAdmin, BM_SETCHECK, vRunAsAdmin ? 1 : 0, 0);
     SendMessage(checkUseClipboard, BM_SETCHECK, vSendKeyStepByStep ? 0 : 1, 0);
-    SendMessage(checkFixChromium, BM_SETCHECK, vFixChromiumBrowser ? 1 : 0, 0);
 
     EnableWindow(checkRestoreIfWrongSpelling, vCheckSpelling);
     EnableWindow(checkAllowZWJF, vCheckSpelling);
     EnableWindow(checkTempOffSpelling, vCheckSpelling);
-    EnableWindow(checkFixChromium, vFixRecommendBrowser);
 
     //tab info
     wchar_t buffer[256];
@@ -446,8 +442,7 @@ void MainControlDialog::onCheckboxClicked(const HWND& hWnd) {
     else if (hWnd == checkFixRecommendBrowser) {
         val = (int)SendMessage(hWnd, BM_GETCHECK, 0, 0);
         APP_SET_DATA(vFixRecommendBrowser, val ? 1 : 0);
-        EnableWindow(checkFixChromium, vFixRecommendBrowser);
-    }
+        }
     else if (hWnd == checkShowOnStartup) {
         val = (int)SendMessage(hWnd, BM_GETCHECK, 0, 0);
         APP_SET_DATA(vShowOnStartUp, val ? 1 : 0);
@@ -544,10 +539,6 @@ void MainControlDialog::onCheckboxClicked(const HWND& hWnd) {
     else if (hWnd == checkTempOffOpenKey) {
         val = (int)SendMessage(hWnd, BM_GETCHECK, 0, 0);
         APP_SET_DATA(vTempOffOpenKey, val ? 1 : 0);
-    }
-    else if (hWnd == checkFixChromium) {
-        val = (int)SendMessage(hWnd, BM_GETCHECK, 0, 0);
-        APP_SET_DATA(vFixChromiumBrowser, val ? 1 : 0);
     }
     SystemTrayHelper::updateData();
 }

@@ -84,4 +84,3 @@ extern int vRunAsAdmin;
 extern int vRememberCode;
 extern int vOtherLanguage;
 extern int vTempOffOpenKey;
-extern int vFixChromiumBrowser;

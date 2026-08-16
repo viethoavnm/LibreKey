@@ -237,8 +237,6 @@ BEGIN
     CONTROL         "Chạy với quyền Admin",IDC_CHECK_RUN_AS_ADMIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,31,119,10
     CONTROL         "Tạo biểu tượng trên Desktop",IDC_CHECK_CHECK_CREATE_SHORTCUT,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,31,119,10
-    CONTROL         "Sửa lỗi trên Chromium (beta)",IDC_CHECK_FIX_CHROMIUM,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,12,119,10
     CONTROL         "Dùng Clipboard để gửi phím",IDC_CHECK_USE_CLIPBOARD,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,50,119,10
     CONTROL         "Hỗ trợ ứng dụng Metro",IDC_CHECK_SUPPORT_METRO_APP,
@@ -513,7 +511,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_STRING_FIX_CHROMIUM "Sửa lỗi bị đúp từ trên các trình duyệt Chromium bao gồm Google Chrome, Brave, Microsoft Edge. Tính năng này đang được thử nghiệm. Cần bật tính năng ""Sửa lỗi gợi ý"" để hỗ trợ tính năng này."
 END
 
 #endif    // English (United States) resources
