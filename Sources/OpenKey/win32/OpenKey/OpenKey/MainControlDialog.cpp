@@ -16,6 +16,7 @@ redistribute your new version, it MUST be open source.
 
 extern void ReloadAppExclusionList();
 #include "AppDelegate.h"
+#include <commdlg.h>
 #include <Shlobj.h>
 #include <Uxtheme.h>
 
