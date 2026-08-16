@@ -29,6 +29,22 @@ Phiên bản hiện tại: **1.2.0** · macOS 10.13+ (Universal) và Windows (x8
 
 ## Tải về
 
+### macOS, bằng Homebrew
+
+```sh
+brew tap viethoavnm/librekey
+brew trust --cask viethoavnm/librekey/librekey
+brew install --cask librekey
+xattr -dr com.apple.quarantine /Applications/LibreKey.app
+```
+
+Nâng cấp về sau chỉ còn `brew upgrade --cask librekey`. Bước `brew trust` là bắt
+buộc từ Homebrew 6 với mọi tap ngoài luồng chính thức; bước `xattr` là vì bản
+phát hành ký ad-hoc, xem ghi chú ngay dưới. Chi tiết ở
+[viethoavnm/homebrew-librekey](https://github.com/viethoavnm/homebrew-librekey).
+
+### Tải thẳng
+
 Vào [Releases](https://github.com/viethoavnm/LibreKey/releases/latest) và tải file
 tương ứng:
 
@@ -55,7 +71,8 @@ tương ứng:
 
 ## Cài đặt trên macOS
 
-1. Kéo `LibreKey.app` vào thư mục `/Applications`.
+1. Kéo `LibreKey.app` vào thư mục `/Applications`. Cài bằng Homebrew thì bước này
+   đã xong rồi.
 2. Vào *System Settings → Privacy & Security → Accessibility* và bật LibreKey.
 
 **Trên máy nhiều người dùng:** quyền Accessibility do macOS quản lý ở cấp hệ
@@ -241,6 +258,7 @@ một máy Windows
 | Bundle ID | `vn.viethoavnm.librekey` |
 | Giấy phép | GPL v3 |
 | Bản build sẵn | [Releases](https://github.com/viethoavnm/LibreKey/releases/latest) — ký ad-hoc, xem lưu ý ở phần [Tải về](#tải-về) |
+| Homebrew | Tap riêng [viethoavnm/homebrew-librekey](https://github.com/viethoavnm/homebrew-librekey), cask cập nhật tự động khi publish release |
 
 Dòng *Ngày cập nhật* ở tab Thông tin lấy từ `__DATE__`, tức là **ngày biên dịch**
 của chính bản build đó, không phải ngày phát hành ghi ở bảng trên.
@@ -356,6 +374,19 @@ Developer ID và notarization.
    `LibreKey`, `LibreKeyHelper`, `LibreKeyTests`.
 3. Chọn scheme **LibreKey**, rồi vào menu *Product → Archive*.
 4. Trong cửa sổ Organizer hiện ra, bấm *Distribute App* và chọn nơi lưu.
+
+### Cập nhật cask Homebrew
+
+Không phải làm tay. Workflow
+[`homebrew-bump.yml`](.github/workflows/homebrew-bump.yml) chạy khi một release
+được publish: nó chờ file `LibreKey-x.y.z-macOS.zip` xuất hiện trong release (tối
+đa 10 phút, vì file này upload bằng tay), tính `sha256`, rồi đẩy commit sang
+`viethoavnm/homebrew-librekey`.
+
+Workflow cần secret **`HOMEBREW_TAP_TOKEN`** — một Personal Access Token có
+quyền ghi vào repo tap, vì `GITHUB_TOKEN` mặc định chỉ có phạm vi trong repo này.
+Nếu release là pre-release thì workflow bỏ qua. Bump lại thủ công cho một tag cũ:
+*Actions → Homebrew cask bump → Run workflow*, nhập tag.
 
 ## Logo
 

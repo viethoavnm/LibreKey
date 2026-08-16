@@ -4,6 +4,16 @@ LibreKey là bản fork của [OpenKey](https://github.com/tuyenvm/OpenKey) do M
 Tuyên viết, phát hành theo giấy phép GPL v3. Nhật ký thay đổi của OpenKey nằm ở
 kho gốc; file này chỉ ghi những gì LibreKey khác đi.
 
+## Chưa phát hành
+
+- **Cài bằng Homebrew trên macOS.** Cask nằm ở tap riêng
+  [viethoavnm/homebrew-librekey](https://github.com/viethoavnm/homebrew-librekey);
+  `brew install --cask librekey` là đủ, nâng cấp về sau bằng `brew upgrade`.
+  Homebrew Cask chính thức chưa nhận vì kho chưa đủ ngưỡng phổ biến (75 sao, hoặc
+  30 fork, hoặc 30 watcher). Cask được workflow `homebrew-bump.yml` cập nhật tự
+  động mỗi khi có release mới, nên không có bước sửa `sha256` bằng tay. Ứng dụng
+  không đổi một dòng nào.
+
 ## 1.2.0 — 16/08/2026
 
 Đưa tính năng Loại trừ ứng dụng sang bản Windows.
