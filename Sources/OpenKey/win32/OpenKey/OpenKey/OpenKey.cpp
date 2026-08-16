@@ -13,6 +13,7 @@ redistribute your new version, it MUST be open source.
 -----------------------------------------------------------*/
 #include "stdafx.h"
 #include "AppDelegate.h"
+#include "AppExclusionList.h"
 
 #include <algorithm>
 #include <cctype>
@@ -45,6 +46,14 @@ static vector<string> _chromiumBrowser = {
 	"browser.exe",    //Cốc Cốc
 	"arc.exe"
 };
+
+//Ứng dụng người dùng chọn không gõ tiếng Việt. Đọc lại mỗi khi danh sách đổi;
+//bộ hook chỉ quét một vector nhỏ nên rẻ hơn nhiều so với đọc registry mỗi phím.
+static vector<string> _excludedApps;
+
+void ReloadAppExclusionList() {
+	_excludedApps = AppExclusionList::load();
+}
 
 static bool isChromiumBrowser(const string& exeName) {
 	string lowered = exeName;
@@ -98,6 +107,8 @@ void OpenKeyFree() {
 }
 
 void OpenKeyInit() {
+	ReloadAppExclusionList();
+
 	APP_GET_DATA(vLanguage, 1);
 	APP_GET_DATA(vInputType, 0);
 	vFreeMark = 0;
@@ -576,6 +587,12 @@ LRESULT CALLBACK keyboardHookProcess(int nCode, WPARAM wParam, LPARAM lParam) {
 			_hasJustUsedHotKey = false;
 		}
 		_keycode = 0;
+		return CallNextHookEx(hKeyboardHook, nCode, wParam, lParam);
+	}
+
+	//Người dùng đã yêu cầu tránh ứng dụng này: trả phím lại nguyên vẹn. Các phím
+	//tắt đổi ngôn ngữ và chuyển mã ở trên vẫn chạy vì chúng là phím tắt toàn cục.
+	if (AppExclusionList::contains(_excludedApps, OpenKeyHelper::getLastAppExecuteName())) {
 		return CallNextHookEx(hKeyboardHook, nCode, wParam, lParam);
 	}
 
