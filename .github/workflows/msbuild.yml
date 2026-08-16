@@ -6,6 +6,11 @@ on:
     tags: [ "v*" ]
   pull_request:
     branches: [ "master" ]
+  # A tag created through the API - which is what `gh release create` does -
+  # fires `create`, not `push`, so the tags trigger above misses it. This one
+  # catches the release itself.
+  release:
+    types: [ published ]
   workflow_dispatch:
 
 env:
