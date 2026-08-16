@@ -1,0 +1,124 @@
+name: Homebrew cask bump
+
+# Keeps viethoavnm/homebrew-librekey pointing at the newest release. The cask
+# only ships the macOS build, so this ignores the Windows archive entirely.
+
+on:
+  release:
+    types: [ published ]
+  # For re-running a release whose macOS zip was uploaded late, or for the
+  # first bump after this workflow lands.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag của release cần đẩy sang tap (vd: v1.2.0)"
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  TAP_REPOSITORY: viethoavnm/homebrew-librekey
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    # A pre-release is not what brew should hand to everyone.
+    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
+
+    steps:
+      - name: Read the tag and version
+        id: rel
+        env:
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
+        run: |
+          if [ -z "$TAG" ]; then
+            echo "::error::Không xác định được tag của release."
+            exit 1
+          fi
+          version="${TAG#v}"
+          if ! printf '%s' "$version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Tag '$TAG' không có dạng vX.Y.Z, không bump cask."
+            exit 1
+          fi
+          {
+            echo "tag=$TAG"
+            echo "version=$version"
+            echo "asset=LibreKey-$version-macOS.zip"
+          } >> "$GITHUB_OUTPUT"
+
+      # The macOS zip is built and uploaded by hand, so it can land after the
+      # release is published. Wait for it rather than bumping the cask to a URL
+      # that 404s for every user who runs brew in the meantime.
+      - name: Wait for the macOS asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.rel.outputs.tag }}
+          ASSET: ${{ steps.rel.outputs.asset }}
+        run: |
+          for attempt in $(seq 1 30); do
+            if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
+                 --json assets --jq '.assets[].name' | grep -qxF "$ASSET"; then
+              echo "Thấy $ASSET sau $attempt lần thử."
+              exit 0
+            fi
+            echo "Chưa thấy $ASSET, thử lại sau 20s ($attempt/30)."
+            sleep 20
+          done
+          echo "::error::Không thấy $ASSET trong release $TAG sau 10 phút."
+          exit 1
+
+      - name: Hash the asset
+        id: hash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.rel.outputs.tag }}
+          ASSET: ${{ steps.rel.outputs.asset }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "$ASSET"
+          sha="$(sha256sum "$ASSET" | cut -d' ' -f1)"
+          echo "Bump sang $ASSET, sha256 $sha"
+          echo "sha256=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Check out the tap
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.TAP_REPOSITORY }}
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: tap
+
+      # Rewriting the two stanzas in place keeps every hand-written part of the
+      # cask - caveats, zap paths, uninstall - untouched.
+      - name: Bump the cask
+        env:
+          VERSION: ${{ steps.rel.outputs.version }}
+          SHA256: ${{ steps.hash.outputs.sha256 }}
+        run: |
+          cask=tap/Casks/librekey.rb
+          sed -i -E "s|^  version \".*\"$|  version \"$VERSION\"|" "$cask"
+          sed -i -E "s|^  sha256 \".*\"$|  sha256 \"$SHA256\"|" "$cask"
+
+          # A silent no-op sed would ship a cask pinned to the old release, so
+          # confirm both lines really say what they should now.
+          grep -qxF "  version \"$VERSION\"" "$cask" || {
+            echo "::error::Không thay được stanza version trong $cask."
+            exit 1
+          }
+          grep -qxF "  sha256 \"$SHA256\"" "$cask" || {
+            echo "::error::Không thay được stanza sha256 trong $cask."
+            exit 1
+          }
+
+      - name: Push to the tap
+        working-directory: tap
+        env:
+          VERSION: ${{ steps.rel.outputs.version }}
+        run: |
+          if git diff --quiet; then
+            echo "Cask đã ở phiên bản $VERSION, không có gì để đẩy."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "feat: LibreKey $VERSION"
+          git push
