@@ -23,6 +23,4 @@ public:
 	~AboutDialog();
 	virtual void fillData() override;
 private:
-	HWND hUpdateButton;
-	void onUpdateButton();
 };

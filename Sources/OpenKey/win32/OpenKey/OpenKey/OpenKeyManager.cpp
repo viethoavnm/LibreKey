@@ -51,36 +51,7 @@ void OpenKeyManager::freeEngine() {
 	OpenKeyFree();
 }
 
-bool OpenKeyManager::checkUpdate(string& newVersion) {
-	wstring dataW = OpenKeyHelper::getContentOfUrl(L"https://raw.githubusercontent.com/tuyenvm/OpenKey/master/version.json");
-	string data = wideStringToUtf8(dataW);
-
-	//simple parse
-	constexpr char versionNameStr[] = "\"versionName\":";
-	constexpr char versionCodeStr[] = "\"versionCode\":";
-	constexpr char numbers[] = "0123456789";
-	size_t posBegin = string::npos;
-	size_t posEnd = string::npos;
-
-	posBegin = data.find("latestWinVersion");
-	posBegin = data.find(versionNameStr, posBegin);
-	posBegin += (sizeof(versionNameStr) - 1);
-	posBegin = data.find('\"', posBegin);
-	posBegin = data.find_first_of(numbers, posBegin);
-
-	posEnd = data.find('\"', posBegin);
-
-	if (posBegin == string::npos || posEnd == string::npos) {
-		return false;
-	}
-
-	newVersion = data.substr(posBegin, posEnd - posBegin);
-
-	posBegin = posEnd;
-	posBegin = data.find(versionCodeStr, posBegin);
-	posBegin += (sizeof(versionCodeStr) - 1);
-
-	posEnd = data.find("}", posBegin);
+", posBegin);
 
 	if (posBegin == string::npos || posEnd == string::npos) {
 		return false;

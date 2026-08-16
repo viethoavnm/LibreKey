@@ -25,9 +25,8 @@ private:
 		checkSpelling, checkRestoreIfWrongSpelling, checkUseClipboard, checkModernIcon,
 		checkAllowZWJF, checkTempOffSpelling, checkQuickStartConsonant, checkQuickEndConsonant;
 	HWND checkSmartSwitchKey, checkCapsFirstChar, checkQuickTelex, checkUseMacro, checkUseMacroInEnglish;
-	HWND checkCreateDesktopShortcut, checkCheckNewVersion, checkRunAsAdmin, checkSupportMetroApp, checkMacroAutoCaps;
+	HWND checkCreateDesktopShortcut, checkRunAsAdmin, checkSupportMetroApp, checkMacroAutoCaps;
 	HWND checkFixChromium, checkRememberTableCode, checkTempOffOpenKey, checkAllowOtherLanguages;
-	HWND hUpdateButton;
 private:
 	void initDialog();
 	void onComboBoxSelected(const HWND& hCombobox, const int& comboboxId);
@@ -35,7 +34,6 @@ private:
 	void onCharacter(const HWND& hWnd, const UINT16& keyCode);
 	void setSwitchKeyText(const HWND& hWnd, const UINT16 & keyCode);
 	void onTabIndexChanged();
-	void onUpdateButton();
 	void requestRestartAsAdmin();
 protected:
 	INT_PTR eventProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);

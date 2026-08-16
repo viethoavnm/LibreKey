@@ -167,8 +167,6 @@ void MainControlDialog::initDialog() {
     checkMacroAutoCaps = GetDlgItem(hTabPage2, IDC_CHECK_AUTO_CAPS);
     createToolTip(checkMacroAutoCaps, IDS_STRING_MACRO_AUTO_CAP);
 
-    hUpdateButton = GetDlgItem(hDlg, IDC_BUTTON_CHECK_UPDATE);
-
     /*------------end tab 2----------------*/
 
     checkModernIcon = GetDlgItem(hTabPage3, IDC_CHECK_MODERN_ICON);
@@ -186,8 +184,6 @@ void MainControlDialog::initDialog() {
     checkRunAsAdmin = GetDlgItem(hTabPage3, IDC_CHECK_RUN_AS_ADMIN);
     createToolTip(checkRunAsAdmin, IDS_STRING_RUN_AS_ADMIN);
 
-    checkCheckNewVersion = GetDlgItem(hTabPage3, IDC_CHECK_CHECK_UPDATE);
-    createToolTip(checkCheckNewVersion, IDS_STRING_CHECK_UPDATE);
 
     checkSupportMetroApp = GetDlgItem(hTabPage3, IDC_CHECK_SUPPORT_METRO_APP);
     createToolTip(checkSupportMetroApp, IDS_STRING_SUPPORT_METRO);
@@ -235,9 +231,6 @@ INT_PTR MainControlDialog::eventProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
         }
         case IDC_BUTTON_MACRO_TABLE:
             AppDelegate::getInstance()->onMacroTable();
-            break;
-        case IDC_BUTTON_CHECK_UPDATE:
-            onUpdateButton();
             break;
         case IDC_BUTTON_GO_SOURCE_CODE:
             ShellExecute(NULL, _T("open"), _T("https://github.com/tuyenvm/OpenKey"), NULL, NULL, SW_SHOWNORMAL);
@@ -362,7 +355,6 @@ void MainControlDialog::fillData() {
     SendMessage(checkSupportMetroApp, BM_SETCHECK, vSupportMetroApp ? 1 : 0, 0);
     SendMessage(checkCreateDesktopShortcut, BM_SETCHECK, vCreateDesktopShortcut ? 1 : 0, 0);
     SendMessage(checkRunAsAdmin, BM_SETCHECK, vRunAsAdmin ? 1 : 0, 0);
-    SendMessage(checkCheckNewVersion, BM_SETCHECK, vCheckNewVersion ? 1 : 0, 0);
     SendMessage(checkUseClipboard, BM_SETCHECK, vSendKeyStepByStep ? 0 : 1, 0);
     SendMessage(checkFixChromium, BM_SETCHECK, vFixChromiumBrowser ? 1 : 0, 0);
 
@@ -541,10 +533,6 @@ void MainControlDialog::onCheckboxClicked(const HWND& hWnd) {
         APP_SET_DATA(vRunAsAdmin, val ? 1 : 0);
         requestRestartAsAdmin();
     }
-    else if (hWnd == checkCheckNewVersion) {
-        val = (int)SendMessage(hWnd, BM_GETCHECK, 0, 0);
-        APP_SET_DATA(vCheckNewVersion, val ? 1 : 0);
-    }
     else if (hWnd == checkRememberTableCode) {
         val = (int)SendMessage(hWnd, BM_GETCHECK, 0, 0);
         APP_SET_DATA(vRememberCode, val ? 1 : 0);
@@ -598,38 +586,6 @@ void MainControlDialog::onTabIndexChanged() {
     ShowWindow(hTabPage2, (index == 1) ? SW_SHOW : SW_HIDE);
     ShowWindow(hTabPage3, (index == 2) ? SW_SHOW : SW_HIDE);
     ShowWindow(hTabPage4, (index == 3) ? SW_SHOW : SW_HIDE);
-}
-
-void MainControlDialog::onUpdateButton() {
-    EnableWindow(hUpdateButton, false);
-    string newVersion;
-    if (OpenKeyManager::checkUpdate(newVersion)) {
-        WCHAR msg[256];
-        wsprintf(msg,
-            TEXT("OpenKey Có phiên bản mới (%s), bạn có muốn cập nhật không?"),
-            utf8ToWideString(newVersion).c_str());
-
-        int msgboxID = MessageBox(
-            hDlg,
-            msg,
-            _T("OpenKey Update"),
-            MB_ICONEXCLAMATION | MB_YESNO
-        );
-        if (msgboxID == IDYES) {
-            //Call OpenKeyUpdate
-            WCHAR path[MAX_PATH];
-            GetCurrentDirectory(MAX_PATH, path);
-            wsprintf(path, TEXT("%s\\OpenKeyUpdate.exe"), path);
-            ShellExecute(0, L"", path, 0, 0, SW_SHOWNORMAL);
-
-            AppDelegate::getInstance()->onOpenKeyExit();
-        }
-
-    }
-    else {
-        MessageBox(hDlg, _T("Bạn đang dùng phiên bản mới nhất!"), _T("OpenKey Update"), MB_OK);
-    }
-    EnableWindow(hUpdateButton, true);
 }
 
 void MainControlDialog::requestRestartAsAdmin() {

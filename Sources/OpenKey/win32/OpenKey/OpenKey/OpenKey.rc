@@ -98,14 +98,10 @@ BEGIN
     CONTROL         "<a>https://github.com/tuyenvm/OpenKey</a>",IDC_SYSLINK_HOME_PAGE,
                     "SysLink",WS_TABSTOP,105,79,152,10
     LTEXT           "Trang chủ:",IDC_STATIC_APP_SUB_TITLE2,45,79,47,8
-    LTEXT           "Phiên bản mới:",IDC_STATIC_APP_SUB_TITLE3,45,91,58,8
     LTEXT           "Fanpage:",IDC_STATIC_APP_SUB_TITLE4,45,103,47,8
-    CONTROL         "<a>https://github.com/tuyenvm/OpenKey/releases</a>",IDC_SYSLINK_NEW_VERSION,
-                    "SysLink",WS_TABSTOP,105,91,175,10
     CONTROL         "<a>https://www.facebook.com/OpenKeyVN</a>",IDC_SYSLINK_FANPAGE,
                     "SysLink",WS_TABSTOP,105,104,175,10
     CTEXT           "Mai Vũ Tuyên © 2019",IDC_STATIC_APP_SUB_TITLE5,80,142,130,8
-    PUSHBUTTON      "Kiểm tra bản mới...",IDC_BUTTON_CHECK_VERSION,44,117,75,14
 END
 
 IDD_DIALOG_MAIN DIALOGEX 0, 0, 297, 261
@@ -241,9 +237,6 @@ BEGIN
     CONTROL         "Khởi động cùng Windows",IDC_CHECK_RUN_WITH_WINDOWS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,89,119,10
     CONTROL         "Chạy với quyền Admin",IDC_CHECK_RUN_AS_ADMIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,31,119,10
-    CONTROL         "Kiểm tra bản mới lúc khởi động",IDC_CHECK_CHECK_UPDATE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,70,119,10
-    PUSHBUTTON      "Kiểm tra bản mới...",IDC_BUTTON_CHECK_UPDATE,151,88,75,14
     CONTROL         "Tạo biểu tượng trên Desktop",IDC_CHECK_CHECK_CREATE_SHORTCUT,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,31,119,10
     CONTROL         "Sửa lỗi trên Chromium (beta)",IDC_CHECK_FIX_CHROMIUM,
@@ -481,7 +474,6 @@ BEGIN
     IDS_STRING_CREATE_DESKTOP 
                             "Tạo biểu tượng OpenKey ở Desktop để có thể tìm thấy nhanh khi cần thiết"
     IDS_STRING_RUN_AS_ADMIN "Khởi động lại OpenKey với quyền Admin để có thể gõ được tiếng Việt trong game, bạn sẽ được yêu cầu khởi động lại chương trình OpenKey"
-    IDS_STRING_CHECK_UPDATE "Kiểm tra bản mới mỗi lần khởi động OpenKey"
     IDS_STRING_REMEMBER_TABLE_CODE 
                             "OpenKey sẽ tự động ghi nhớ bạn đã dùng bảng mã nào cho ứng dụng nào, để lần sau khi chuyển qua ứng dụng đó, OpenKey sẽ tự động chuyển sang bảng mã đó cho bạn. Rất thích hợp cho các ứng dụng kỹ thuật như Photoshop, CAD,..."
     IDS_STRING_TEMP_OFF_OPENKEY 

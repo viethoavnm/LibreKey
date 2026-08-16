@@ -105,7 +105,6 @@ void OpenKeyInit() {
 	APP_GET_DATA(vSupportMetroApp, 0);
 	APP_GET_DATA(vRunAsAdmin, 0);
 	APP_GET_DATA(vCreateDesktopShortcut, 0);
-	APP_GET_DATA(vCheckNewVersion, 0);
 	APP_GET_DATA(vRememberCode, 1);
 	APP_GET_DATA(vOtherLanguage, 1);
 	APP_GET_DATA(vTempOffOpenKey, 0);

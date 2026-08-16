@@ -34,7 +34,6 @@
 #define IDS_STRING_SHOW_ON_STARTUP      122
 #define IDS_STRING_CREATE_DESKTOP       123
 #define IDS_STRING_RUN_AS_ADMIN         124
-#define IDS_STRING_CHECK_UPDATE         125
 #define IDS_STRING_REMEMBER_TABLE_CODE  126
 #define IDS_STRING_TEMP_OFF_OPENKEY     127
 #define IDR_MAINFRAME                   128
@@ -120,7 +119,6 @@
 #define IDC_CHECK_USE_MACRO_IN_ENGLISH  1021
 #define IDC_BUTTON1                     1022
 #define IDC_BUTTON_MACRO_TABLE          1022
-#define IDC_BUTTON_CHECK_VERSION        1022
 #define IDC_BUTTON_CONVERT_BUTTON       1022
 #define IDC_BUTTON_ADD                  1022
 #define ID_BTN_DEFAULT                  1023
@@ -141,7 +139,6 @@
 #define IDC_STATIC_APP_VERSION_INFO     1029
 #define IDC_STATIC_APP_SUB_TITLE4       1030
 #define IDC_SYSLINK_AUTHOR_EMAIL        1030
-#define IDC_SYSLINK_NEW_VERSION         1031
 #define IDC_SYSLINK_FANPAGE             1032
 #define IDC_STATIC_APP_SUB_TITLE5       1033
 #define IDC_STATIC_APP_SUB_TITLE6       1034
@@ -159,10 +156,8 @@
 #define IDC_TAB_CONTROL                 1046
 #define IDC_BUTTON_GO_SOURCE_CODE       1047
 #define IDC_CHECK_RUN_AS_ADMIN          1048
-#define IDC_CHECK_CHECK_UPDATE          1049
 #define IDC_CHECK_SUPPORT_METRO         1050
 #define IDC_CHECK_CHECK_CREATE_SHORTCUT 1050
-#define IDC_BUTTON_CHECK_UPDATE         1051
 #define IDS_STRING_CTRL                 1052
 #define IDC_CHECK_FIX_CHROMIUM          1052
 #define IDS_STRING_ALT                  1053
