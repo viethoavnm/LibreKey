@@ -509,9 +509,6 @@ BEGIN
                             "Thay thế nhanh các phụ âm cuối như g, h, k bằng ng, nh, ch.Ví dụ: trươg→trương, nhah→nhanh, bák→bách"
 END
 
-STRINGTABLE
-BEGIN
-END
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
