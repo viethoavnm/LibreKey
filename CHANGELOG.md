@@ -4,6 +4,37 @@ LibreKey là bản fork của [OpenKey](https://github.com/tuyenvm/OpenKey) do M
 Tuyên viết, phát hành theo giấy phép GPL v3. Nhật ký thay đổi của OpenKey nằm ở
 kho gốc; file này chỉ ghi những gì LibreKey khác đi.
 
+## 1.2.0 — 16/08/2026
+
+Đưa tính năng Loại trừ ứng dụng sang bản Windows.
+
+### Tính năng mới
+
+- **Loại trừ ứng dụng trên Windows.** Tab thứ tư, nằm giữa "Hệ thống" và "Thông
+  tin", giống vị trí ở bản macOS. Danh sách tên file thực thi, kèm nút *Thêm ứng
+  dụng...* mở hộp thoại chọn `.exe` và nút *Bỏ khỏi danh sách* (chỉ bật khi có
+  dòng được chọn). Trong ứng dụng bị loại trừ, phím đi thẳng qua — engine không
+  đụng vào; riêng phím tắt chuyển ngôn ngữ và chuyển mã vẫn dùng được vì đó là
+  phím tắt toàn cục.
+
+  Định danh là **tên file thực thi**, khớp với thứ mà `getLastAppExecuteName()`
+  trả về, và mọi phép so sánh đều bỏ qua hoa thường vì tên file Windows vốn không
+  phân biệt. Danh sách lưu trong registry cùng chỗ với các thiết lập khác, và mỗi
+  lần sửa là cache của bộ hook được nạp lại ngay, không cần khởi động lại.
+
+### Sửa lỗi
+
+- Thiếu `<commdlg.h>` khiến hộp thoại chọn file không biên dịch được.
+- Thông báo khởi động lại với quyền Admin còn sót tên OpenKey.
+
+### Chưa kiểm chứng
+
+Giống bản 1.1.0: bản Windows build sạch trên CI và các chuỗi đã được kiểm tra
+trực tiếp trong binary, nhưng **chưa ai chạy thử trên máy Windows thật**. Ngoài
+ra `AppExclusionList` bên win32 **chưa có unit test** — win32 không có test
+target, khác với bản macOS nơi logic tương đương có 16 test. Phần logic thuần đã
+được tách khỏi UI và registry để sau này thêm test được.
+
 ## 1.1.0 — 16/08/2026
 
 Bổ sung bản Windows. Số phiên bản đồng nhất giữa hai nền tảng.

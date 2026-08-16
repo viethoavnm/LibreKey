@@ -11,7 +11,7 @@
 **Bộ gõ tiếng Việt cho macOS và Windows. Bản macOS chạy được trên máy có nhiều
 tài khoản người dùng.**
 
-Phiên bản hiện tại: **1.1.0** · macOS 10.13+ (Universal) và Windows (x86/x64) · GPL v3
+Phiên bản hiện tại: **1.2.0** · macOS 10.13+ (Universal) và Windows (x86/x64) · GPL v3
 
 ![Bảng điều khiển LibreKey](docs/screenshots/panel-bo-go.png)
 
@@ -76,7 +76,6 @@ bảng điều khiển.
 Bản Windows dùng chung engine tiếng Việt với bản macOS, nên kiểu gõ, bảng mã,
 gõ tắt và công cụ chuyển mã hoạt động như nhau. Khác biệt:
 
-- **Chưa có tính năng Loại trừ ứng dụng** — mới chỉ làm ở bản macOS
 - **Không có các bản vá đa người dùng** — Windows không có cơ chế tương tự nên
   vấn đề đó không tồn tại
 - **Đã gỡ kênh cập nhật tự động**, giống bản macOS và cùng một lý do
@@ -113,7 +112,7 @@ Kết quả đo A/B trên cùng một máy, cùng thời điểm, cùng hai tài
 | Bản | `LSMultipleInstancesProhibited` | Khi tài khoản khác đang giữ ứng dụng |
 |---|---|---|
 | OpenKey 2.0.5 | `true` | ❌ `-10829`, bị chặn hoàn toàn |
-| LibreKey 1.1.0 | `false` | ✅ chạy song song bình thường |
+| LibreKey 1.2.0 | `false` | ✅ chạy song song bình thường |
 
 ## Fork này lấy gì và sửa gì
 
@@ -175,8 +174,9 @@ Trong ứng dụng bị loại trừ, phím **đi thẳng qua, engine không đ�
 phải kiểu ép sang chế độ English. Riêng phím tắt chuyển ngôn ngữ và chuyển mã
 vẫn dùng được vì đó là phím tắt toàn cục.
 
-Danh sách lưu theo từng tài khoản macOS, khớp với bản chất đa người dùng của fork
-này.
+Có ở **cả macOS lẫn Windows**. Trên macOS ứng dụng được nhận theo bundle id và
+danh sách lưu theo từng tài khoản; trên Windows nhận theo tên file `.exe` và lưu
+trong registry.
 
 ## Tính năng kế thừa từ OpenKey
 
@@ -234,7 +234,7 @@ một máy Windows
 
 | | |
 |---|---|
-| Phiên bản | **1.1.0** (build 2) |
+| Phiên bản | **1.2.0** (build 3) |
 | Ngày phát hành | 16/08/2026 |
 | Yêu cầu | macOS 10.13 (High Sierra) trở lên · Windows 7 trở lên |
 | Kiến trúc | macOS: Universal (`arm64` + `x86_64`) · Windows: `x86` và `x64` |
@@ -386,8 +386,10 @@ rm -rf ModernKey/Resources/Icon.iconset
 - **Bản Windows chưa được chạy thử trên máy Windows thật.** Nó build sạch trên
   GitHub Actions và các chuỗi thương hiệu đã được kiểm tra trực tiếp trong
   binary, nhưng chưa ai mở nó lên gõ thử.
-- Bản Windows chưa có tính năng Loại trừ ứng dụng, và các bản vá đa người dùng
-  không áp dụng được vì Windows không có cơ chế tương tự.
+- Bản Windows không có các bản vá đa người dùng vì Windows không có cơ chế
+  tương tự — vấn đề đó không tồn tại ở đó.
+- `AppExclusionList` bên Windows chưa có unit test nào; win32 không có test
+  target, khác với bản macOS nơi logic tương đương có 16 test.
 - Thư mục `linux/` chỉ có một file README ghi "Coming soon" — OpenKey chưa bao
   giờ có mã nguồn Linux, nên LibreKey cũng không có gì để fork.
 - Tên file và tên lớp bên trong (`OpenKeyManager`, `OpenKey.mm`, thư mục
