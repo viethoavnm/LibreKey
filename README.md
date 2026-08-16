@@ -260,6 +260,31 @@ Thiếu `LibreKeyHelper.app` nghĩa là login item chưa được nhúng, và t�
 cùng hệ thống sẽ hỏng âm thầm — đây đúng là lỗi mà fork này sinh ra để sửa, nên
 đáng kiểm tra mỗi lần đóng gói.
 
+### Build bằng chữ ký của bạn
+
+Project mặc định ký ad-hoc để ai clone về cũng build được ngay. Muốn ký bằng
+team của mình thì truyền qua dòng lệnh, **đừng ghi vào project file** — ghi vào
+đó là người khác clone về sẽ gặp lại lỗi `requires a development team`:
+
+```bash
+xcodebuild -project OpenKey.xcodeproj -scheme LibreKey -configuration Release build \
+    -allowProvisioningUpdates \
+    DEVELOPMENT_TEAM=XXXXXXXXXX CODE_SIGN_STYLE=Automatic
+```
+
+> **Cẩn thận với kiểu hỏng im lặng.** Nếu keychain chưa có certificate hợp lệ,
+> lệnh trên vẫn in `** BUILD SUCCEEDED **` nhưng rơi ngược về ad-hoc, vì
+> `CODE_SIGN_IDENTITY = "-"` ở cấp project thắng. Luôn kiểm chứng bằng:
+>
+> ```bash
+> codesign -dv "$APP" 2>&1 | grep -E "Signature=|TeamIdentifier="
+> ```
+>
+> Ký thành công thì `TeamIdentifier` phải là mã team của bạn, không phải
+> `not set`. Kiểm tra certificate có sẵn hay chưa bằng
+> `security find-identity -v -p codesigning`; nếu ra `0 valid identities` thì
+> vào Xcode → *Settings → Accounts* đăng nhập lại rồi bấm *Manage Certificates*.
+
 ### Vì sao nên ký bằng chữ ký thật
 
 Bản ký ad-hoc build được và chạy được — login item vẫn đăng ký bình thường, đã
