@@ -12,6 +12,9 @@ You can fork, modify, improve this program. If you
 redistribute your new version, it MUST be open source.
 -----------------------------------------------------------*/
 #include "MainControlDialog.h"
+#include "AppExclusionList.h"
+
+extern void ReloadAppExclusionList();
 #include "AppDelegate.h"
 #include <Shlobj.h>
 #include <Uxtheme.h>
@@ -65,8 +68,10 @@ void MainControlDialog::initDialog() {
     TabCtrl_InsertItem(hTab, 1, &tci);
     tci.pszText = (LPWSTR)_T("Hệ thống");
     TabCtrl_InsertItem(hTab, 2, &tci);
-    tci.pszText = (LPWSTR)_T("Thông tin");
+    tci.pszText = (LPWSTR)_T("Loại trừ");
     TabCtrl_InsertItem(hTab, 3, &tci);
+    tci.pszText = (LPWSTR)_T("Thông tin");
+    TabCtrl_InsertItem(hTab, 4, &tci);
     RECT r;
     TabCtrl_GetItemRect(hTab, 0, &r);
     TabCtrl_SetItemSize(hTab, r.right - r.left, (r.bottom - r.top) * 1.428f);
@@ -75,7 +80,8 @@ void MainControlDialog::initDialog() {
     hTabPage1 = CreateDialogParam(hIns, MAKEINTRESOURCE(IDD_DIALOG_TAB_GENERAL), hDlg, tabPageEventProc, (LPARAM)this);
     hTabPage2 = CreateDialogParam(hIns, MAKEINTRESOURCE(IDD_DIALOG_TAB_MACRO), hDlg, tabPageEventProc, (LPARAM)this);
     hTabPage3 = CreateDialogParam(hIns, MAKEINTRESOURCE(IDD_DIALOG_TAB_SYSTEM), hDlg, tabPageEventProc, (LPARAM)this);
-    hTabPage4 = CreateDialogParam(hIns, MAKEINTRESOURCE(IDD_DIALOG_TAB_INFO), hDlg, tabPageEventProc, (LPARAM)this);
+    hTabPage4 = CreateDialogParam(hIns, MAKEINTRESOURCE(IDD_DIALOG_TAB_EXCLUDE), hDlg, tabPageEventProc, (LPARAM)this);
+    hTabPage5 = CreateDialogParam(hIns, MAKEINTRESOURCE(IDD_DIALOG_TAB_INFO), hDlg, tabPageEventProc, (LPARAM)this);
     RECT rc;//find tab control's rectangle
     GetWindowRect(hTab, &rc);
     POINT offset = { 0 };
@@ -86,6 +92,14 @@ void MainControlDialog::initDialog() {
     SetWindowPos(hTabPage2, 0, rc.left + 1, rc.top + 3, rc.right - rc.left - 5, rc.bottom - rc.top - 6, SWP_HIDEWINDOW);
     SetWindowPos(hTabPage3, 0, rc.left + 1, rc.top + 3, rc.right - rc.left - 5, rc.bottom - rc.top - 6, SWP_HIDEWINDOW);
     SetWindowPos(hTabPage4, 0, rc.left + 1, rc.top + 3, rc.right - rc.left - 5, rc.bottom - rc.top - 6, SWP_HIDEWINDOW);
+    SetWindowPos(hTabPage5, 0, rc.left + 1, rc.top + 3, rc.right - rc.left - 5, rc.bottom - rc.top - 6, SWP_HIDEWINDOW);
+    listExcludedApps = GetDlgItem(hTabPage4, IDC_LIST_EXCLUDED_APPS);
+    createToolTip(listExcludedApps, IDS_STRING_EXCLUDE);
+    buttonAddExcludedApp = GetDlgItem(hTabPage4, IDC_BUTTON_ADD_EXCLUDED_APP);
+    buttonRemoveExcludedApp = GetDlgItem(hTabPage4, IDC_BUTTON_REMOVE_EXCLUDED_APP);
+    excludedApps = AppExclusionList::load();
+    fillExcludedAppList();
+
     onTabIndexChanged();
 
     checkCtrl = GetDlgItem(hDlg, IDC_CHECK_SWITCH_KEY_CTRL);
@@ -230,6 +244,12 @@ INT_PTR MainControlDialog::eventProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
         case IDC_BUTTON_MACRO_TABLE:
             AppDelegate::getInstance()->onMacroTable();
             break;
+        case IDC_BUTTON_ADD_EXCLUDED_APP:
+            onAddExcludedApp();
+            break;
+        case IDC_BUTTON_REMOVE_EXCLUDED_APP:
+            onRemoveExcludedApp();
+            break;
         case IDC_BUTTON_GO_SOURCE_CODE:
             ShellExecute(NULL, _T("open"), _T("https://github.com/viethoavnm/LibreKey"), NULL, NULL, SW_SHOWNORMAL);
             break;
@@ -239,6 +259,10 @@ INT_PTR MainControlDialog::eventProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
             }
             else if (HIWORD(wParam) == BN_CLICKED) {
                 this->onCheckboxClicked((HWND)lParam);
+            }
+            else if (HIWORD(wParam) == LBN_SELCHANGE && (HWND)lParam == listExcludedApps) {
+                EnableWindow(buttonRemoveExcludedApp,
+                    SendMessage(listExcludedApps, LB_GETCURSEL, 0, 0) != LB_ERR);
             }
             else if (HIWORD(wParam) == EN_CHANGE) {
                 _lastKeyCode = OpenKeyManager::_lastKeyCode;
@@ -362,7 +386,7 @@ void MainControlDialog::fillData() {
     //tab info
     wchar_t buffer[256];
     wsprintfW(buffer, _T("Phiên bản %s cho Windows - Ngày cập nhật: %s"), OpenKeyHelper::getVersionString().c_str(), _T(__DATE__));
-    SendDlgItemMessage(hTabPage4, IDC_STATIC_APP_VERSION_INFO, WM_SETTEXT, 0, LPARAM(buffer));
+    SendDlgItemMessage(hTabPage5, IDC_STATIC_APP_VERSION_INFO, WM_SETTEXT, 0, LPARAM(buffer));
 }
 
 void MainControlDialog::setSwitchKey(const unsigned short& code) {
@@ -571,12 +595,65 @@ void MainControlDialog::setSwitchKeyText(const HWND& hWnd, const UINT16& keyCode
     }
 }
 
+void MainControlDialog::fillExcludedAppList() {
+    SendMessage(listExcludedApps, LB_RESETCONTENT, 0, 0);
+    for (size_t i = 0; i < excludedApps.size(); i++) {
+        SendMessage(listExcludedApps, LB_ADDSTRING, 0,
+            (LPARAM)utf8ToWideString(excludedApps[i]).c_str());
+    }
+    //Không có dòng nào được chọn sau khi nạp lại.
+    EnableWindow(buttonRemoveExcludedApp, FALSE);
+}
+
+void MainControlDialog::onAddExcludedApp() {
+    TCHAR path[MAX_PATH] = { 0 };
+    OPENFILENAME ofn = { 0 };
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hDlg;
+    ofn.lpstrFilter = _T("Ứng dụng (*.exe)\0*.exe\0");
+    ofn.lpstrFile = path;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrTitle = _T("Chọn ứng dụng không gõ tiếng Việt");
+    //OFN_NOCHANGEDIR: hộp thoại không được đổi thư mục làm việc của tiến trình.
+    ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
+    if (!GetOpenFileName(&ofn))
+        return;
+
+    string exeName = AppExclusionList::exeNameFromPath(wideStringToUtf8(path));
+    vector<string> updated = AppExclusionList::add(excludedApps, exeName);
+    if (updated.size() == excludedApps.size()) {
+        MessageBox(hDlg, _T("Ứng dụng này đã có trong danh sách."), _T("LibreKey"), MB_OK);
+        return;
+    }
+
+    excludedApps = updated;
+    AppExclusionList::save(excludedApps);
+    ReloadAppExclusionList();
+    fillExcludedAppList();
+}
+
+void MainControlDialog::onRemoveExcludedApp() {
+    int index = (int)SendMessage(listExcludedApps, LB_GETCURSEL, 0, 0);
+    if (index == LB_ERR)
+        return;
+
+    vector<string> updated = AppExclusionList::remove(excludedApps, index);
+    if (updated.size() == excludedApps.size())
+        return;
+
+    excludedApps = updated;
+    AppExclusionList::save(excludedApps);
+    ReloadAppExclusionList();
+    fillExcludedAppList();
+}
+
 void MainControlDialog::onTabIndexChanged() {
     int index = TabCtrl_GetCurSel(hTab);
     ShowWindow(hTabPage1, (index == 0) ? SW_SHOW : SW_HIDE);
     ShowWindow(hTabPage2, (index == 1) ? SW_SHOW : SW_HIDE);
     ShowWindow(hTabPage3, (index == 2) ? SW_SHOW : SW_HIDE);
     ShowWindow(hTabPage4, (index == 3) ? SW_SHOW : SW_HIDE);
+    ShowWindow(hTabPage5, (index == 4) ? SW_SHOW : SW_HIDE);
 }
 
 void MainControlDialog::requestRestartAsAdmin() {
@@ -584,7 +661,7 @@ void MainControlDialog::requestRestartAsAdmin() {
     if (vRunAsAdmin && !IsUserAnAdmin()) {
         int msgboxID = MessageBox(
             hDlg,
-            _T("Bạn cần phải khởi động lại OpenKey để kích hoạt chế độ Admin!\nBạn có muốn khởi động lại OpenKey không?"),
+            _T("Bạn cần phải khởi động lại LibreKey để kích hoạt chế độ Admin!\nBạn có muốn khởi động lại LibreKey không?"),
             _T("LibreKey"),
             MB_ICONEXCLAMATION | MB_YESNO
         );

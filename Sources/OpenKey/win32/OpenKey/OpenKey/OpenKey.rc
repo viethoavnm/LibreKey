@@ -252,6 +252,17 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,259,247,50,14
 END
 
+IDD_DIALOG_TAB_EXCLUDE DIALOGEX 0, 0, 344, 177
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+EXSTYLE WS_EX_TRANSPARENT
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "LibreKey sẽ không gõ tiếng Việt trong những ứng dụng dưới đây.",IDC_STATIC,7,7,300,8
+    LISTBOX         IDC_LIST_EXCLUDED_APPS,7,20,300,120,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Thêm ứng dụng...",IDC_BUTTON_ADD_EXCLUDED_APP,7,145,80,14
+    PUSHBUTTON      "Bỏ khỏi danh sách",IDC_BUTTON_REMOVE_EXCLUDED_APP,91,145,80,14
+END
+
 IDD_DIALOG_TAB_INFO DIALOGEX 0, 0, 287, 119
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 EXSTYLE WS_EX_TRANSPARENT
@@ -344,6 +355,14 @@ BEGIN
         RIGHTMARGIN, 309
         TOPMARGIN, 7
         BOTTOMMARGIN, 261
+    END
+
+    IDD_DIALOG_TAB_EXCLUDE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 337
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 170
     END
 
     IDD_DIALOG_TAB_INFO, DIALOG
@@ -505,6 +524,7 @@ BEGIN
                             "Tự động chuyển qua chữ hoa. VD: định nghĩa ""ko = không"", nếu gõ ""KO"" sẽ thành ""KHÔNG"", gõ ""Ko"" sẽ thành Không"
     IDS_STRING_START_CONSONANT 
                             "Thay thế nhanh các phụ âm đầu như f, j, w bằng ph, gi, qu.Ví dụ: fải→phải, jảng→giảng, wên→quên"
+    IDS_STRING_EXCLUDE      "Chọn những ứng dụng mà LibreKey không gõ tiếng Việt trong đó, ví dụ terminal, trình soạn code hay game. Phím sẽ đi thẳng qua, không bị bộ gõ đụng vào."
     IDS_STRING_END_CONSONANT 
                             "Thay thế nhanh các phụ âm cuối như g, h, k bằng ng, nh, ch.Ví dụ: trươg→trương, nhah→nhanh, bák→bách"
 END

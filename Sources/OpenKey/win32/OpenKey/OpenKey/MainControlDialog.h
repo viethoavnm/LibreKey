@@ -16,7 +16,7 @@ redistribute your new version, it MUST be open source.
 
 class MainControlDialog : public BaseDialog {
 private:
-	HWND hTab, hTabPage1, hTabPage2, hTabPage3, hTabPage4;
+	HWND hTab, hTabPage1, hTabPage2, hTabPage3, hTabPage4, hTabPage5;
 	HWND comboBoxInputType;
 	HWND comboBoxTableCode;
 	HWND checkCtrl, checkAlt, checkWin, checkShift, textSwitchKey, checkBeep;
@@ -26,6 +26,9 @@ private:
 		checkAllowZWJF, checkTempOffSpelling, checkQuickStartConsonant, checkQuickEndConsonant;
 	HWND checkSmartSwitchKey, checkCapsFirstChar, checkQuickTelex, checkUseMacro, checkUseMacroInEnglish;
 	HWND checkCreateDesktopShortcut, checkRunAsAdmin, checkSupportMetroApp, checkMacroAutoCaps;
+	HWND listExcludedApps, buttonAddExcludedApp, buttonRemoveExcludedApp;
+	vector<string> excludedApps;
+
 	HWND checkRememberTableCode, checkTempOffOpenKey, checkAllowOtherLanguages;
 private:
 	void initDialog();
@@ -34,6 +37,10 @@ private:
 	void onCharacter(const HWND& hWnd, const UINT16& keyCode);
 	void setSwitchKeyText(const HWND& hWnd, const UINT16 & keyCode);
 	void onTabIndexChanged();
+
+	void fillExcludedAppList();
+	void onAddExcludedApp();
+	void onRemoveExcludedApp();
 	void requestRestartAsAdmin();
 protected:
 	INT_PTR eventProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
