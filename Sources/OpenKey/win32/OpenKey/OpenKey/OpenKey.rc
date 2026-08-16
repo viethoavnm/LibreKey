@@ -88,25 +88,23 @@ END
 
 IDD_ABOUTBOX DIALOGEX 0, 0, 287, 157
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Giới thiệu OpenKey"
+CAPTION "Giới thiệu LibreKey"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     ICON            IDI_APP_ICON,IDC_STATIC,14,17,20,20
-    LTEXT           "OpenKey",IDC_STATIC_APP_TITLE,45,14,206,33,SS_NOPREFIX
-    LTEXT           "Bộ gõ Tiếng Việt nguồn mở đa nền tảng",IDC_STATIC_APP_SUB_TITLE,45,40,215,12
+    LTEXT           "LibreKey",IDC_STATIC_APP_TITLE,45,14,206,33,SS_NOPREFIX
+    LTEXT           "Bộ gõ Tiếng Việt cho Windows",IDC_STATIC_APP_SUB_TITLE,45,40,215,12
     LTEXT           "Phien ban",IDC_STATIC_APP_VERSION,45,52,227,8
-    CONTROL         "<a>https://github.com/tuyenvm/OpenKey</a>",IDC_SYSLINK_HOME_PAGE,
+    CONTROL         "<a>https://github.com/viethoavnm/LibreKey</a>",IDC_SYSLINK_HOME_PAGE,
                     "SysLink",WS_TABSTOP,105,79,152,10
     LTEXT           "Trang chủ:",IDC_STATIC_APP_SUB_TITLE2,45,79,47,8
-    LTEXT           "Fanpage:",IDC_STATIC_APP_SUB_TITLE4,45,103,47,8
-    CONTROL         "<a>https://www.facebook.com/OpenKeyVN</a>",IDC_SYSLINK_FANPAGE,
-                    "SysLink",WS_TABSTOP,105,104,175,10
-    CTEXT           "Mai Vũ Tuyên © 2019",IDC_STATIC_APP_SUB_TITLE5,80,142,130,8
+    LTEXT           "LibreKey là bản fork của OpenKey (Mai Vũ Tuyên), phát hành theo giấy phép GPL v3. Engine tiếng Việt giữ nguyên từ OpenKey.",IDC_STATIC_APP_SUB_TITLE4,45,95,227,26
+    CTEXT           "viethoavnm © 2026",IDC_STATIC_APP_SUB_TITLE5,80,142,130,8
 END
 
 IDD_DIALOG_MAIN DIALOGEX 0, 0, 297, 261
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "OpenKey 1.4 - Bộ gõ Tiếng Việt"
+CAPTION "LibreKey 1.0.0 - Bộ gõ Tiếng Việt"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     PUSHBUTTON      "Cài đặt gốc",ID_BTN_DEFAULT,113,234,71,20
@@ -126,13 +124,13 @@ BEGIN
     CONTROL         "Tiếng Việt",IDC_RADIO_METHOD_VIETNAMESE,"Button",BS_AUTORADIOBUTTON,64,59,47,10
     CONTROL         "Tiếng Anh",IDC_RADIO_METHOD_ENGLISH,"Button",BS_AUTORADIOBUTTON,158,59,48,10
     DEFPUSHBUTTON   "Đóng",IDBUTTON_OK,200,234,71,20
-    PUSHBUTTON      "Tắt OpenKey",IDBUTTON_EXIT,26,234,71,20
+    PUSHBUTTON      "Tắt LibreKey",IDBUTTON_EXIT,26,234,71,20
     CONTROL         "",IDC_TAB_CONTROL,"SysTabControl32",TCS_FIXEDWIDTH,7,89,283,140
 END
 
 IDD_DIALOG_MACRO DIALOGEX 0, 0, 415, 253
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Thiết lập gõ tắt - OpenKey"
+CAPTION "Thiết lập gõ tắt - LibreKey"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     CONTROL         "",IDC_LIST_MACRO_DATA,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | WS_BORDER | WS_TABSTOP,7,41,401,186
@@ -150,7 +148,7 @@ END
 
 IDD_DIALOG_CONVERT_TOOL DIALOGEX 0, 0, 283, 194
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Công cụ chuyển mã - OpenKey"
+CAPTION "Công cụ chuyển mã - LibreKey"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "Đóng",IDOK,156,169,71,18
@@ -203,7 +201,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,88,130,10
     CONTROL         "Cho phép gõ trong các ngôn ngữ khác",IDC_CHECK_OTHER_LANGUAGES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,106,204,10
-    CONTROL         "Tạm tắt OpenKey bằng phím Alt",IDC_CHECK_TEMP_OFF_OPEN_KEY,
+    CONTROL         "Tạm tắt LibreKey bằng phím Alt",IDC_CHECK_TEMP_OFF_OPEN_KEY,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,88,123,10
 END
 
@@ -262,17 +260,17 @@ EXSTYLE WS_EX_TRANSPARENT
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     ICON            IDI_APP_ICON,IDC_STATIC,10,13,20,20
-    LTEXT           "OpenKey - Bộ gõ Tiếng Việt nguồn mở đa nền tảng",IDC_STATIC_APP_TITLE,39,9,206,8,SS_NOPREFIX
+    LTEXT           "LibreKey - Bộ gõ Tiếng Việt cho Windows",IDC_STATIC_APP_TITLE,39,9,206,8,SS_NOPREFIX
     LTEXT           "Trang chủ",IDC_STATIC_APP_TITLE2,39,19,37,8,SS_NOPREFIX
-    CONTROL         "<a>https://open-key.org</a>",IDC_SYSLINK_HOME_PAGE,
+    CONTROL         "<a>https://github.com/viethoavnm/LibreKey</a>",IDC_SYSLINK_HOME_PAGE,
                     "SysLink",WS_TABSTOP,81,19,101,10
-    LTEXT           "Facebook",IDC_STATIC_APP_TITLE3,39,29,37,8,SS_NOPREFIX
-    CONTROL         "<a>https://www.facebook.com/OpenKeyVN</a>",IDC_SYSLINK_FANPAGE,
+    LTEXT           "Bản gốc",IDC_STATIC_APP_TITLE3,39,29,37,8,SS_NOPREFIX
+    CONTROL         "<a>https://github.com/tuyenvm/OpenKey</a>",IDC_SYSLINK_FANPAGE,
                     "SysLink",WS_TABSTOP,81,29,184,10
-    LTEXT           "OpenKey cho Windows là phần mềm mã nguồn mở và được phát hành miễn phí. Bạn hoàn toàn có thể đóng góp ý kiến, yêu cầu tính năng mới qua email của tác giả hoặc trên github.",IDC_STATIC_APP_SUB_TITLE5,39,61,234,28
-    LTEXT           "Mai Vũ Tuyên © 2019 - ",IDC_STATIC_APP_SUB_TITLE6,39,94,78,8
-    CONTROL         "<a>maivutuyen.91@gmail.com</a>",IDC_SYSLINK_AUTHOR_EMAIL,
-                    "SysLink",WS_TABSTOP,117,94,101,10
+    LTEXT           "LibreKey là bản fork của OpenKey (Mai Vũ Tuyên), phát hành theo giấy phép GPL v3. Engine tiếng Việt giữ nguyên từ OpenKey; bản fork đổi thương hiệu và gỡ kênh cập nhật tự động.",IDC_STATIC_APP_SUB_TITLE5,39,61,234,28
+    LTEXT           "viethoavnm © 2026 - ",IDC_STATIC_APP_SUB_TITLE6,39,94,72,8
+    CONTROL         "<a>viethoavnm@gmail.com</a>",IDC_SYSLINK_AUTHOR_EMAIL,
+                    "SysLink",WS_TABSTOP,111,94,107,10
     LTEXT           "Phien ban",IDC_STATIC_APP_VERSION_INFO,39,50,227,8
     PUSHBUTTON      "Mã nguồn...",IDC_BUTTON_GO_SOURCE_CODE,226,91,50,14
 END
@@ -398,8 +396,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,0,5,0
- PRODUCTVERSION 2,0,5,0
+ FILEVERSION 1,0,0,0
+ PRODUCTVERSION 1,0,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -414,14 +412,14 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName", "The OpenKey Project"
-            VALUE "FileDescription", "OpenKey - Bộ gõ Tiếng Việt nguồn mở"
-            VALUE "FileVersion", "2.0.5.0"
-            VALUE "InternalName", "OpenKey.exe"
-            VALUE "LegalCopyright", "Copyright (C) 2019 - Mai Vũ Tuyên"
-            VALUE "OriginalFilename", "OpenKey.exe"
-            VALUE "ProductName", "OpenKey"
-            VALUE "ProductVersion", "2.0.5.0"
+            VALUE "CompanyName", "viethoavnm"
+            VALUE "FileDescription", "LibreKey - Bộ gõ Tiếng Việt cho Windows"
+            VALUE "FileVersion", "1.0.0.0"
+            VALUE "InternalName", "LibreKey.exe"
+            VALUE "LegalCopyright", "Copyright (C) 2026 viethoavnm. Fork của OpenKey (C) 2019 Mai Vũ Tuyên. GPL v3."
+            VALUE "OriginalFilename", "LibreKey.exe"
+            VALUE "ProductName", "LibreKey"
+            VALUE "ProductVersion", "1.0.0.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -438,12 +436,12 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_APP_TITLE           "OpenKey"
+    IDS_APP_TITLE           "LibreKey"
     IDS_TRAY_TITLE          "Bấm vào đây để bật gõ Tiếng Việt"
     IDS_TRAY_TITLE_2        "Bấm vào đây để tắt gõ Tiếng Việt"
     IDS_STRING_CONVERT_COMPLETED 
                             "Chuyển mã thành công!\nKết quả đã được lưu trong Clipboard!"
-    IDS_MAIN_DIALOG_TITLE   "OpenKey %s - Bộ gõ Tiếng Việt"
+    IDS_MAIN_DIALOG_TITLE   "LibreKey %s - Bộ gõ Tiếng Việt"
     IDS_STRING_MODERN_ORTHORGRAPHY "Bor d"
     IDC_OPENKEY             "OPENKEY"
     IDS_STRING_MORDEN_ORTHORGRAPHY 
@@ -466,18 +464,18 @@ BEGIN
     IDS_STRING_CAPS_FIRST_CHAR 
                             "Tự động viết hoa sau dấu chấm ngắt câu và sau khi xuống dòng"
     IDS_STRING_SMART_SWITCH_KEY 
-                            "Bạn đang sử dụng Chrome và dùng chế độ gõ Tiếng Việt, bạn chuyển qua Command Prompt và chuyển chế độ gõ qua Tiếng Anh, OpenKey sẽ tự ghi nhớ thao tác cho bạn, khi bạn chuyển về lại Chrome, OpenKey sẽ tự chuyển sang chế độ Tiếng Việt, sau đó nếu lại quay lại Command Prompt, OpenKey cũng sẽ tự đổi qua chế độ Tiếng Anh"
+                            "Bạn đang sử dụng Chrome và dùng chế độ gõ Tiếng Việt, bạn chuyển qua Command Prompt và chuyển chế độ gõ qua Tiếng Anh, LibreKey sẽ tự ghi nhớ thao tác cho bạn, khi bạn chuyển về lại Chrome, LibreKey sẽ tự chuyển sang chế độ Tiếng Việt, sau đó nếu lại quay lại Command Prompt, LibreKey cũng sẽ tự đổi qua chế độ Tiếng Anh"
     IDS_STRING_SUPPORT_METRO 
                             "Hỗ trợ các ứng dụng Metro như Facebook Messenger, Instargram,..."
-    IDS_STRING_RUN_ON_STARTUP "Tự chạy OpenKey khi khởi động Windows"
-    IDS_STRING_SHOW_ON_STARTUP "Hiện bảng điều khiển mỗi lần chạy OpenKey"
+    IDS_STRING_RUN_ON_STARTUP "Tự chạy LibreKey khi khởi động Windows"
+    IDS_STRING_SHOW_ON_STARTUP "Hiện bảng điều khiển mỗi lần chạy LibreKey"
     IDS_STRING_CREATE_DESKTOP 
-                            "Tạo biểu tượng OpenKey ở Desktop để có thể tìm thấy nhanh khi cần thiết"
-    IDS_STRING_RUN_AS_ADMIN "Khởi động lại OpenKey với quyền Admin để có thể gõ được tiếng Việt trong game, bạn sẽ được yêu cầu khởi động lại chương trình OpenKey"
+                            "Tạo biểu tượng LibreKey ở Desktop để có thể tìm thấy nhanh khi cần thiết"
+    IDS_STRING_RUN_AS_ADMIN "Khởi động lại LibreKey với quyền Admin để có thể gõ được tiếng Việt trong game, bạn sẽ được yêu cầu khởi động lại chương trình LibreKey"
     IDS_STRING_REMEMBER_TABLE_CODE 
-                            "OpenKey sẽ tự động ghi nhớ bạn đã dùng bảng mã nào cho ứng dụng nào, để lần sau khi chuyển qua ứng dụng đó, OpenKey sẽ tự động chuyển sang bảng mã đó cho bạn. Rất thích hợp cho các ứng dụng kỹ thuật như Photoshop, CAD,..."
+                            "LibreKey sẽ tự động ghi nhớ bạn đã dùng bảng mã nào cho ứng dụng nào, để lần sau khi chuyển qua ứng dụng đó, LibreKey sẽ tự động chuyển sang bảng mã đó cho bạn. Rất thích hợp cho các ứng dụng kỹ thuật như Photoshop, CAD,..."
     IDS_STRING_TEMP_OFF_OPENKEY 
-                            "Bằng cách bấm phím Alt, OpenKey sẽ tạm ngừng hoạt động cho tới khi bạn gõ 1 từ mới."
+                            "Bằng cách bấm phím Alt, LibreKey sẽ tạm ngừng hoạt động cho tới khi bạn gõ 1 từ mới."
 END
 
 STRINGTABLE

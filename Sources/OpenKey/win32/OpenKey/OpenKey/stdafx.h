@@ -55,7 +55,7 @@ extern wchar_t _logBuffer[1024];
 #define APP_SET_DATA(KEY, VAL) KEY = VAL; OpenKeyHelper::setRegInt(_T(#KEY), KEY)
 #define APP_GET_DATA(KEY, DEFAULT_VAL) KEY = OpenKeyHelper::getRegInt(_T(#KEY), DEFAULT_VAL)
 
-#define APP_CLASS _T("OpenKeyVietnameseInputMethod")
+#define APP_CLASS _T("LibreKeyVietnameseInputMethod")
 
 extern void saveSmartSwitchKeyData();
 
