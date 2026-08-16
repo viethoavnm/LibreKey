@@ -7,9 +7,11 @@
 //
 
 #import "ViewController.h"
+#import "LibreKeyBranding.h"
 #import "OpenKeyManager.h"
 #import "AppDelegate.h"
 #import "MyTextField.h"
+#import "OKAppExclusionTableController.h"
 
 extern AppDelegate* appDelegate;
 extern void OnSpellCheckingChanged(void);
@@ -36,8 +38,10 @@ extern int vOtherLanguage;
 extern int vTempOffOpenKey;
 extern int vShowIconOnDock;
 extern int vAutoCapsMacro;
-extern int vFixChromiumBrowser;
 extern int vPerformLayoutCompat;
+
+@interface ViewController () <NSOpenSavePanelDelegate>
+@end
 
 @implementation ViewController {
     __weak IBOutlet NSButton *CustomSwitchCommand;
@@ -48,7 +52,7 @@ extern int vPerformLayoutCompat;
     __weak IBOutlet NSButton *CustomBeepSound;
     NSArray* tabviews, *tabbuttons;
     NSRect tabViewRect;
-    NSView* tabButtonBackground;
+    OKAppExclusionTableController* excludedAppTableController;
 }
 
 - (void)viewDidLoad {
@@ -65,25 +69,22 @@ extern int vPerformLayoutCompat;
     self.viewParent.frame = parentRect;
     
     //set correct tabgroup
-    tabviews = [NSArray arrayWithObjects:self.tabviewPrimary, self.tabviewMacro, self.tabviewSystem, self.tabviewInfo, nil];
-    tabbuttons = [NSArray arrayWithObjects:self.tabbuttonPrimary, self.tabbuttonMacro, self.tabbuttonSystem, self.tabbuttonInfo, nil];
-    NSButton* firstTabButton = [tabbuttons objectAtIndex:0];
-    NSRect tabButtonBackgroundRect = firstTabButton.frame;
-    for (NSButton* button in tabbuttons) {
-        tabButtonBackgroundRect = NSUnionRect(tabButtonBackgroundRect, button.frame);
-    }
-    tabButtonBackgroundRect = NSInsetRect(tabButtonBackgroundRect, -2, -2);
-    tabButtonBackground = [[NSView alloc] initWithFrame:tabButtonBackgroundRect];
-    [tabButtonBackground setWantsLayer:YES];
-    tabButtonBackground.layer.backgroundColor = [[NSColor windowBackgroundColor] CGColor];
-    [self.view addSubview:tabButtonBackground];
+    tabviews = [NSArray arrayWithObjects:self.tabviewPrimary, self.tabviewMacro, self.tabviewSystem, self.tabviewExclude, self.tabviewInfo, nil];
+    tabbuttons = [NSArray arrayWithObjects:self.tabbuttonPrimary, self.tabbuttonMacro, self.tabbuttonSystem, self.tabbuttonExclude, self.tabbuttonInfo, nil];
     tabViewRect = self.tabviewPrimary.frame;
     for (NSBox* b in tabviews) {
         b.frame = tabViewRect;
     }
     
     [self showTab:0];
-    
+
+    excludedAppTableController = [[OKAppExclusionTableController alloc] initWithDefaults:[NSUserDefaults standardUserDefaults]];
+    excludedAppTableController.tableView = self.excludedAppTable;
+    excludedAppTableController.removeButton = self.removeExcludedAppButton;
+    self.excludedAppTable.dataSource = excludedAppTableController;
+    self.excludedAppTable.delegate = excludedAppTableController;
+    [excludedAppTableController reload];
+
     NSArray* inputTypeData = [[NSArray alloc] initWithObjects:@"Telex", @"VNI", @"Simple Telex 1", @"Simple Telex 2", nil];
     NSArray* codeData = [OpenKeyManager getTableCodes];
     
@@ -107,7 +108,7 @@ extern int vPerformLayoutCompat;
 
 - (void)viewDidAppear {
     [super viewDidAppear];
-    NSString* str = @"OpenKey %@ - Bộ gõ Tiếng Việt";
+    NSString* str = @"LibreKey %@ - Bộ gõ Tiếng Việt";
     self.view.window.title = [NSString stringWithFormat:str, [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleShortVersionString"]];
 }
 
@@ -149,7 +150,6 @@ extern int vPerformLayoutCompat;
     NSButton* button = [tabbuttons objectAtIndex:index];
     [button setState:NSControlStateValueOn];
 
-    [self.view addSubview:tabButtonBackground positioned:NSWindowAbove relativeTo:b];
     for (NSButton* tabButton in tabbuttons) {
         [self.view addSubview:tabButton positioned:NSWindowAbove relativeTo:nil];
     }
@@ -235,7 +235,6 @@ extern int vPerformLayoutCompat;
 - (IBAction)onFixRecommendBrowser:(id)sender {
     NSInteger val = [self setCustomValue:sender keyToSet:@"FixRecommendBrowser"];
     vFixRecommendBrowser = (int)val;
-    [self.FixChromiumBrowser setEnabled:val];
 }
 
 - (IBAction)onControlSwitchKey:(NSButton *)sender {
@@ -366,14 +365,56 @@ extern int vPerformLayoutCompat;
     [appDelegate showIconOnDock:vShowIconOnDock];
 }
 
-- (IBAction)onCheckNewVersionOnStartup:(NSButton *)sender {
-    NSInteger val = sender.state == NSControlStateValueOn ? 0 : 1;
-    [[NSUserDefaults standardUserDefaults] setInteger:val forKey:@"DontCheckUpdate"];
+- (IBAction)onAddExcludedApp:(id)sender {
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    panel.title = @"Chọn ứng dụng không gõ tiếng Việt";
+    panel.prompt = @"Loại trừ";
+    panel.canChooseFiles = YES;
+    panel.canChooseDirectories = NO;
+    panel.allowsMultipleSelection = YES;
+    panel.treatsFilePackagesAsDirectories = NO;
+    panel.directoryURL = [NSURL fileURLWithPath:@"/Applications"];
+    //Not allowedContentTypes: that would pull in UniformTypeIdentifiers, which
+    //postdates this app's 10.13 deployment target. Anything that slips through
+    //is caught by addApplicationAtURL: below anyway.
+    panel.delegate = self;
+
+    if ([panel runModal] != NSModalResponseOK)
+        return;
+
+    //Adding several at once: report only the ones that did not take, so
+    //picking a folderful of apps does not turn into a stack of alerts.
+    NSMutableArray<NSString*>* rejected = [NSMutableArray array];
+    for (NSURL* url in panel.URLs) {
+        if (![excludedAppTableController addApplicationAtURL:url])
+            [rejected addObject:[[NSFileManager defaultManager] displayNameAtPath:url.path]];
+    }
+
+    if (rejected.count > 0) {
+        NSAlert* alert = [[NSAlert alloc] init];
+        alert.messageText = @"Không thêm được ứng dụng";
+        alert.informativeText = [NSString stringWithFormat:@"%@ đã có trong danh sách, hoặc không phải là ứng dụng.",
+                                 [rejected componentsJoinedByString:@", "]];
+        [alert beginSheetModalForWindow:self.view.window completionHandler:nil];
+    }
 }
 
-- (IBAction)onFixChromiumBrowser:(NSButton *)sender {
-    NSInteger val = [self setCustomValue:sender keyToSet:@"vFixChromiumBrowser"];
-    vFixChromiumBrowser = (int)val;
+- (IBAction)onRemoveExcludedApp:(id)sender {
+    [excludedAppTableController removeEntriesAtIndexes:self.excludedAppTable.selectedRowIndexes];
+}
+
+//Applications are selectable, plain folders stay navigable, everything else is
+//greyed out.
+- (BOOL)panel:(id)sender shouldEnableURL:(NSURL*)url {
+    NSNumber* isDirectory = nil;
+    NSNumber* isPackage = nil;
+    [url getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:NULL];
+    [url getResourceValue:&isPackage forKey:NSURLIsPackageKey error:NULL];
+
+    if (isDirectory.boolValue && !isPackage.boolValue)
+        return YES;
+
+    return [url.pathExtension.lowercaseString isEqualToString:@"app"];
 }
 
 - (IBAction)onTerminateApp:(id)sender {
@@ -469,13 +510,6 @@ extern int vPerformLayoutCompat;
     value = [[NSUserDefaults standardUserDefaults] integerForKey:@"vShowIconOnDock"];
     self.ShowIconOnDock.state = value ? NSControlStateValueOn : NSControlStateValueOff;
     
-    value = [[NSUserDefaults standardUserDefaults] integerForKey:@"DontCheckUpdate"];
-    self.CheckNewVersionOnStartup.state = value ? NSControlStateValueOff :NSControlStateValueOn;
-    
-    value = [[NSUserDefaults standardUserDefaults] integerForKey:@"vFixChromiumBrowser"];
-    self.FixChromiumBrowser.state = value ? NSControlStateValueOn : NSControlStateValueOff;
-    self.FixChromiumBrowser.enabled = fixRecommendBrowser ? YES : NO;
-    
     value = [[NSUserDefaults standardUserDefaults] integerForKey:@"vPerformLayoutCompat"];
     self.PerformLayoutCompat.state = value ? NSControlStateValueOn : NSControlStateValueOff;
     
@@ -506,32 +540,6 @@ extern int vPerformLayoutCompat;
             [[NSUserDefaults standardUserDefaults] setInteger:1 forKey:@"RunOnStartup"];
             self.RunOnStartupButton.state = NSControlStateValueOn;
         }
-    }];
-}
-
-- (IBAction)onHomePageLink:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL: [NSURL URLWithString:@"https://open-key.org"]];
-}
-
-- (IBAction)onFanpageLink:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL: [NSURL URLWithString:@"https://www.facebook.com/OpenKeyVN"]];
-}
-
-- (IBAction)onEmailLink:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL: [NSURL URLWithString:@"mailto:maivutuyen.91@gmail.com"]];
-}
-
-- (IBAction)onSourceCode:(id)sender {
-  [[NSWorkspace sharedWorkspace] openURL: [NSURL URLWithString:@"https://github.com/tuyenvm/OpenKey"]];
-}
-
-- (IBAction)onCheckNewVersionButton:(id)sender {
-    self.CheckNewVersionButton.title = @"Đang kiểm tra...";
-    self.CheckNewVersionButton.enabled = false;
-    
-    [OpenKeyManager checkNewVersion:self.view.window callbackFunc:^{
-        self.CheckNewVersionButton.enabled = true;
-        self.CheckNewVersionButton.title = @"Kiểm tra bản mới...";
     }];
 }
 

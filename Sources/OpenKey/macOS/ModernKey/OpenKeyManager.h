@@ -11,12 +11,18 @@
 
 #import <Cocoa/Cocoa.h>
 
-typedef void (^CheckNewVersionCallback)(void);
-
 @interface OpenKeyManager : NSObject
 +(BOOL)isInited;
 +(BOOL)initEventTap;
 +(BOOL)stopEventTap;
+
+/// YES while the tap exists and is actually delivering events. macOS disables a
+/// tap behind our back on timeout and around Fast User Switching, and a disabled
+/// tap looks identical to a working one from -isInited alone.
++(BOOL)isEventTapEnabled;
+
+/// Re-arms a tap the system disabled. Safe to call from the event tap callback.
++(BOOL)reEnableEventTap;
 
 +(NSArray*)getTableCodes;
 
@@ -25,7 +31,8 @@ typedef void (^CheckNewVersionCallback)(void);
 
 +(BOOL)quickConvert;
 
-+(void)checkNewVersion:(NSWindow*)parent callbackFunc:(CheckNewVersionCallback) callback;
+/// `~/Library/Application Support/LibreKey` for the current mac user.
++(NSString*)getApplicationSupportFolder;
 @end
 
 #endif /* OpenKeyManager_h */

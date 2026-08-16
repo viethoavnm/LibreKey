@@ -44,7 +44,32 @@
 		23E2E4A02314FD3A006CCC3E /* Vietnamese.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23E2E49B2314FD3A006CCC3E /* Vietnamese.cpp */; };
 		23F512852336386200397988 /* MJAccessibilityUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 23F512832336386200397988 /* MJAccessibilityUtils.m */; };
 		A534F32629D8B78100296F25 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 23874B0F220160A500000BC8 /* Carbon.framework */; };
+		AA0200000000000000000001 /* OKSingleInstanceLockTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000011 /* OKSingleInstanceLockTests.m */; };
+		AA0200000000000000000002 /* OKSingleInstanceLock.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000012 /* OKSingleInstanceLock.m */; };
+		AA0200000000000000000003 /* OKAppExclusionListTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000012 /* OKAppExclusionListTests.m */; };
+		AA0200000000000000000004 /* OKAppExclusionList.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000015 /* OKAppExclusionList.m */; };
+		AA0200000000000000000005 /* OKAppExclusionTableControllerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000013 /* OKAppExclusionTableControllerTests.m */; };
+		AA0200000000000000000006 /* OKAppExclusionTableController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000017 /* OKAppExclusionTableController.m */; };
+		AA0100000000000000000007 /* OKSingleInstanceLock.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000012 /* OKSingleInstanceLock.m */; };
+		AA0100000000000000000008 /* OKAppExclusionList.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000015 /* OKAppExclusionList.m */; };
+		AA0100000000000000000009 /* OKAppExclusionTableController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000017 /* OKAppExclusionTableController.m */; };
+		AA0100000000000000000001 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 237559B52204156000FB8CB9 /* AppDelegate.m */; };
+		AA0100000000000000000002 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 237559BD2204156000FB8CB9 /* main.m */; };
+		AA0100000000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 237559B72204156000FB8CB9 /* Assets.xcassets */; };
+		AA0100000000000000000004 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 237559B92204156000FB8CB9 /* MainMenu.xib */; };
+		AA0100000000000000000005 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 238519FB21F1BF4900E79A41 /* Cocoa.framework */; };
+		AA0100000000000000000006 /* LibreKeyHelper.app in CopyFiles */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000010 /* LibreKeyHelper.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AA0100000000000000000040 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 232EDA4C21F1B33E0085D362 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 237559B12204156000FB8CB9;
+			remoteInfo = LibreKeyHelper;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		237559C4220417DD00FB8CB9 /* CopyFiles */ = {
@@ -53,6 +78,7 @@
 			dstPath = Contents/Library/LoginItems;
 			dstSubfolderSpec = 1;
 			files = (
+				AA0100000000000000000006 /* LibreKeyHelper.app in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,7 +91,7 @@
 		232DB1E121FAED280049A0B5 /* Status.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Status.png; sourceTree = "<group>"; };
 		232DB1E221FAED280049A0B5 /* Status@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Status@2x.png"; sourceTree = "<group>"; };
 		232DB1E321FAED280049A0B5 /* StatusHighlighted@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "StatusHighlighted@2x.png"; sourceTree = "<group>"; };
-		232EDA5421F1B33E0085D362 /* OpenKey.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenKey.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		232EDA5421F1B33E0085D362 /* LibreKey.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LibreKey.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		232EDA5721F1B33E0085D362 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		232EDA5821F1B33E0085D362 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		232EDA5A21F1B33E0085D362 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
@@ -75,11 +101,9 @@
 		232EDA6221F1B33F0085D362 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		232EDA6321F1B33F0085D362 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		232EDA6521F1B33F0085D362 /* ModernKey.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ModernKey.entitlements; sourceTree = "<group>"; };
-		23310EA12314F31400226CA5 /* Icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Icon.icns; sourceTree = "<group>"; };
 		233C4A6D231F923D00DD7052 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		233C4A6F231F937900DD7052 /* ConvertTool.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ConvertTool.cpp; sourceTree = "<group>"; };
 		233C4A71231F938800DD7052 /* ConvertTool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ConvertTool.h; sourceTree = "<group>"; };
-		233D800222F7D1F000E02DC6 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		2344220522F42F70009E47D4 /* OpenKey.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenKey.entitlements; sourceTree = "<group>"; };
 		2345899822F720D7003E0923 /* MacroViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MacroViewController.h; sourceTree = "<group>"; };
 		2345899922F720D7003E0923 /* MacroViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MacroViewController.mm; sourceTree = "<group>"; };
@@ -113,13 +137,6 @@
 		238AF96822042E2500AEFA17 /* ThumbUp@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ThumbUp@2x.png"; sourceTree = "<group>"; };
 		238AF97022042EC600AEFA17 /* Icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Icon.icns; sourceTree = "<group>"; };
 		23963B4F22040C720097189E /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
-		2397059323143266002DDEA7 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
-		2397059423143266002DDEA7 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		2397059623143267002DDEA7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		2397059923143267002DDEA7 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
-		2397059B23143267002DDEA7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		2397059C23143267002DDEA7 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		2397059E23143267002DDEA7 /* OpenKeyUpdate.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenKeyUpdate.entitlements; sourceTree = "<group>"; };
 		23A984BE220ED07E000914A2 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		23CA6D1522F0439100804D6E /* MyTextField.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MyTextField.h; sourceTree = "<group>"; };
 		23CA6D1622F0439100804D6E /* MyTextField.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MyTextField.m; sourceTree = "<group>"; };
@@ -134,6 +151,18 @@
 		23E2E49C2314FD3A006CCC3E /* SmartSwitchKey.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SmartSwitchKey.h; sourceTree = "<group>"; };
 		23F512832336386200397988 /* MJAccessibilityUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MJAccessibilityUtils.m; sourceTree = "<group>"; };
 		23F512842336386200397988 /* MJAccessibilityUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MJAccessibilityUtils.h; sourceTree = "<group>"; };
+		AA0200000000000000000010 /* LibreKeyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LibreKeyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA0200000000000000000011 /* OKSingleInstanceLockTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKSingleInstanceLockTests.m; sourceTree = "<group>"; };
+		AA0200000000000000000012 /* OKAppExclusionListTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKAppExclusionListTests.m; sourceTree = "<group>"; };
+		AA0200000000000000000013 /* OKAppExclusionTableControllerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKAppExclusionTableControllerTests.m; sourceTree = "<group>"; };
+		AA0100000000000000000013 /* LibreKeyBranding.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LibreKeyBranding.h; sourceTree = "<group>"; };
+		AA0100000000000000000011 /* OKSingleInstanceLock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKSingleInstanceLock.h; sourceTree = "<group>"; };
+		AA0100000000000000000012 /* OKSingleInstanceLock.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKSingleInstanceLock.m; sourceTree = "<group>"; };
+		AA0100000000000000000014 /* OKAppExclusionList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKAppExclusionList.h; sourceTree = "<group>"; };
+		AA0100000000000000000015 /* OKAppExclusionList.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKAppExclusionList.m; sourceTree = "<group>"; };
+		AA0100000000000000000016 /* OKAppExclusionTableController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKAppExclusionTableController.h; sourceTree = "<group>"; };
+		AA0100000000000000000017 /* OKAppExclusionTableController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKAppExclusionTableController.m; sourceTree = "<group>"; };
+		AA0100000000000000000010 /* LibreKeyHelper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LibreKeyHelper.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -148,6 +177,14 @@
 				23851A0021F1BFA300E79A41 /* Cocoa.framework in Frameworks */,
 				238519FF21F1BF8A00E79A41 /* EventKit.framework in Frameworks */,
 				238519F821F1BF3C00E79A41 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0100000000000000000021 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA0100000000000000000005 /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -180,8 +217,7 @@
 				23E2E4932314FD3A006CCC3E /* engine */,
 				2344220522F42F70009E47D4 /* OpenKey.entitlements */,
 				232EDA5621F1B33E0085D362 /* ModernKey */,
-				233D800122F7D1F000E02DC6 /* OpenKeyTest */,
-				2397059223143266002DDEA7 /* OpenKeyUpdate */,
+				AA0200000000000000000020 /* OpenKeyTests */,
 				232EDA5521F1B33E0085D362 /* Products */,
 				237559B32204156000FB8CB9 /* OpenKeyHelper */,
 				238519F121F1B8E200E79A41 /* Frameworks */,
@@ -192,6 +228,8 @@
 			isa = PBXGroup;
 			children = (
 				232EDA5421F1B33E0085D362 /* OpenKey.app */,
+				AA0100000000000000000010 /* LibreKeyHelper.app */,
+				AA0200000000000000000010 /* OpenKeyTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -222,24 +260,25 @@
 				23136D90231FBD49000764E6 /* ConvertToolViewController.h */,
 				23136D91231FBD49000764E6 /* ConvertToolViewController.mm */,
 				2371AAEE22FA85B200CA1B57 /* OpenKey.mm */,
+				AA0100000000000000000013 /* LibreKeyBranding.h */,
+				AA0100000000000000000011 /* OKSingleInstanceLock.h */,
+				AA0100000000000000000012 /* OKSingleInstanceLock.m */,
+				AA0100000000000000000014 /* OKAppExclusionList.h */,
+				AA0100000000000000000015 /* OKAppExclusionList.m */,
+				AA0100000000000000000016 /* OKAppExclusionTableController.h */,
+				AA0100000000000000000017 /* OKAppExclusionTableController.m */,
 			);
 			path = ModernKey;
 			sourceTree = "<group>";
 		};
-		23310EA02314F31400226CA5 /* Resources */ = {
+		AA0200000000000000000020 /* OpenKeyTests */ = {
 			isa = PBXGroup;
 			children = (
-				23310EA12314F31400226CA5 /* Icon.icns */,
+				AA0200000000000000000011 /* OKSingleInstanceLockTests.m */,
+				AA0200000000000000000012 /* OKAppExclusionListTests.m */,
+				AA0200000000000000000013 /* OKAppExclusionTableControllerTests.m */,
 			);
-			path = Resources;
-			sourceTree = "<group>";
-		};
-		233D800122F7D1F000E02DC6 /* OpenKeyTest */ = {
-			isa = PBXGroup;
-			children = (
-				233D800222F7D1F000E02DC6 /* main.mm */,
-			);
-			path = OpenKeyTest;
+			path = OpenKeyTests;
 			sourceTree = "<group>";
 		};
 		237559B32204156000FB8CB9 /* OpenKeyHelper */ = {
@@ -281,21 +320,6 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		2397059223143266002DDEA7 /* OpenKeyUpdate */ = {
-			isa = PBXGroup;
-			children = (
-				23310EA02314F31400226CA5 /* Resources */,
-				2397059323143266002DDEA7 /* AppDelegate.h */,
-				2397059423143266002DDEA7 /* AppDelegate.m */,
-				2397059623143267002DDEA7 /* Assets.xcassets */,
-				2397059823143267002DDEA7 /* MainMenu.xib */,
-				2397059B23143267002DDEA7 /* Info.plist */,
-				2397059C23143267002DDEA7 /* main.m */,
-				2397059E23143267002DDEA7 /* OpenKeyUpdate.entitlements */,
-			);
-			path = OpenKeyUpdate;
-			sourceTree = "<group>";
-		};
 		23E2E4932314FD3A006CCC3E /* engine */ = {
 			isa = PBXGroup;
 			children = (
@@ -321,7 +345,7 @@
 /* Begin PBXNativeTarget section */
 		232EDA5321F1B33E0085D362 /* OpenKey */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 232EDA6821F1B33F0085D362 /* Build configuration list for PBXNativeTarget "OpenKey" */;
+			buildConfigurationList = 232EDA6821F1B33F0085D362 /* Build configuration list for PBXNativeTarget "LibreKey" */;
 			buildPhases = (
 				232EDA5021F1B33E0085D362 /* Sources */,
 				232EDA5121F1B33E0085D362 /* Frameworks */,
@@ -331,11 +355,44 @@
 			buildRules = (
 			);
 			dependencies = (
+				AA0100000000000000000041 /* PBXTargetDependency */,
 			);
-			name = OpenKey;
-			productName = ModernKey;
+			name = LibreKey;
+			productName = LibreKey;
 			productReference = 232EDA5421F1B33E0085D362 /* OpenKey.app */;
 			productType = "com.apple.product-type.application";
+		};
+		237559B12204156000FB8CB9 /* OpenKeyHelper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA0100000000000000000052 /* Build configuration list for PBXNativeTarget "LibreKeyHelper" */;
+			buildPhases = (
+				AA0100000000000000000020 /* Sources */,
+				AA0100000000000000000021 /* Frameworks */,
+				AA0100000000000000000022 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LibreKeyHelper;
+			productName = LibreKeyHelper;
+			productReference = AA0100000000000000000010 /* LibreKeyHelper.app */;
+			productType = "com.apple.product-type.application";
+		};
+		AA0200000000000000000030 /* OpenKeyTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA0200000000000000000052 /* Build configuration list for PBXNativeTarget "LibreKeyTests" */;
+			buildPhases = (
+				AA0200000000000000000021 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LibreKeyTests;
+			productName = LibreKeyTests;
+			productReference = AA0200000000000000000010 /* OpenKeyTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -347,6 +404,14 @@
 				ORGANIZATIONNAME = "Tuyen Mai";
 				TargetAttributes = {
 					232EDA5321F1B33E0085D362 = {
+						CreatedOnToolsVersion = 10.1;
+						SystemCapabilities = {
+							com.apple.Sandbox = {
+								enabled = 0;
+							};
+						};
+					};
+					237559B12204156000FB8CB9 = {
 						CreatedOnToolsVersion = 10.1;
 						SystemCapabilities = {
 							com.apple.Sandbox = {
@@ -370,6 +435,8 @@
 			projectRoot = "";
 			targets = (
 				232EDA5321F1B33E0085D362 /* OpenKey */,
+				237559B12204156000FB8CB9 /* OpenKeyHelper */,
+				AA0200000000000000000030 /* OpenKeyTests */,
 			);
 		};
 /* End PBXProject section */
@@ -397,6 +464,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA0100000000000000000022 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA0100000000000000000003 /* Assets.xcassets in Resources */,
+				AA0100000000000000000004 /* MainMenu.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -419,10 +495,43 @@
 				233C4A70231F937900DD7052 /* ConvertTool.cpp in Sources */,
 				23136D92231FBD49000764E6 /* ConvertToolViewController.mm in Sources */,
 				232EDA5921F1B33E0085D362 /* AppDelegate.m in Sources */,
+				AA0100000000000000000007 /* OKSingleInstanceLock.m in Sources */,
+				AA0100000000000000000008 /* OKAppExclusionList.m in Sources */,
+				AA0100000000000000000009 /* OKAppExclusionTableController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0100000000000000000020 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA0100000000000000000001 /* AppDelegate.m in Sources */,
+				AA0100000000000000000002 /* main.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0200000000000000000021 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA0200000000000000000001 /* OKSingleInstanceLockTests.m in Sources */,
+				AA0200000000000000000002 /* OKSingleInstanceLock.m in Sources */,
+				AA0200000000000000000003 /* OKAppExclusionListTests.m in Sources */,
+				AA0200000000000000000004 /* OKAppExclusionList.m in Sources */,
+				AA0200000000000000000005 /* OKAppExclusionTableControllerTests.m in Sources */,
+				AA0200000000000000000006 /* OKAppExclusionTableController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AA0100000000000000000041 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 237559B12204156000FB8CB9 /* OpenKeyHelper */;
+			targetProxy = AA0100000000000000000040 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		232EDA5F21F1B33F0085D362 /* Main.storyboard */ = {
@@ -437,14 +546,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				237559BA2204156000FB8CB9 /* Base */,
-			);
-			name = MainMenu.xib;
-			sourceTree = "<group>";
-		};
-		2397059823143267002DDEA7 /* MainMenu.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				2397059923143267002DDEA7 /* Base */,
 			);
 			name = MainMenu.xib;
 			sourceTree = "<group>";
@@ -569,23 +670,23 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = NO;
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 48;
-				DEVELOPMENT_TEAM = 8S7348QV8Q;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = ModernKey/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
-				MARKETING_VERSION = 2.0.4;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
 					"-lc++\n-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.tuyenmai.openkey;
+				PRODUCT_BUNDLE_IDENTIFIER = vn.viethoavnm.librekey;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
@@ -595,25 +696,101 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = NO;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 48;
-				DEVELOPMENT_TEAM = 8S7348QV8Q;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = ModernKey/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
-				MARKETING_VERSION = 2.0.4;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
 					"-lc++\n-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.tuyenmai.openkey;
+				PRODUCT_BUNDLE_IDENTIFIER = vn.viethoavnm.librekey;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+			};
+			name = Release;
+		};
+		AA0100000000000000000050 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = OpenKeyHelper/OpenKeyHelper.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = OpenKeyHelper/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = vn.viethoavnm.librekey.Helper;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		AA0100000000000000000051 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = OpenKeyHelper/OpenKeyHelper.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = OpenKeyHelper/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = vn.viethoavnm.librekey.Helper;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		AA0200000000000000000050 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				PRODUCT_BUNDLE_IDENTIFIER = vn.viethoavnm.librekey.Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/ModernKey";
+			};
+			name = Debug;
+		};
+		AA0200000000000000000051 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				PRODUCT_BUNDLE_IDENTIFIER = vn.viethoavnm.librekey.Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/ModernKey";
 			};
 			name = Release;
 		};
@@ -629,11 +806,29 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		232EDA6821F1B33F0085D362 /* Build configuration list for PBXNativeTarget "OpenKey" */ = {
+		232EDA6821F1B33F0085D362 /* Build configuration list for PBXNativeTarget "LibreKey" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				232EDA6921F1B33F0085D362 /* Debug */,
 				232EDA6A21F1B33F0085D362 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA0100000000000000000052 /* Build configuration list for PBXNativeTarget "LibreKeyHelper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0100000000000000000050 /* Debug */,
+				AA0100000000000000000051 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA0200000000000000000052 /* Build configuration list for PBXNativeTarget "LibreKeyTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0200000000000000000050 /* Debug */,
+				AA0200000000000000000051 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

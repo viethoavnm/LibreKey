@@ -11,6 +11,8 @@
 #import "Engine.h"
 #import "AppDelegate.h"
 #import "ViewController.h"
+#import "OpenKeyManager.h"
+#import "OKAppExclusionList.h"
 
 #define FRONT_APP [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier
 #define OTHER_CONTROL_KEY (_flag & kCGEventFlagMaskCommand) || (_flag & kCGEventFlagMaskControl) || \
@@ -44,7 +46,6 @@ extern ViewController* viewController;
 
 extern AppDelegate* appDelegate;
 extern int vSendKeyStepByStep;
-extern int vFixChromiumBrowser;
 extern int vPerformLayoutCompat;
 
 extern "C" {
@@ -58,7 +59,19 @@ extern "C" {
                                      @"com.google.Chrome", @"com.brave.Browser",
                                      @"com.microsoft.edgemac.Dev", @"com.microsoft.edgemac.Beta", @"com.microsoft.Edge.Dev", @"com.microsoft.Edge"];
     NSArray* _recommendWorkaroundDisabledApp = @[@"com.apple.Spotlight"];
-    
+
+    //Chromium based browsers, which need the selection workaround instead of the
+    //empty character one. Matched by bundle id prefix so the release channels
+    //(.beta, .dev, .canary, ...) come along without listing every one of them.
+    NSArray* _chromiumBrowserApp = @[@"com.google.Chrome",
+                                     @"org.chromium.Chromium",
+                                     @"com.brave.Browser",
+                                     @"com.microsoft.edgemac", @"com.microsoft.Edge",
+                                     @"com.vivaldi.Vivaldi",
+                                     @"com.operasoftware.Opera",
+                                     @"com.coccoc.Coccoc",
+                                     @"company.thebrowser.Browser"];
+
     CGEventSourceRef myEventSource = NULL;
     vKeyHookState* pData;
     CGEventRef eventBackSpaceDown;
@@ -85,8 +98,27 @@ extern "C" {
     vector<Byte> savedSmartSwitchKeyData; ////use for smart switch key
     
     NSString* _frontMostApp = @"UnknownApp";
-    
-    void OpenKeyInit() {
+
+    //Whether the app in front is on the user's exclusion list. Read on every
+    //keystroke, so it is answered once per app switch instead.
+    bool _isFrontAppExcluded = false;
+
+    //Re-read on every app activation. The list is small and app switches happen
+    //at human speed, so there is nothing to cache - and reading it fresh means
+    //edits made in the panel take effect the moment the user switches away.
+    void ReloadAppExclusionState() {
+        bool wasExcluded = _isFrontAppExcluded;
+        NSArray* entries = [OKAppExclusionList entriesFromDefaults:[NSUserDefaults standardUserDefaults]];
+        _isFrontAppExcluded = [OKAppExclusionList entries:entries containBundleId:FRONT_APP];
+
+        //Crossing the boundary leaves half a word in the engine buffer.
+        if (wasExcluded != _isFrontAppExcluded)
+            startNewSession();
+    }
+
+    //Re-reading settings is cheap and they may have changed, so this runs on every
+    //OpenKeyInit call.
+    void OpenKeyReloadSettings() {
         //load saved data
         vFreeMark = 0;//(int)[[NSUserDefaults standardUserDefaults] integerForKey:@"FreeMark"];
         LOAD_DATA(vCodeTable, CodeTable); if (vCodeTable < 0) vCodeTable = 0;
@@ -109,27 +141,11 @@ extern "C" {
         LOAD_DATA(vRememberCode, vRememberCode);
         LOAD_DATA(vOtherLanguage, vOtherLanguage);
         LOAD_DATA(vTempOffOpenKey, vTempOffOpenKey);
-        
-        LOAD_DATA(vFixChromiumBrowser, vFixChromiumBrowser);
-        
-        LOAD_DATA(vPerformLayoutCompat, vPerformLayoutCompat);
-        
-        myEventSource = CGEventSourceCreate(kCGEventSourceStatePrivate);
-        pData = (vKeyHookState*)vKeyInit();
 
-        eventBackSpaceDown = CGEventCreateKeyboardEvent (myEventSource, 51, true);
-        eventBackSpaceUp = CGEventCreateKeyboardEvent (myEventSource, 51, false);
-        
-        //init and load macro data
-        NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
-        NSData *data = [prefs objectForKey:@"macroData"];
-        initMacroMap((Byte*)data.bytes, (int)data.length);
-        
-        //init and load smart switch key data
-        data = [prefs objectForKey:@"smartSwitchKey"];
-        initSmartSwitchKey((Byte*)data.bytes, (int)data.length);
-        
+        LOAD_DATA(vPerformLayoutCompat, vPerformLayoutCompat);
+
         //init convert tool
+        NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
         convertToolDontAlertWhenCompleted = ![prefs boolForKey:@"convertToolDontAlertWhenCompleted"];
         convertToolToAllCaps = [prefs boolForKey:@"convertToolToAllCaps"];
         convertToolToAllNonCaps = [prefs boolForKey:@"convertToolToAllNonCaps"];
@@ -143,7 +159,37 @@ extern "C" {
             convertToolHotKey = EMPTY_HOTKEY;
         }
     }
-    
+
+    void OpenKeyInit() {
+        OpenKeyReloadSettings();
+        ReloadAppExclusionState();
+
+        //Everything below allocates. initEventTap can run many times over a
+        //session - sleep/wake, and now Fast User Switching - and re-running this
+        //leaked a CGEventSource, two CGEvents and the engine state each time. It
+        //also threw away in-memory macro edits that had not been persisted yet.
+        static bool engineInited = false;
+        if (engineInited)
+            return;
+        engineInited = true;
+
+        myEventSource = CGEventSourceCreate(kCGEventSourceStatePrivate);
+        pData = (vKeyHookState*)vKeyInit();
+
+        eventBackSpaceDown = CGEventCreateKeyboardEvent (myEventSource, 51, true);
+        eventBackSpaceUp = CGEventCreateKeyboardEvent (myEventSource, 51, false);
+
+        NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+
+        //init and load macro data
+        NSData *data = [prefs objectForKey:@"macroData"];
+        initMacroMap((Byte*)data.bytes, (int)data.length);
+
+        //init and load smart switch key data
+        data = [prefs objectForKey:@"smartSwitchKey"];
+        initSmartSwitchKey((Byte*)data.bytes, (int)data.length);
+    }
+
     void RequestNewSession() {
         //send event signal to Engine
         vKeyHandleEvent(vKeyEvent::Mouse, vKeyEventState::MouseDown, 0);
@@ -154,7 +200,7 @@ extern "C" {
     }
     
     void queryFrontMostApp() {
-        if ([[[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier compare:OPENKEY_BUNDLE] != 0) {
+        if ([[[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier compare:LIBREKEY_BUNDLE] != 0) {
             _frontMostApp = [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier;
             if (_frontMostApp == nil)
                 _frontMostApp = [[NSWorkspace sharedWorkspace] frontmostApplication].localizedName != nil ?
@@ -170,6 +216,15 @@ extern "C" {
         if (topApp == nil) return false;
         for (_j = 0; _j < [_unicodeCompoundApp count]; _j++) {
             if ([topApp hasPrefix:[_unicodeCompoundApp objectAtIndex:_j]] || [[_unicodeCompoundApp objectAtIndex:_j] isEqualToString:topApp])
+                return true;
+        }
+        return false;
+    }
+
+    BOOL isChromiumBrowserApp(NSString* topApp) {
+        if (topApp == nil) return false;
+        for (NSString* bundleId in _chromiumBrowserApp) {
+            if ([topApp hasPrefix:bundleId])
                 return true;
         }
         return false;
@@ -370,7 +425,7 @@ extern "C" {
         CGEventTapPostEvent(_proxy, eventBackSpaceDown);
         CGEventTapPostEvent(_proxy, eventBackSpaceUp);
         
-        if (IS_DOUBLE_CODE(vCodeTable)) { //VNI or Unicode Compound
+        if (IS_DOUBLE_CODE(vCodeTable) && !_syncKey.empty()) { //VNI or Unicode Compound
             if (_syncKey.back() > 1) {
                 if (!(vCodeTable == 3 && containUnicodeCompoundApp(FRONT_APP))) {
                     CGEventTapPostEvent(_proxy, eventBackSpaceDown);
@@ -380,7 +435,7 @@ extern "C" {
             _syncKey.pop_back();
         }
     }
-    
+
     void SendShiftAndLeftArrow() {
         CGEventRef eventVkeyDown = CGEventCreateKeyboardEvent (myEventSource, KEY_LEFT, true);
         CGEventRef eventVkeyUp = CGEventCreateKeyboardEvent (myEventSource, KEY_LEFT, false);
@@ -392,7 +447,7 @@ extern "C" {
         CGEventTapPostEvent(_proxy, eventVkeyDown);
         CGEventTapPostEvent(_proxy, eventVkeyUp);
         
-        if (IS_DOUBLE_CODE(vCodeTable)) { //VNI or Unicode Compound
+        if (IS_DOUBLE_CODE(vCodeTable) && !_syncKey.empty()) { //VNI or Unicode Compound
             if (_syncKey.back() > 1) {
                 if (!(vCodeTable == 3 && containUnicodeCompoundApp(FRONT_APP))) {
                     CGEventTapPostEvent(_proxy, eventVkeyDown);
@@ -599,6 +654,16 @@ extern "C" {
      * MAIN Callback.
      */
     CGEventRef OpenKeyCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon) {
+        //The system disables our tap on timeout and around Fast User Switching.
+        //These arrive as ordinary callbacks; without re-arming here the tap stays
+        //dead forever and OpenKey silently stops typing Vietnamese - the classic
+        //"stopped working after I switched users" report. Must come first: these
+        //events carry none of the fields the code below reads.
+        if (type == kCGEventTapDisabledByTimeout || type == kCGEventTapDisabledByUserInput) {
+            [OpenKeyManager reEnableEventTap];
+            return event;
+        }
+
         //dont handle my event
         if (CGEventGetIntegerValueField(event, kCGEventSourceStateID) == CGEventSourceGetSourceStateID(myEventSource)) {
             return event;
@@ -665,7 +730,13 @@ extern "C" {
             (type != kCGEventLeftMouseDown) && (type != kCGEventRightMouseDown) &&
             (type != kCGEventLeftMouseDragged) && (type != kCGEventRightMouseDragged))
             return event;
-        
+
+        //The user asked us to stay out of this app: hand every key straight
+        //back. The switch language and convert hotkeys handled above still
+        //work, because those are global shortcuts rather than typing.
+        if (_isFrontAppExcluded)
+            return event;
+
         _proxy = proxy;
         
         //If is in english mode
@@ -740,11 +811,21 @@ extern "C" {
                 
                 //fix autocomplete
                 if (shouldUseRecommendWorkaround(FRONT_APP) && pData->extCode != 4) {
-                    if (vFixChromiumBrowser && [_unicodeCompoundApp containsObject:FRONT_APP]) {
+                    if (isChromiumBrowserApp(FRONT_APP)) {
                         if (pData->backspaceCount > 0) {
+                            //Shift+Left selects the last unit, so that unit is
+                            //already dealt with - drop it from the count.
                             SendShiftAndLeftArrow();
-                            if (pData->backspaceCount == 1)
-                                pData->backspaceCount--;
+                            pData->backspaceCount--;
+                            if (pData->backspaceCount > 0) {
+                                //A live selection swallows the next backspace. Send
+                                //it raw: routing it through SendBackspace() would pop
+                                //_syncKey again for the unit Shift+Left just popped,
+                                //and could re-send the extra backspace that the
+                                //second Shift+Left already covered.
+                                CGEventTapPostEvent(_proxy, eventBackSpaceDown);
+                                CGEventTapPostEvent(_proxy, eventBackSpaceUp);
+                            }
                         }
                     } else {
                         SendEmptyCharacter();

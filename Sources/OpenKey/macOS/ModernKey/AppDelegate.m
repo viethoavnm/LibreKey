@@ -10,12 +10,11 @@
 #import <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
 #import <ServiceManagement/ServiceManagement.h>
-#include <libproc.h>
-#include <sys/proc_info.h>
 #import "AppDelegate.h"
 #import "ViewController.h"
 #import "OpenKeyManager.h"
 #import "MJAccessibilityUtils.h"
+#import "OKSingleInstanceLock.h"
 
 AppDelegate* appDelegate;
 extern ViewController* viewController;
@@ -23,6 +22,7 @@ extern void OnTableCodeChange(void);
 extern void OnInputMethodChanged(void);
 extern void RequestNewSession(void);
 extern void OnActiveAppChanged(void);
+extern void ReloadAppExclusionState(void);
 
 //see document in Engine.h
 int vLanguage = 1;
@@ -32,7 +32,11 @@ int vCodeTable = 0;
 int vCheckSpelling = 1;
 int vUseModernOrthography = 1;
 int vQuickTelex = 0;
-#define DEFAULT_SWITCH_STATUS 0x7A000206 //default option + z
+//Switch key layout: bits 0-7 key code (0xFE = none), bit 8 Control, bit 9 Option,
+//bit 10 Command, bit 11 Shift, bit 15 beep, bits 24-31 the character shown in the
+//UI (0xFE = none). Ctrl + Shift is a modifiers-only shortcut, so both the key code
+//and the display character are 0xFE and checkHotKey skips its key-code test.
+#define DEFAULT_SWITCH_STATUS 0xFE0009FE //default Ctrl + Shift
 int vSwitchKeyStatus = DEFAULT_SWITCH_STATUS;
 int vRestoreIfWrongSpelling = 0;
 int vFixRecommendBrowser = 1;
@@ -53,9 +57,6 @@ int vTempOffOpenKey = 0; //new on version 2.0
 int vShowIconOnDock = 0; //new on version 2.0
 
 int vPerformLayoutCompat = 0;
-
-//beta feature
-int vFixChromiumBrowser = 0; //new on version 2.0
 
 extern int convertToolHotKey;
 extern bool convertToolDontAlertWhenCompleted;
@@ -89,12 +90,24 @@ extern bool convertToolDontAlertWhenCompleted;
     NSMenuItem* mnuVietnameseLocaleCP1258;
     
     NSMenuItem* mnuQuickConvert;
+    NSMenuItem* mnuGrantPermission;
+
+    NSTimer* _accessibilityTimer;
+    BOOL _hasStarted;
 }
 
 -(void)askPermission {
+    //LSUIElement apps are not brought to the front on launch. Without this the
+    //alert can open behind other windows with no Dock icon to raise it, which
+    //looks exactly like "OpenKey did not start" - the usual report from a second
+    //mac user who has not been granted Accessibility yet.
+    [NSApp activateIgnoringOtherApps:YES];
+
     NSAlert *alert = [[NSAlert alloc] init];
-    [alert setMessageText: [NSString stringWithFormat:@"OpenKey cần bạn cấp quyền để có thể hoạt động!"]];
-    [alert setInformativeText:@"Vui lòng chạy lại ứng dụng sau khi cấp quyền."];
+    [alert setMessageText: [NSString stringWithFormat:@"LibreKey cần bạn cấp quyền để có thể hoạt động!"]];
+    [alert setInformativeText:@"Vào System Settings > Privacy & Security > Accessibility và bật LibreKey.\n"
+                               "Quyền này cần tài khoản quản trị (administrator) để mở khoá.\n"
+                               "LibreKey sẽ tự hoạt động ngay sau khi được cấp quyền, không cần chạy lại."];
 
     [alert addButtonWithTitle:@"Không"];
     [alert addButtonWithTitle:@"Cấp quyền"];
@@ -108,7 +121,31 @@ extern bool convertToolDontAlertWhenCompleted;
         MJAccessibilityOpenPanel();
     }
 
-    [NSApp terminate:0];
+    //Deliberately do NOT terminate here. Quitting meant the permission was being
+    //granted to an app that had already gone away, so the user had to hunt down
+    //and relaunch OpenKey by hand. Stay alive and pick the grant up ourselves.
+    [self startWaitingForAccessibility];
+}
+
+//Accessibility is granted out of process and macOS posts no notification for it,
+//so polling is what is available. One second is cheap and feels immediate.
+-(void)startWaitingForAccessibility {
+    if (_accessibilityTimer != nil)
+        return;
+    _accessibilityTimer = [NSTimer scheduledTimerWithTimeInterval:1.0
+                                                           target:self
+                                                         selector:@selector(onAccessibilityPollTick:)
+                                                         userInfo:nil
+                                                          repeats:YES];
+}
+
+-(void)onAccessibilityPollTick:(NSTimer*)timer {
+    if (!MJAccessibilityIsEnabled())
+        return;
+
+    [timer invalidate];
+    _accessibilityTimer = nil;
+    [self startOpenKey];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
@@ -120,46 +157,43 @@ extern bool convertToolDontAlertWhenCompleted;
     [[NSUserDefaults standardUserDefaults] setObject: [NSNumber numberWithInt: 50]
                                               forKey: @"NSInitialToolTipDelay"];
     
-    //check whether this app has been launched before that or not
-    //Only check instances owned by current user (for multi-user/Fast User Switching support)
-    uid_t currentUID = getuid();
-    NSArray<NSRunningApplication *>* runningApps = [[NSWorkspace sharedWorkspace] runningApplications];
-    pid_t myPID = [[NSProcessInfo processInfo] processIdentifier];
-    BOOL alreadyRunning = NO;
-
-    for (NSRunningApplication *app in runningApps) {
-        if ([app.bundleIdentifier isEqualToString:OPENKEY_BUNDLE] &&
-            app.processIdentifier != myPID) {
-            pid_t pid = app.processIdentifier;
-            struct proc_bsdinfo proc;
-            int size = proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &proc, sizeof(proc));
-            if (size == sizeof(proc) && proc.pbi_uid == currentUID) {
-                alreadyRunning = YES;
-                break;
-            }
-        }
-    }
-
-    if (alreadyRunning) {
+    //Allow exactly one instance per mac user. The lock file lives in this user's
+    //own Application Support folder, so another logged-in user (Fast User
+    //Switching) has a different file and is never blocked by us.
+    if (![OKSingleInstanceLock acquireAtPath:[self singleInstanceLockPath]]) {
         [NSApp terminate:nil];
         return;
     }
-    
+
+    //Build the menu bar item even without Accessibility, so the user can see that
+    //OpenKey is running and can re-open the permission dialog from the menu.
+    [self createStatusBarMenu];
+
     // check if user granted Accessabilty permission
     if (!MJAccessibilityIsEnabled()) {
         [self askPermission];
         return;
     }
-    
+
+    [self startOpenKey];
+}
+
+//Everything that needs the Accessibility permission in place. Runs either straight
+//from launch, or later on, once the user finally grants it.
+-(void)startOpenKey {
+    if (_hasStarted)
+        return;
+    _hasStarted = YES;
+
+    mnuGrantPermission.hidden = YES;
+
     vShowIconOnDock = (int)[[NSUserDefaults standardUserDefaults] integerForKey:@"vShowIconOnDock"];
     if (vShowIconOnDock)
         [NSApp setActivationPolicy: NSApplicationActivationPolicyRegular];
-    
+
     if (vSwitchKeyStatus & 0x8000)
         NSBeep();
 
-    [self createStatusBarMenu];
-    
     //init
     dispatch_async(dispatch_get_main_queue(), ^{
         if (![OpenKeyManager initEventTap]) {
@@ -179,11 +213,6 @@ extern bool convertToolDontAlertWhenCompleted;
     }
     [[NSUserDefaults standardUserDefaults] setInteger:1 forKey:@"NonFirstTime"];
     
-    //check update if enable
-    NSInteger dontCheckUpdate = [[NSUserDefaults standardUserDefaults] integerForKey:@"DontCheckUpdate"];
-    if (!dontCheckUpdate)
-        [OpenKeyManager checkNewVersion:nil callbackFunc:nil];
-    
     //correct run on startup
     NSInteger val = [[NSUserDefaults standardUserDefaults] integerForKey:@"RunOnStartup"];
     [appDelegate setRunOnStartup:val];
@@ -195,7 +224,14 @@ extern bool convertToolDontAlertWhenCompleted;
 }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
-    // Insert code here to tear down your application
+    [OKSingleInstanceLock releaseLock];
+}
+
+//Per-user lock file. Reuses the Application Support folder OpenKey already owns,
+//which NSUserDomainMask scopes to the current mac user.
+-(NSString*)singleInstanceLockPath {
+    return [[OpenKeyManager getApplicationSupportFolder]
+            stringByAppendingPathComponent:OKSingleInstanceLockFileName];
 }
 
 -(void) createStatusBarMenu {
@@ -206,7 +242,14 @@ extern bool convertToolDontAlertWhenCompleted;
     
     theMenu = [[NSMenu alloc] initWithTitle:@""];
     [theMenu setAutoenablesItems:NO];
-    
+
+    //Only visible while the Accessibility permission is missing. Gives a user who
+    //dismissed the launch alert a way back to it without relaunching the app.
+    mnuGrantPermission = [theMenu addItemWithTitle:@"Cấp quyền cho LibreKey..."
+                                            action:@selector(askPermission)
+                                     keyEquivalent:@""];
+    mnuGrantPermission.hidden = MJAccessibilityIsEnabled();
+
     menuInputMethod = [theMenu addItemWithTitle:@"Bật Tiếng Việt"
                                                      action:@selector(onInputMethodSelected)
                                               keyEquivalent:@""];
@@ -235,7 +278,15 @@ extern bool convertToolDontAlertWhenCompleted;
     [theMenu addItemWithTitle:@"Giới thiệu" action:@selector(onAboutSelected) keyEquivalent:@""];
     [theMenu addItem:[NSMenuItem separatorItem]];
     
-    [theMenu addItemWithTitle:@"Thoát" action:@selector(terminate:) keyEquivalent:@"q"];
+    //Routed through our own selector rather than terminate:. Recent macOS
+    //auto-decorates menu items whose action is a recognised system selector, which
+    //is where the boxed-X image on Thoát came from; an app-specific selector gets
+    //no such treatment. Image cleared as well, in case a future macOS decorates on
+    //title instead.
+    NSMenuItem* mnuQuit = [theMenu addItemWithTitle:@"Thoát"
+                                             action:@selector(onQuitSelected)
+                                      keyEquivalent:@"q"];
+    mnuQuit.image = nil;
     
     
     [self setInputTypeMenu:menuInputType];
@@ -291,14 +342,14 @@ extern bool convertToolDontAlertWhenCompleted;
     vFreeMark = 0; [[NSUserDefaults standardUserDefaults] setInteger:vFreeMark forKey:@"FreeMark"];
     vCheckSpelling = 1; [[NSUserDefaults standardUserDefaults] setInteger:vCheckSpelling forKey:@"Spelling"];
     vCodeTable = 0; [[NSUserDefaults standardUserDefaults] setInteger:vCodeTable forKey:@"CodeTable"];
-    vSwitchKeyStatus = DEFAULT_SWITCH_STATUS; [[NSUserDefaults standardUserDefaults] setInteger:vCodeTable forKey:@"SwitchKeyStatus"];
+    vSwitchKeyStatus = DEFAULT_SWITCH_STATUS; [[NSUserDefaults standardUserDefaults] setInteger:vSwitchKeyStatus forKey:@"SwitchKeyStatus"];
     vQuickTelex = 0; [[NSUserDefaults standardUserDefaults] setInteger:vQuickTelex forKey:@"QuickTelex"];
     vUseModernOrthography = 0; [[NSUserDefaults standardUserDefaults] setInteger:vUseModernOrthography forKey:@"ModernOrthography"];
     vRestoreIfWrongSpelling = 0; [[NSUserDefaults standardUserDefaults] setInteger:vRestoreIfWrongSpelling forKey:@"RestoreIfInvalidWord"];
     vFixRecommendBrowser = 1; [[NSUserDefaults standardUserDefaults] setInteger:vFixRecommendBrowser forKey:@"FixRecommendBrowser"];
     vUseMacro = 1; [[NSUserDefaults standardUserDefaults] setInteger:vUseMacro forKey:@"UseMacro"];
     vUseMacroInEnglishMode = 0; [[NSUserDefaults standardUserDefaults] setInteger:vUseMacroInEnglishMode forKey:@"UseMacroInEnglishMode"];
-    vSendKeyStepByStep = 0;[[NSUserDefaults standardUserDefaults] setInteger:vUseMacroInEnglishMode forKey:@"SendKeyStepByStep"];
+    vSendKeyStepByStep = 0;[[NSUserDefaults standardUserDefaults] setInteger:vSendKeyStepByStep forKey:@"SendKeyStepByStep"];
     vUseSmartSwitchKey = 1;[[NSUserDefaults standardUserDefaults] setInteger:vUseSmartSwitchKey forKey:@"UseSmartSwitchKey"];
     vUpperCaseFirstChar = 0;[[NSUserDefaults standardUserDefaults] setInteger:vUpperCaseFirstChar forKey:@"UpperCaseFirstChar"];
     vTempOffSpelling = 0;[[NSUserDefaults standardUserDefaults] setInteger:vTempOffSpelling forKey:@"vTempOffSpelling"];
@@ -309,7 +360,6 @@ extern bool convertToolDontAlertWhenCompleted;
     vOtherLanguage = 1;[[NSUserDefaults standardUserDefaults] setInteger:vOtherLanguage forKey:@"vOtherLanguage"];
     vTempOffOpenKey = 0;[[NSUserDefaults standardUserDefaults] setInteger:vTempOffOpenKey forKey:@"vTempOffOpenKey"];
     vShowIconOnDock = 0;[[NSUserDefaults standardUserDefaults] setInteger:vShowIconOnDock forKey:@"vShowIconOnDock"];
-    vFixChromiumBrowser = 0;[[NSUserDefaults standardUserDefaults] setInteger:vFixChromiumBrowser forKey:@"vFixChromiumBrowser"];
     vPerformLayoutCompat = 0;[[NSUserDefaults standardUserDefaults] setInteger:vPerformLayoutCompat forKey:@"vPerformLayoutCompat"];
 
     [[NSUserDefaults standardUserDefaults] setInteger:1 forKey:@"GrayIcon"];
@@ -319,9 +369,24 @@ extern bool convertToolDontAlertWhenCompleted;
     [viewController fillData];
 }
 
+//Registers/unregisters the login item for the *current* mac user only.
+//Both APIs below are per-user, so every user profile keeps its own setting.
 -(void)setRunOnStartup:(BOOL)val {
-    CFStringRef appId = (__bridge CFStringRef)@"com.tuyenmai.OpenKeyHelper";
-    SMLoginItemSetEnabled(appId, val);
+    if (@available(macOS 13.0, *)) {
+        //SMLoginItemSetEnabled is deprecated and unreliable on Ventura and later
+        SMAppService* service = [SMAppService loginItemServiceWithIdentifier:LIBREKEY_HELPER_BUNDLE];
+        NSError* error = nil;
+        BOOL ok = val ? [service registerAndReturnError:&error] : [service unregisterAndReturnError:&error];
+        if (!ok) {
+            NSLog(@"LibreKey: could not %@ login item: %@", val ? @"register" : @"unregister", error);
+        }
+        return;
+    }
+
+    if (!SMLoginItemSetEnabled((__bridge CFStringRef)LIBREKEY_HELPER_BUNDLE, val)) {
+        NSLog(@"LibreKey: SMLoginItemSetEnabled(%@) failed - is LibreKeyHelper.app embedded in Contents/Library/LoginItems?",
+              val ? @"YES" : @"NO");
+    }
 }
 
 -(void)setGrayIcon:(BOOL)val {
@@ -417,11 +482,9 @@ extern bool convertToolDontAlertWhenCompleted;
         [mnuVietnameseLocaleCP1258 setState:NSControlStateValueOn];
     }
     vCodeTable = (int)intCode;
-    
-    //
-    NSInteger intRunOnStartup = [[NSUserDefaults standardUserDefaults] integerForKey:@"RunOnStartup"];
-    [self setRunOnStartup:intRunOnStartup ? YES : NO];
-
+    //NOTE: do not touch the login item here. fillData runs on every UI refresh,
+    //and re-registering on each one is both wasteful and racy. Registration happens
+    //once in applicationDidFinishLaunching and from the control panel toggle.
 }
 
 -(void)onImputMethodChanged:(BOOL)willNotify {
@@ -468,6 +531,10 @@ extern bool convertToolDontAlertWhenCompleted;
 - (void)onCodeSelected:(id)sender {
     NSMenuItem *menuItem = (NSMenuItem*) sender;
     [self onCodeTableChanged:(int)menuItem.tag];
+}
+
+-(void)onQuitSelected {
+    [NSApp terminate:nil];
 }
 
 -(void)onConvertTool {
@@ -542,12 +609,33 @@ extern bool convertToolDontAlertWhenCompleted;
     [OpenKeyManager stopEventTap];
 }
 
+#pragma mark Fast User Switching
+//Another mac user switched in. Our session is no longer on the console, so drop
+//the event tap rather than leave a half-dead one behind.
+-(void)receiveSessionResignActive: (NSNotification*)note {
+    [OpenKeyManager stopEventTap];
+}
+
+//We are back on the console. Rebuild the tap; without this OpenKey keeps its menu
+//bar icon but never types Vietnamese again.
+-(void)receiveSessionBecomeActive: (NSNotification*)note {
+    if (MJAccessibilityIsEnabled())
+        [OpenKeyManager initEventTap];
+}
+
 -(void)receiveActiveSpaceChanged: (NSNotification*)note {
     RequestNewSession();
 }
 
 -(void)activeAppChanged: (NSNotification*)note {
-    if (vUseSmartSwitchKey && [OpenKeyManager isInited]) {
+    if (![OpenKeyManager isInited])
+        return;
+
+    //Unconditional: the exclusion list has to follow every app change, not only
+    //the ones smart switch key cares about.
+    ReloadAppExclusionState();
+
+    if (vUseSmartSwitchKey) {
         OnActiveAppChanged();
     }
 }
@@ -561,6 +649,16 @@ extern bool convertToolDontAlertWhenCompleted;
                                                            selector: @selector(receiveSleepNote:)
                                                                name: NSWorkspaceWillSleepNotification object: NULL];
     
+    //Fast User Switching. Without these two the event tap dies when another user
+    //takes the console and is never brought back.
+    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver: self
+                                                           selector: @selector(receiveSessionResignActive:)
+                                                               name: NSWorkspaceSessionDidResignActiveNotification object: NULL];
+
+    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver: self
+                                                           selector: @selector(receiveSessionBecomeActive:)
+                                                               name: NSWorkspaceSessionDidBecomeActiveNotification object: NULL];
+
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver: self
                                                            selector: @selector(receiveActiveSpaceChanged:)
                                                                name: NSWorkspaceActiveSpaceDidChangeNotification object: NULL];

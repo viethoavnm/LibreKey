@@ -14,11 +14,16 @@
 @property (weak) IBOutlet NSButton *tabbuttonPrimary;
 @property (weak) IBOutlet NSButton *tabbuttonMacro;
 @property (weak) IBOutlet NSButton *tabbuttonSystem;
+@property (weak) IBOutlet NSButton *tabbuttonExclude;
 @property (weak) IBOutlet NSButton *tabbuttonInfo;
 @property (weak) IBOutlet NSBox *tabviewPrimary;
 @property (weak) IBOutlet NSBox *tabviewMacro;
 @property (weak) IBOutlet NSBox *tabviewSystem;
+@property (weak) IBOutlet NSBox *tabviewExclude;
 @property (weak) IBOutlet NSBox *tabviewInfo;
+
+@property (weak) IBOutlet NSTableView *excludedAppTable;
+@property (weak) IBOutlet NSButton *removeExcludedAppButton;
 
 @property (weak) IBOutlet NSPopUpButton *popupInputType;
 @property (weak) IBOutlet NSPopUpButton *popupCode;
@@ -61,11 +66,8 @@
 @property (weak) IBOutlet NSButton *TempOffOpenKey;
 @property (weak) IBOutlet NSButton *AutoCapsMacro;
 @property (weak) IBOutlet NSButton *ShowIconOnDock;
-@property (weak) IBOutlet NSButton *CheckNewVersionOnStartup;
-@property (weak) IBOutlet NSButton *FixChromiumBrowser;
 @property (weak) IBOutlet NSButton *PerformLayoutCompat;
 
-@property (weak) IBOutlet NSButton *CheckNewVersionButton;
 @property (weak) IBOutlet NSTextField *VersionInfo;
 
 @property (weak) IBOutlet NSImageView *cursorImage;

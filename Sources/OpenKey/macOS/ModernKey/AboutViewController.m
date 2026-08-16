@@ -1,6 +1,6 @@
 //
 //  AboutViewController.m
-//  OpenKey
+//  LibreKey
 //
 //  Created by Tuyen on 2/15/19.
 //  Copyright © 2019 Tuyen Mai. All rights reserved.
@@ -17,43 +17,16 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do view setup here.
-    
-    self.VersionInfo.stringValue = [NSString stringWithFormat:@"Phiên bản %@ (build %@) - Ngày cập nhật %@",
+
+    self.VersionInfo.stringValue = [NSString stringWithFormat:@"Phiên bản %@ (build %@) - %@",
                                     [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleShortVersionString"],
                                     [[NSBundle mainBundle] objectForInfoDictionaryKey: @"CFBundleVersion"],
                                     [OpenKeyManager getBuildDate]] ;
-    
-    NSInteger dontCheckUpdate = [[NSUserDefaults standardUserDefaults] integerForKey:@"DontCheckUpdate"];
-    self.CheckUpdateOnStatus.state = dontCheckUpdate ? NSControlStateValueOff :NSControlStateValueOn;
 }
 
-- (IBAction)onHomePage:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL: [NSURL URLWithString:@"https://github.com/tuyenvm/OpenKey"]];
-}
-
-- (IBAction)onFanPage:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL: [NSURL URLWithString:@"https://www.facebook.com/OpenKeyVN"]];
-}
-
-- (IBAction)onLatestReleaseVersion:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL: [NSURL URLWithString:@"https://github.com/tuyenvm/OpenKey/releases"]];
-}
-
-- (IBAction)onCheckUpdateOnStartup:(NSButton *)sender {
-    NSInteger val = sender.state == NSControlStateValueOn ? 0 : 1;
-    [[NSUserDefaults standardUserDefaults] setInteger:val forKey:@"DontCheckUpdate"];
-}
-
-- (IBAction)onCheckNewVersion:(id)sender {
-    
-    self.CheckNewVersionButton.title = @"Đang kiểm tra...";
-    self.CheckNewVersionButton.enabled = false;
-    
-    [OpenKeyManager checkNewVersion: self.view.window callbackFunc:^{
-        self.CheckNewVersionButton.enabled = true;
-        self.CheckNewVersionButton.title = @"Kiểm tra bản mới...";
-    }];
-}
+//The home page, latest release and fanpage rows are gone from the About window,
+//along with the update controls: this fork ships no update channel, so those
+//buttons had nothing to talk to. The GPL attribution they used to carry is now a
+//paragraph in the window itself, which is where a licence notice belongs.
 
 @end

@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ViewController.h"
 
-#define OPENKEY_BUNDLE @"com.tuyenmai.openkey"
+#import "LibreKeyBranding.h"
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 
