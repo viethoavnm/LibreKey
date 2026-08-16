@@ -51,26 +51,6 @@ void OpenKeyManager::freeEngine() {
 	OpenKeyFree();
 }
 
-", posBegin);
-
-	if (posBegin == string::npos || posEnd == string::npos) {
-		return false;
-	}
-
-	auto shiftVersion = [](DWORD version) {
-		return (version << 16) | (version & 0x00FF00) | (version >> 16 & 0xFF);
-		};
-
-	string newVersionCodeStr = data.substr(posBegin, posEnd - posBegin);
-	DWORD newVersionCode = (DWORD)atoi(newVersionCodeStr.data());
-	newVersionCode = shiftVersion(newVersionCode);
-
-	DWORD currentVersionCode = OpenKeyHelper::getVersionNumber();
-	currentVersionCode = shiftVersion(currentVersionCode);
-
-	return newVersionCode > currentVersionCode;
-}
-
 void OpenKeyManager::createDesktopShortcut() {
 	CoInitialize(NULL);
 	IShellLink* pShellLink = NULL;
