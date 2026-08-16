@@ -290,7 +290,7 @@ static void SendBackspace() {
 		SendMessage(HWND_BROADCAST, WM_CHAR, VK_BACK, 0L);
 		SendMessage(HWND_BROADCAST, WM_CHAR, VK_BACK, 0L);
 	}
-	if (IS_DOUBLE_CODE(vCodeTable)) { //VNI or Unicode Compound
+	if (IS_DOUBLE_CODE(vCodeTable) && !_syncKey.empty()) { //VNI or Unicode Compound
 		if (_syncKey.back() > 1) {
 			/*if (!(vCodeTable == 3 && containUnicodeCompoundApp(FRONT_APP))) {
 				SendInput(2, backspaceEvent, sizeof(INPUT));
@@ -624,9 +624,24 @@ LRESULT CALLBACK keyboardHookProcess(int nCode, WPARAM wParam, LPARAM lParam) {
 			//fix autocomplete
 			if (vFixRecommendBrowser && pData->extCode != 4) {
 				if (isChromiumBrowser(OpenKeyHelper::getLastAppExecuteName())) {
-					SendCombineKey(KEY_LEFT_SHIFT, KEY_LEFT, 0, KEYEVENTF_EXTENDEDKEY);
-					if (pData->backspaceCount == 1)
+					if (pData->backspaceCount > 0) {
+						//Shift+Left selects the last unit, so that unit is already
+						//dealt with - drop it from the count.
+						SendCombineKey(KEY_LEFT_SHIFT, KEY_LEFT, 0, KEYEVENTF_EXTENDEDKEY);
+						if (IS_DOUBLE_CODE(vCodeTable) && !_syncKey.empty()) {
+							//a two codepoint unit needs a second press to be covered
+							if (_syncKey.back() > 1)
+								SendCombineKey(KEY_LEFT_SHIFT, KEY_LEFT, 0, KEYEVENTF_EXTENDEDKEY);
+							_syncKey.pop_back();
+						}
 						pData->backspaceCount--;
+						if (pData->backspaceCount > 0) {
+							//A live selection swallows the next backspace. Send it raw:
+							//routing it through SendBackspace() would pop _syncKey again
+							//for the unit the selection already accounted for.
+							SendInput(2, backspaceEvent, sizeof(INPUT));
+						}
+					}
 				} else {
 					SendEmptyCharacter();
 					pData->backspaceCount++;
