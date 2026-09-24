@@ -1472,7 +1472,8 @@ void vKeyHandleEvent(const vKeyEvent& event,
         }
         
         if (vUpperCaseFirstChar) {
-            if (data == KEY_DOT)
+            //. ! ? end a sentence; Shift + dot is >, which does not
+            if ((data == KEY_DOT && capsStatus != 1) || (capsStatus == 1 && (data == KEY_1 || data == KEY_SLASH)))
                 _upperCaseStatus = 1;
             else if (data == KEY_ENTER || data == KEY_RETURN)
                 _upperCaseStatus = 2;
@@ -1518,6 +1519,7 @@ void vKeyHandleEvent(const vKeyEvent& event,
         _willTempOffEngine = false;
     } else if (data == KEY_DELETE) {
         _autoHornIndex = -1;
+        _upperCaseStatus = 0; //what was pending may just have been deleted
         hCode = vDoNothing;
         hExt = 2; //delete
         if (_specialChar.size() > 0) {
