@@ -67,4 +67,20 @@
     XCTAssertTyped("tw", "tư");
 }
 
+#pragma mark - A lone w not drawn yet is not counted as on screen
+
+/// The ư a lone w makes is not on screen yet when checkGrammar moves the tone
+/// onto it, but it was counted in the backspaces: "irwin" typed after "pp "
+/// deleted the space in front of it.
+- (void)testMovingTheToneOntoALoneWDoesNotDeleteIntoThePreviousWord {
+    OKTypingResult r = OKTypeKeys("irwin", OKTypingSettings(), "pp ");
+    XCTAssertEqual(r.overDeletes, 0, @"gave %s", r.text.c_str());
+    XCTAssertTrue([@(r.text.c_str()) hasPrefix:@"pp "], @"gave %s", r.text.c_str());
+}
+
+- (void)testToneMovesOntoALoneW {
+    XCTAssertTyped("irw", "iử");
+    XCTAssertTyped("twf", "từ");
+}
+
 @end
