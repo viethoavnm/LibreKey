@@ -118,6 +118,7 @@ static vector<Uint32> _specialChar;
 static bool _useSpellCheckingBefore;
 static bool _hasHandleQuickConsonant;
 static bool _willTempOffEngine = false;
+static int _autoHornIndex = -1; //the o checkGrammar horned by itself, see insertW
 
 //function prototype
 void findAndCalculateVowel(const bool& forGrammar=false);
@@ -306,6 +307,7 @@ void checkGrammar(const int& deltaBackSpace) {
                 CHR(i) == KEY_M || CHR(i) == KEY_P || CHR(i) == KEY_T) {
                 if (i - 2 >= 0 && CHR(i - 1) == KEY_O && CHR(i - 2) == KEY_U) {
                     if ((TypingWord[i-1] & TONEW_MASK) ^ (TypingWord[i-2] & TONEW_MASK)) {
+                        _autoHornIndex = (TypingWord[i-1] & TONEW_MASK) ? i - 2 : i - 1;
                         TypingWord[i - 2] |= TONEW_MASK;
                         TypingWord[i - 1] |= TONEW_MASK;
                         isCheckedGrammar = true;
@@ -455,6 +457,7 @@ void restoreLastTypingState() {
 }
 
 void startNewSession() {
+    _autoHornIndex = -1;
     _index = 0;
     hBPC = 0;
     hNCC = 0;
@@ -490,6 +493,7 @@ void vKeyResetState() {
     _hasHandledMacro = false;
     _hasHandleQuickConsonant = false;
     _willTempOffEngine = false;
+    _autoHornIndex = -1;
     _upperCaseStatus = 0;
     _spellingOK = false;
     _spellingFlag = false;
@@ -922,6 +926,19 @@ void insertW(const Uint16& data, const bool& isCaps) {
     if (vowelCount > 1) {
         hBPC = _index - VSI;
         hNCC = hBPC;
+        
+        //the user asks for the horn checkGrammar already put on ("buwoi" + w):
+        //keep it, instead of reading the w as an undo of both
+        if ((TypingWord[VSI] & TONEW_MASK) && (TypingWord[VSI+1] & TONEW_MASK) &&
+            (_autoHornIndex == VSI || _autoHornIndex == VSI + 1)) {
+            _autoHornIndex = -1;
+            hCode = vWillProcess;
+            for (ii = VSI; ii < _index; ii++) {
+                hData[_index - 1 - ii] = GET(TypingWord[ii]);
+            }
+            return;
+        }
+        _autoHornIndex = -1;
         
         if (((TypingWord[VSI] & TONEW_MASK) && (TypingWord[VSI+1] & TONEW_MASK)) ||
             ((TypingWord[VSI] & TONEW_MASK) && CHR(VSI+1) == KEY_I) ||
@@ -1459,6 +1476,7 @@ void vKeyHandleEvent(const vKeyEvent& event,
         vCheckSpelling = _useSpellCheckingBefore;
         _willTempOffEngine = false;
     } else if (data == KEY_DELETE) {
+        _autoHornIndex = -1;
         hCode = vDoNothing;
         hExt = 2; //delete
         if (_specialChar.size() > 0) {
