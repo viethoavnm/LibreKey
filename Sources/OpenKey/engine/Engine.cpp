@@ -304,7 +304,7 @@ void checkGrammar(const int& deltaBackSpace) {
     if (_index >= 3) {
         for (i = _index-1; i >= 0; i--) {
             if (CHR(i) == KEY_N || CHR(i) == KEY_C || CHR(i) == KEY_I ||
-                CHR(i) == KEY_M || CHR(i) == KEY_P || CHR(i) == KEY_T) {
+                CHR(i) == KEY_M || CHR(i) == KEY_P || CHR(i) == KEY_T || CHR(i) == KEY_U) {
                 if (i - 2 >= 0 && CHR(i - 1) == KEY_O && CHR(i - 2) == KEY_U) {
                     if ((TypingWord[i-1] & TONEW_MASK) ^ (TypingWord[i-2] & TONEW_MASK)) {
                         _autoHornIndex = (TypingWord[i-1] & TONEW_MASK) ? i - 2 : i - 1;
@@ -967,7 +967,13 @@ void insertW(const Uint16& data, const bool& isCaps) {
             Uint32 firstBefore = TypingWord[VSI], secondBefore = TypingWord[VSI+1];
             
             if ((CHR(VSI) == KEY_U && CHR(VSI+1) == KEY_O)) {
-                if (VSI - 2 >= 0 && TypingWord[VSI - 2] == KEY_T && TypingWord[VSI - 1] == KEY_H) {
+                //uơ, not ươ, after th, h, kh or no onset while nothing follows
+                //("thuở", "huơ", "khuơ", "uở"); checkGrammar turns it into ươ
+                //once a consonant or i/u comes. CHR ignores the case of the onset.
+                bool onsetTh = VSI == 2 && CHR(0) == KEY_T && CHR(1) == KEY_H;
+                bool onsetH = (VSI == 1 && CHR(0) == KEY_H) || (VSI == 2 && CHR(0) == KEY_K && CHR(1) == KEY_H);
+                bool nothingAfter = VSI + 2 == _index;
+                if (onsetTh || ((onsetH || VSI == 0) && nothingAfter)) {
                     if ((TypingWord[VSI+1] & TONEW_MASK) && !(TypingWord[VSI] & TONEW_MASK)) {
                         TypingWord[VSI] |= TONEW_MASK; //second w: thuơ -> thươ
                     }
