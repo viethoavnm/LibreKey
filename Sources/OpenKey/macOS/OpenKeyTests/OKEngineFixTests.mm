@@ -164,6 +164,30 @@
     XCTAssertTyped("thaaa{BS}{BS}aa", "thâ");
 }
 
+#pragma mark - A second w undoes a horn on the second vowel (#216)
+
+/// oa, io and th/q + uo put the horn or breve on the second vowel. A second
+/// w put it on again, so the word stuck at "hoă" and w could not be typed.
+- (void)testSecondWUndoesAHornOnTheSecondVowel {
+    XCTAssertTyped("hoaww", "hoaw");
+    XCTAssertTyped("tioww", "tiow");
+    XCTAssertTyped("thuoww", "thuow");
+}
+
+- (void)testSecondWUndoesWithSpellingOff {
+    OKTypingSettings noSpelling;
+    noSpelling.spelling = false;
+    XCTAssertEqualObjects(@(OKTypeKeys("bloatww", noSpelling).text.c_str()), @"bloatw");
+}
+
+- (void)testFirstWOnTheseVowelsUnchanged {
+    XCTAssertTyped("hoaw", "hoă");
+    XCTAssertTyped("tiow", "tiơ");
+    XCTAssertTyped("thuow", "thuơ");
+    XCTAssertTyped("muaw", "mưa");
+    XCTAssertTyped("muaww", "muaw");
+}
+
 /// Backspacing within the letters the undo wrote keeps the undo.
 - (void)testUndoStaysWhileTheWordIsStillUndone {
     OKTypingSettings noSpelling;
