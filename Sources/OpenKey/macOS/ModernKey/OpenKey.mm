@@ -630,7 +630,9 @@ extern "C" {
         if (HAS_BEEP(vSwitchKeyStatus))
             NSBeep();
         [appDelegate onImputMethodChanged:YES];
-        startNewSession();
+        //like a click: what came before - a pending capital, VNI key lengths -
+        //belongs to text typed in the other language
+        RequestNewSession();
     }
     
     void handleMacro() {
