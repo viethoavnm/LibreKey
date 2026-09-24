@@ -62,6 +62,7 @@
 		AA0200000000000000000040 /* OKEngineTypist.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000018 /* OKEngineTypist.mm */; };
 		AA0200000000000000000041 /* OKEngineTypistTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000019 /* OKEngineTypistTests.mm */; };
 		AA0200000000000000000042 /* OKEngineCorpus.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA020000000000000000001B /* OKEngineCorpus.mm */; };
+		AA0200000000000000000043 /* OKEngineCorpusRunnerTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA020000000000000000001C /* OKEngineCorpusRunnerTests.mm */; };
 		AA0100000000000000000007 /* OKSingleInstanceLock.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000012 /* OKSingleInstanceLock.m */; };
 		AA0100000000000000000008 /* OKAppExclusionList.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000015 /* OKAppExclusionList.m */; };
 		AA0100000000000000000009 /* OKAppExclusionTableController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000017 /* OKAppExclusionTableController.m */; };
@@ -176,6 +177,7 @@
 		AA0200000000000000000019 /* OKEngineTypistTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OKEngineTypistTests.mm; sourceTree = "<group>"; };
 		AA020000000000000000001A /* OKEngineCorpus.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKEngineCorpus.h; sourceTree = "<group>"; };
 		AA020000000000000000001B /* OKEngineCorpus.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OKEngineCorpus.mm; sourceTree = "<group>"; };
+		AA020000000000000000001C /* OKEngineCorpusRunnerTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OKEngineCorpusRunnerTests.mm; sourceTree = "<group>"; };
 		AA0100000000000000000013 /* LibreKeyBranding.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LibreKeyBranding.h; sourceTree = "<group>"; };
 		AA0100000000000000000011 /* OKSingleInstanceLock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKSingleInstanceLock.h; sourceTree = "<group>"; };
 		AA0100000000000000000012 /* OKSingleInstanceLock.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKSingleInstanceLock.m; sourceTree = "<group>"; };
@@ -310,6 +312,7 @@
 				AA0200000000000000000019 /* OKEngineTypistTests.mm */,
 				AA020000000000000000001A /* OKEngineCorpus.h */,
 				AA020000000000000000001B /* OKEngineCorpus.mm */,
+				AA020000000000000000001C /* OKEngineCorpusRunnerTests.mm */,
 			);
 			path = OpenKeyTests;
 			sourceTree = "<group>";
@@ -566,6 +569,7 @@
 				AA0200000000000000000040 /* OKEngineTypist.mm in Sources */,
 				AA0200000000000000000041 /* OKEngineTypistTests.mm in Sources */,
 				AA0200000000000000000042 /* OKEngineCorpus.mm in Sources */,
+				AA0200000000000000000043 /* OKEngineCorpusRunnerTests.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
