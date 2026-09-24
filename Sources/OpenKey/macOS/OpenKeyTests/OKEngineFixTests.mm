@@ -197,6 +197,33 @@
     XCTAssertTyped("muaww", "muaw");
 }
 
+#pragma mark - huơ, khuơ (#229)
+
+/// After h, kh or no onset, uo + w is uơ while nothing follows, like th.
+- (void)testUoWAfterHOrKhIsUHornlessO {
+    XCTAssertTyped("huow", "huơ");
+    XCTAssertTyped("khuow", "khuơ");
+    XCTAssertTyped("uowr", "uở");
+    XCTAssertTyped("Huow", "Huơ");
+}
+
+/// A final consonant, or i/u, still makes it ươ.
+- (void)testUoWBecomesUoHornedOnceTheWordGoesOn {
+    XCTAssertTyped("huowng", "hương");
+    XCTAssertTyped("huowu", "hươu");
+    XCTAssertTyped("khuowu", "khươu");
+    XCTAssertTyped("huowi", "hươi");
+}
+
+/// Horning the u yourself still gives ươ, and other onsets keep ươ.
+- (void)testUoWElsewhereUnchanged {
+    XCTAssertTyped("huwow", "hươ");
+    XCTAssertTyped("tuow", "tươ");
+    XCTAssertTyped("muowi", "mươi");
+    XCTAssertTyped("thuowr", "thuở");
+    XCTAssertTyped("Thuowr", "Thuở");
+}
+
 /// Backspacing within the letters the undo wrote keeps the undo.
 - (void)testUndoStaysWhileTheWordIsStillUndone {
     OKTypingSettings noSpelling;
