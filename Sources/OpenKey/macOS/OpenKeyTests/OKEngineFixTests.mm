@@ -122,4 +122,31 @@
     XCTAssertEqualObjects(@([self type:"k {BS}o " macro:"ko" content:"không"].text.c_str()), @"không ");
 }
 
+#pragma mark - Macros inside punctuation (#279)
+
+- (NSString *)btw:(const char *)keys {
+    return @([self type:keys macro:"btw" content:"by the way"].text.c_str());
+}
+
+/// The quote in front went into the macro key, so "btw" never matched.
+- (void)testMacroInsideQuotesFires {
+    XCTAssertEqualObjects([self btw:"\"btw\""], @"\"by the way\"");
+}
+
+/// A closing ) ! or * is a shifted digit, which did not end a macro.
+- (void)testMacroBeforeShiftedDigitPunctuationFires {
+    XCTAssertEqualObjects([self btw:"(btw)"], @"(by the way)");
+    XCTAssertEqualObjects([self btw:"btw!"], @"by the way!");
+}
+
+- (void)testMacroOnSpaceUnchanged {
+    XCTAssertEqualObjects([self btw:"btw "], @"by the way ");
+    XCTAssertEqualObjects([self btw:"xbtw "], @"xbtw ");
+}
+
+/// Digits typed without Shift are still part of a word, not an end of it.
+- (void)testPlainDigitsDoNotEndAMacro {
+    XCTAssertEqualObjects([self btw:"btw2 "], @"btw2 ");
+}
+
 @end
