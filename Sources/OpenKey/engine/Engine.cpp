@@ -1393,10 +1393,12 @@ void vKeyHandleEvent(const vKeyEvent& event,
         hNCC = 0;
         hExt = 1; //word break
         
-        //check macro feature
-        if (vUseMacro && isMacroBreakCode(data) && !_hasHandledMacro && findMacro(hMacroKey, hMacroData)) {
+        //check macro feature; a shifted digit is punctuation too: ) ! * ...
+        int macroLength = 0;
+        if (vUseMacro && (isMacroBreakCode(data) || (IS_NUMBER_KEY(data) && capsStatus == 1)) && !_hasHandledMacro &&
+            findMacroSkippingLeadingPunctuation(hMacroKey, hMacroData, macroLength)) {
             hCode = vReplaceMaro;
-            hBPC = (Byte)hMacroKey.size();
+            hBPC = (Byte)macroLength;
             _hasHandledMacro = true;
         } else if ((vQuickStartConsonant || vQuickEndConsonant) && !tempDisableKey && isMacroBreakCode(data)) {
             checkQuickConsonant();
@@ -1453,9 +1455,10 @@ void vKeyHandleEvent(const vKeyEvent& event,
         if (!tempDisableKey && vCheckSpelling) {
             checkSpelling(true); //force check spelling
         }
-        if (vUseMacro && !_hasHandledMacro && findMacro(hMacroKey, hMacroData)) { //macro
+        int macroLength = 0;
+        if (vUseMacro && !_hasHandledMacro && findMacroSkippingLeadingPunctuation(hMacroKey, hMacroData, macroLength)) { //macro
             hCode = vReplaceMaro;
-            hBPC = (Byte)hMacroKey.size();
+            hBPC = (Byte)macroLength;
             _spaceCount++;
             _hasHandledMacro = true;
         } else if ((vQuickStartConsonant || vQuickEndConsonant) && !tempDisableKey && checkQuickConsonant()) {
