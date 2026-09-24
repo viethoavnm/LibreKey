@@ -53,6 +53,8 @@
 - (void)testAllCapsUppercasesMarkedLetters {
     convertToolToAllCaps = true;
     XCTAssertEqualObjects([self convert:"Việt nam"], @"VIỆT NAM");
+    //a letter that is already upper case must stay so ("VIỆT" gave "VIệT")
+    XCTAssertEqualObjects([self convert:"VIỆT"], @"VIỆT");
     convertToolRemoveMark = true;
     XCTAssertEqualObjects([self convert:"Việt nam"], @"VIET NAM");
 }
