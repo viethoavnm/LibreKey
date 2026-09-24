@@ -523,7 +523,11 @@ void checkCorrectVowel(vector<vector<Uint16>>& charset, int& i, int& k, const Ui
     }
     k = _index - 1;
     for (j = (int)charset[i].size() - 1; j >= 0; j--) {
-        if ((charset[i][j] & ~(vQuickEndConsonant ? END_CONSONANT_MASK : 0)) != CHR(k)) {
+        //the finals marked END_CONSONANT_MASK (k, g, h after a vowel) are only
+        //shorthands for ch, ng, nh; they are real finals too when quick end
+        //consonants are on, or when there is no spelling check to refuse them
+        //- "Đắk Lắk" typed with the marks after the k
+        if ((charset[i][j] & ~((vQuickEndConsonant || !vCheckSpelling) ? END_CONSONANT_MASK : 0)) != CHR(k)) {
             isCorect = false;
             return;
         }
