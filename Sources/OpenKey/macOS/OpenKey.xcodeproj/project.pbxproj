@@ -51,6 +51,7 @@
 		AA0200000000000000000005 /* OKAppExclusionTableControllerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000013 /* OKAppExclusionTableControllerTests.m */; };
 		AA0200000000000000000006 /* OKAppExclusionTableController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000017 /* OKAppExclusionTableController.m */; };
 		AA0200000000000000000007 /* OKTerminalTyping.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000019 /* OKTerminalTyping.m */; };
+		AA0200000000000000000008 /* OKTerminalTypingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000014 /* OKTerminalTypingTests.m */; };
 		AA0100000000000000000007 /* OKSingleInstanceLock.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000012 /* OKSingleInstanceLock.m */; };
 		AA0100000000000000000008 /* OKAppExclusionList.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000015 /* OKAppExclusionList.m */; };
 		AA0100000000000000000009 /* OKAppExclusionTableController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000017 /* OKAppExclusionTableController.m */; };
@@ -157,6 +158,7 @@
 		AA0200000000000000000011 /* OKSingleInstanceLockTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKSingleInstanceLockTests.m; sourceTree = "<group>"; };
 		AA0200000000000000000012 /* OKAppExclusionListTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKAppExclusionListTests.m; sourceTree = "<group>"; };
 		AA0200000000000000000013 /* OKAppExclusionTableControllerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKAppExclusionTableControllerTests.m; sourceTree = "<group>"; };
+		AA0200000000000000000014 /* OKTerminalTypingTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKTerminalTypingTests.m; sourceTree = "<group>"; };
 		AA0100000000000000000013 /* LibreKeyBranding.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LibreKeyBranding.h; sourceTree = "<group>"; };
 		AA0100000000000000000011 /* OKSingleInstanceLock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKSingleInstanceLock.h; sourceTree = "<group>"; };
 		AA0100000000000000000012 /* OKSingleInstanceLock.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKSingleInstanceLock.m; sourceTree = "<group>"; };
@@ -283,6 +285,7 @@
 				AA0200000000000000000011 /* OKSingleInstanceLockTests.m */,
 				AA0200000000000000000012 /* OKAppExclusionListTests.m */,
 				AA0200000000000000000013 /* OKAppExclusionTableControllerTests.m */,
+				AA0200000000000000000014 /* OKTerminalTypingTests.m */,
 			);
 			path = OpenKeyTests;
 			sourceTree = "<group>";
@@ -528,6 +531,7 @@
 				AA0200000000000000000005 /* OKAppExclusionTableControllerTests.m in Sources */,
 				AA0200000000000000000006 /* OKAppExclusionTableController.m in Sources */,
 				AA0200000000000000000007 /* OKTerminalTyping.m in Sources */,
+				AA0200000000000000000008 /* OKTerminalTypingTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
