@@ -26,5 +26,24 @@ std::vector<OKCorpusRow> OKLoadCorpus(const std::string& path) {
 OKCorpusReport OKRunCorpus(const std::vector<OKCorpusRow>& rows,
                            const OKTypingSettings& settings,
                            const std::string& prefix) {
-    return OKCorpusReport();
+    OKCorpusReport report;
+    for (const OKCorpusRow& row : rows) {
+        OKTypingResult result = OKTypeKeys(row.keys, settings, prefix);
+        report.rows++;
+        if (result.overDeletes > 0)
+            report.overDeletes++;
+        if (result.controlChars > 0)
+            report.controlChars++;
+
+        std::string want = prefix + row.expected;
+        if (result.text == want) {
+            report.passed++;
+        } else {
+            //show the row itself, without the prefix every row shares
+            std::string got = result.text.compare(0, prefix.size(), prefix) == 0
+                ? result.text.substr(prefix.size()) : result.text;
+            report.failures.push_back(row.keys + " -> " + got + " (want " + row.expected + ")");
+        }
+    }
+    return report;
 }
