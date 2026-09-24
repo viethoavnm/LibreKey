@@ -1566,7 +1566,9 @@ void vKeyHandleEvent(const vKeyEvent& event,
         }
 
         if (!vFreeMark && !IS_KEY_D(data)) {
-            if (hCode == vDoNothing) {
+            //the char of this key is not on screen yet: the key passes through,
+            //or it is a lone w/[/] whose ư/ơ the host has still to draw
+            if (hCode == vDoNothing || (hCode == vWillProcess && hExt == 4 && hBPC == 0)) {
                 checkGrammar(-1);
             } else {
                 checkGrammar(0);
