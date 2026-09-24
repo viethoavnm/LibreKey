@@ -439,18 +439,23 @@ void restoreLastTypingState() {
         _typingStatesData = _typingStates.back();
         _typingStates.pop_back();
         if (_typingStatesData.size() > 0){
+            //the macro key has to describe the text now in front of the cursor
+            //again, or a later key rebuilds it from nothing
             if (_typingStatesData[0] == KEY_SPACE) {
                 _spaceCount = (int)_typingStatesData.size();
                 _index = 0;
+                hMacroKey.clear();
             } else if (std::find(_charKeyCode.begin(), _charKeyCode.end(), (Uint16)_typingStatesData[0]) != _charKeyCode.end()) {
                 _index = 0;
                 _specialChar = _typingStatesData;
+                hMacroKey = _typingStatesData;
                 checkSpelling();
             } else {
                 for (i = 0; i < _typingStatesData.size(); i++) {
                     TypingWord[i] = _typingStatesData[i];
                 }
                 _index = (Byte)_typingStatesData.size();
+                hMacroKey.assign(TypingWord, TypingWord + _index);
             }
         }
     }
