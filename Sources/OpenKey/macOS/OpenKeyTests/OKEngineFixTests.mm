@@ -149,4 +149,26 @@
     XCTAssertEqualObjects([self btw:"btw2 "], @"btw2 ");
 }
 
+#pragma mark - Backspace re-enables marks with spelling off (#145)
+
+/// "aaa" undoes the circumflex and stops marking the word. With spelling off
+/// nothing turned marking back on after backspacing past the undo.
+- (void)testBackspacePastAnUndoMarksAgainWithSpellingOff {
+    OKTypingSettings noSpelling;
+    noSpelling.spelling = false;
+    XCTAssertEqualObjects(@(OKTypeKeys("thaaa{BS}{BS}aa", noSpelling).text.c_str()), @"thâ");
+    XCTAssertEqualObjects(@(OKTypeKeys("aaa{BS}{BS}aa", noSpelling).text.c_str()), @"â");
+}
+
+- (void)testBackspacePastAnUndoWithSpellingOnUnchanged {
+    XCTAssertTyped("thaaa{BS}{BS}aa", "thâ");
+}
+
+/// Backspacing within the letters the undo wrote keeps the undo.
+- (void)testUndoStaysWhileTheWordIsStillUndone {
+    OKTypingSettings noSpelling;
+    noSpelling.spelling = false;
+    XCTAssertEqualObjects(@(OKTypeKeys("aaaa", noSpelling).text.c_str()), @"aaa");
+}
+
 @end
