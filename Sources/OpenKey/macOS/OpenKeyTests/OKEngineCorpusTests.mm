@@ -22,7 +22,7 @@ static const int kUniKeyTablePassing = 1302;       //of 1,307
 static const int kTelexPairsPassing = 30263;       //of 30,337
 static const int kEnglishPassing = 91712;          //of 97,592
 static const int kEnglishOverDeleteRows = 0;
-static const int kEnglishControlCharRows = 2;       //known bugs, to reach 0
+static const int kEnglishControlCharRows = 0;
 
 @interface OKEngineCorpusTests : XCTestCase
 @end

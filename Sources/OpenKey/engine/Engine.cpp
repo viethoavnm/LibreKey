@@ -907,7 +907,9 @@ void insertAOE(const Uint16& data, const bool& isCaps) {
                 //restore and disable temporary
                 hCode = vRestore;
                 TypingWord[ii] &= ~TONE_MASK;
-                hData[_index - 1 - ii] = TypingWord[ii];
+                //through GET like every other letter here: a vowel that still
+                //has a tone ("ầ" -> "à") is a character, not a key code
+                hData[_index - 1 - ii] = GET(TypingWord[ii]);
                 //_index = 0;
                 if (data != KEY_O) //case thoòng
                     tempDisableKey = true;
