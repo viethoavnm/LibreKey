@@ -196,6 +196,12 @@ bool findMacro(vector<Uint32>& key, vector<Uint32>& macroContentCode) {
     return false;
 }
 
+bool findMacroSkippingLeadingPunctuation(const vector<Uint32>& key,
+                                         vector<Uint32>& macroContentCode,
+                                         int& matchedLength) {
+    return false;
+}
+
 bool hasMacro(const string& macroName) {
     vector<Uint32> key;
     convert(macroName, key);
