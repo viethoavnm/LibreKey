@@ -614,11 +614,17 @@ LRESULT CALLBACK keyboardHookProcess(int nCode, WPARAM wParam, LPARAM lParam) {
 
 	//handle keyboard
 	if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) {
+		//Caps Lock does not shift digits: Shift + 3 is # with or without it, so a
+		//digit must reach the engine as shifted (1) - it would otherwise read the
+		//3 as the VNI hỏi key and turn "Mi#" into "MỈ" (#290)
+		Uint8 capsStatus = (_flag & MASK_SHIFT && _flag & MASK_CAPITAL) ? 0 : (_flag & MASK_SHIFT ? 1 : (_flag & MASK_CAPITAL ? 2 : 0));
+		if (IS_NUMBER_KEY(_keycode) && (_flag & MASK_SHIFT))
+			capsStatus = 1;
 		//send event signal to Engine
 		vKeyHandleEvent(vKeyEvent::Keyboard,
 						vKeyEventState::KeyDown,
 						_keycode,
-						(_flag & MASK_SHIFT && _flag & MASK_CAPITAL) ? 0 : (_flag & MASK_SHIFT ? 1 : (_flag & MASK_CAPITAL ? 2 : 0)),
+						capsStatus,
 						OTHER_CONTROL_KEY);
 		if (pData->code == vDoNothing) { //do nothing
 			if (IS_DOUBLE_CODE(vCodeTable)) { //VNI
