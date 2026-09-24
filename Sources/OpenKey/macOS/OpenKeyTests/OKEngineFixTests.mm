@@ -83,4 +83,29 @@
     XCTAssertTyped("twf", "từ");
 }
 
+#pragma mark - The macro key follows what the engine wrote (#313)
+
+- (OKTypingResult)type:(const char *)keys macro:(const char *)key content:(const char *)content {
+    OKTypingSettings s;
+    s.macros = {{key, content}};
+    return OKTypeKeys(keys, s);
+}
+
+/// After a lone w the macro key held a stale slot instead of the ư, so a macro
+/// whose key starts with ư could never fire.
+- (void)testMacroKeyStartingWithLoneWFires {
+    XCTAssertEqualObjects(@([self type:"wds " macro:"ưds" content:"windows"].text.c_str()), @"windows ");
+    XCTAssertEqualObjects(@([self type:"who " macro:"ưho" content:"who"].text.c_str()), @"who ");
+}
+
+/// A restore puts the typed key back after the restored letters; the macro key
+/// lost one of them ("tesst" gave the key "tst").
+- (void)testMacroKeyKeepsEveryLetterAfterARestore {
+    XCTAssertEqualObjects(@([self type:"tesst " macro:"test" content:"TEST"].text.c_str()), @"TEST ");
+}
+
+- (void)testMacroKeyWithVietnameseLettersStillFires {
+    XCTAssertEqualObjects(@([self type:"ddc " macro:"đc" content:"được"].text.c_str()), @"được ");
+}
+
 @end
