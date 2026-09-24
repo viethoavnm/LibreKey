@@ -52,6 +52,7 @@
 		AA0200000000000000000006 /* OKAppExclusionTableController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000017 /* OKAppExclusionTableController.m */; };
 		AA0200000000000000000007 /* OKTerminalTyping.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000019 /* OKTerminalTyping.m */; };
 		AA0200000000000000000048 /* OKSpotlightDetector.m in Sources */ = {isa = PBXBuildFile; fileRef = AA010000000000000000001B /* OKSpotlightDetector.m */; };
+		AA020000000000000000004A /* OKInputSourceFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = AA010000000000000000001D /* OKInputSourceFilter.m */; };
 		AA0200000000000000000008 /* OKTerminalTypingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000014 /* OKTerminalTypingTests.m */; };
 		AA0200000000000000000009 /* Engine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23E2E49A2314FD3A006CCC3E /* Engine.cpp */; };
 		AA020000000000000000000A /* Vietnamese.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23E2E49B2314FD3A006CCC3E /* Vietnamese.cpp */; };
@@ -74,6 +75,7 @@
 		AA0100000000000000000009 /* OKAppExclusionTableController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000017 /* OKAppExclusionTableController.m */; };
 		AA010000000000000000000A /* OKTerminalTyping.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000019 /* OKTerminalTyping.m */; };
 		AA010000000000000000000B /* OKSpotlightDetector.m in Sources */ = {isa = PBXBuildFile; fileRef = AA010000000000000000001B /* OKSpotlightDetector.m */; };
+		AA010000000000000000000C /* OKInputSourceFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = AA010000000000000000001D /* OKInputSourceFilter.m */; };
 		AA0100000000000000000001 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 237559B52204156000FB8CB9 /* AppDelegate.m */; };
 		AA0100000000000000000002 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 237559BD2204156000FB8CB9 /* main.m */; };
 		AA0100000000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 237559B72204156000FB8CB9 /* Assets.xcassets */; };
@@ -201,6 +203,8 @@
 		AA0100000000000000000019 /* OKTerminalTyping.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKTerminalTyping.m; sourceTree = "<group>"; };
 		AA010000000000000000001A /* OKSpotlightDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKSpotlightDetector.h; sourceTree = "<group>"; };
 		AA010000000000000000001B /* OKSpotlightDetector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKSpotlightDetector.m; sourceTree = "<group>"; };
+		AA010000000000000000001C /* OKInputSourceFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKInputSourceFilter.h; sourceTree = "<group>"; };
+		AA010000000000000000001D /* OKInputSourceFilter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKInputSourceFilter.m; sourceTree = "<group>"; };
 		AA0100000000000000000010 /* LibreKeyHelper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LibreKeyHelper.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -310,6 +314,8 @@
 				AA0100000000000000000019 /* OKTerminalTyping.m */,
 				AA010000000000000000001A /* OKSpotlightDetector.h */,
 				AA010000000000000000001B /* OKSpotlightDetector.m */,
+				AA010000000000000000001C /* OKInputSourceFilter.h */,
+				AA010000000000000000001D /* OKInputSourceFilter.m */,
 			);
 			path = ModernKey;
 			sourceTree = "<group>";
@@ -557,6 +563,7 @@
 				AA0100000000000000000009 /* OKAppExclusionTableController.m in Sources */,
 				AA010000000000000000000A /* OKTerminalTyping.m in Sources */,
 				AA010000000000000000000B /* OKSpotlightDetector.m in Sources */,
+				AA010000000000000000000C /* OKInputSourceFilter.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -581,6 +588,7 @@
 				AA0200000000000000000006 /* OKAppExclusionTableController.m in Sources */,
 				AA0200000000000000000007 /* OKTerminalTyping.m in Sources */,
 				AA0200000000000000000048 /* OKSpotlightDetector.m in Sources */,
+				AA020000000000000000004A /* OKInputSourceFilter.m in Sources */,
 				AA0200000000000000000008 /* OKTerminalTypingTests.m in Sources */,
 				AA0200000000000000000009 /* Engine.cpp in Sources */,
 				AA020000000000000000000A /* Vietnamese.cpp in Sources */,
