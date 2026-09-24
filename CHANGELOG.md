@@ -13,6 +13,32 @@ kho gốc; file này chỉ ghi những gì LibreKey khác đi.
   30 fork, hoặc 30 watcher). Cask được workflow `homebrew-bump.yml` cập nhật tự
   động mỗi khi có release mới, nên không có bước sửa `sha256` bằng tay. Ứng dụng
   không đổi một dòng nào.
+- **Sửa lỗi chữ nhảy loạn khi gõ trong terminal, nhất là qua SSH lúc mạng kém**
+  (macOS). Trong terminal, người sửa chữ không phải terminal mà là shell hay
+  chương trình ở đầu bên kia; byte tới đó bị mạng cắt và gộp tuỳ ý, nên mọi
+  thao tác thừa đều là thêm một chỗ để lệch nhịp với engine. Có hai thao tác
+  thừa như vậy:
+  - *Ký tự rỗng của "sửa lỗi gợi ý".* Tuỳ chọn này bật sẵn và gửi U+202F kèm một
+    backspace thừa trước **mỗi** lần bỏ dấu, ở mọi ứng dụng trừ Spotlight và
+    Chromium — kể cả terminal, nơi không có ô gợi ý nào để lách. Chỗ nào làm rơi
+    ký tự rỗng (iTerm2, xem OpenKey #95) thì backspace thừa ăn mất một chữ thật.
+    Nay terminal không nhận ký tự rỗng nữa, bất kể tuỳ chọn bật hay tắt.
+  - *Cả cụm chữ mới trong một event.* Terminal dựng trên xterm.js (Hyper, Tabby,
+    Termius) coi event nhiều ký tự mà không có composition là paste và bỏ đi,
+    trong khi các backspace trước nó vẫn tới shell. Dòng lệnh tụt lại sau engine
+    và từ đó mỗi lần sửa lại xoá nhầm chữ. Nay terminal nhận mỗi ký tự một event.
+
+  Nhận diện theo bundle id: Terminal, iTerm2, Warp, kitty, Alacritty, WezTerm,
+  Ghostty, Hyper, Tabby, Termius. Khi Spotlight đang mở phía trên terminal thì
+  phím vào Spotlight nên vẫn đi đường cũ. Ứng dụng khác không đổi gì. Terminal
+  trong VS Code **không** được nhận diện, vì bundle id không phân biệt được
+  editor với terminal. Logic chọn cách gửi phím nằm trong `OKTerminalTyping`,
+  có 12 unit test.
+
+  Không sửa được từ phía bộ gõ: chương trình ở remote đọc mỗi lần một chunk và
+  không xử lý backspace nằm lẫn trong chunk đó (các TUI dựng trên Ink, ví dụ
+  Claude Code bản cũ). Mạng kém khiến chunk bị gộp nhiều hơn, nên lỗi này nằm
+  ở chương trình đó chứ không ở LibreKey.
 
 ## 1.2.0 — 16/08/2026
 
