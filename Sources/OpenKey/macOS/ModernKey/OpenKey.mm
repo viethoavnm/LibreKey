@@ -14,6 +14,7 @@
 #import "OpenKeyManager.h"
 #import "OKAppExclusionList.h"
 #import "OKTerminalTyping.h"
+#import "OKSpotlightDetector.h"
 
 #define FRONT_APP [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier
 #define OTHER_CONTROL_KEY (_flag & kCGEventFlagMaskCommand) || (_flag & kCGEventFlagMaskControl) || \
@@ -108,10 +109,13 @@ extern "C" {
     bool _allowsAutocompleteWorkaround = true;
     bool _oneCharacterPerEvent = false;
 
+    void InvalidateSpotlightState();
+
     //Re-read on every app activation. The list is small and app switches happen
     //at human speed, so there is nothing to cache - and reading it fresh means
     //edits made in the panel take effect the moment the user switches away.
     void ReloadAppExclusionState() {
+        InvalidateSpotlightState();
         bool wasExcluded = _isFrontAppExcluded;
         NSArray* entries = [OKAppExclusionList entriesFromDefaults:[NSUserDefaults standardUserDefaults]];
         _isFrontAppExcluded = [OKAppExclusionList entries:entries containBundleId:FRONT_APP];
@@ -235,15 +239,28 @@ extern "C" {
         return false;
     }
 
+    //Reading the window list takes about half a millisecond and a correction
+    //asked up to three times. The answer is kept for two seconds, and dropped as
+    //soon as something that can open or close Spotlight happens - see
+    //InvalidateSpotlightState - so it is read about once per Spotlight session.
+    static OKSpotlightDetector* SpotlightCache() {
+        static OKSpotlightDetector* cache = [[OKSpotlightDetector alloc] initWithLifetime:2.0];
+        return cache;
+    }
+
+    void InvalidateSpotlightState() {
+        [SpotlightCache() invalidate];
+    }
+
     BOOL isSpotlightVisible() {
-        NSArray *windows = CFBridgingRelease(CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
-                                                                        kCGNullWindowID));
-        for (NSDictionary *window in windows) {
-            if ([[window objectForKey:(__bridge NSString *)kCGWindowOwnerName] isEqualToString:@"Spotlight"]) {
-                return true;
-            }
+        OKSpotlightDetector* cache = SpotlightCache();
+        NSTimeInterval now = [NSProcessInfo processInfo].systemUptime;
+        if (![cache hasAnswerAt:now]) {
+            NSArray *windows = CFBridgingRelease(CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
+                                                                            kCGNullWindowID));
+            [cache storeAnswer:[OKSpotlightDetector windowListShowsSpotlight:windows] at:now];
         }
-        return false;
+        return cache.answer;
     }
 
     //Called for every keystroke that sends a correction, not once per app
@@ -712,6 +729,12 @@ extern "C" {
         
         _flag = CGEventGetFlags(event);
         _keycode = (CGKeyCode)CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
+
+        //Cmd+Space, Esc, Return and clicks are how Spotlight opens and closes
+        if (type == kCGEventFlagsChanged || type == kCGEventLeftMouseDown || type == kCGEventRightMouseDown ||
+            (type == kCGEventKeyDown && (_keycode == KEY_ESC || _keycode == KEY_RETURN || _keycode == KEY_ENTER))) {
+            InvalidateSpotlightState();
+        }
         
         if (type == kCGEventKeyDown && vPerformLayoutCompat) {
             // If conversion fail, use current keycode
