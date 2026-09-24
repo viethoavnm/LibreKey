@@ -106,6 +106,7 @@ extern "C" {
 
     //How the correction being sent right now is posted. See RefreshTypingPlan.
     bool _allowsAutocompleteWorkaround = true;
+    bool _oneCharacterPerEvent = false;
 
     //Re-read on every app activation. The list is small and app switches happen
     //at human speed, so there is nothing to cache - and reading it fresh means
@@ -255,6 +256,7 @@ extern "C" {
                                                          spotlightVisible:spotlightVisible];
         OKTypingPlan* plan = [OKTerminalTyping planForTarget:target];
         _allowsAutocompleteWorkaround = plan.allowsAutocompleteWorkaround;
+        _oneCharacterPerEvent = plan.oneCharacterPerEvent;
     }
 
     BOOL shouldUseRecommendWorkaround(NSString* topApp) {
@@ -496,6 +498,27 @@ extern "C" {
         CFRelease(eventVkeyUp);
     }
     
+    //Terminals get one character per key event. A multi-character event does
+    //not look like typing to all of them: the xterm.js based ones (Hyper,
+    //Tabby, Termius...) take it for a paste and drop it, while the backspaces
+    //before it still land - from then on every correction deletes into text
+    //the engine never knew was there.
+    void PostUnicodeString(const Uint16* chars, const int& count) {
+        const int step = (_oneCharacterPerEvent && count > 1) ? 1 : count;
+        int start = 0;
+        do {
+            _newEventDown = CGEventCreateKeyboardEvent(myEventSource, 0, true);
+            _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
+            CGEventKeyboardSetUnicodeString(_newEventDown, step, chars + start);
+            CGEventKeyboardSetUnicodeString(_newEventUp, step, chars + start);
+            CGEventTapPostEvent(_proxy, _newEventDown);
+            CGEventTapPostEvent(_proxy, _newEventUp);
+            CFRelease(_newEventDown);
+            CFRelease(_newEventUp);
+            start += step;
+        } while (start < count);
+    }
+
     void SendNewCharString(const bool& dataFromMacro=false, const Uint16& offset=0) {
         _j = 0;
         _newCharSize = dataFromMacro ? pData->macroData.size() : pData->newCharCount;
@@ -569,14 +592,7 @@ extern "C" {
             startNewSession();
         }
         
-        _newEventDown = CGEventCreateKeyboardEvent(myEventSource, 0, true);
-        _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
-        CGEventKeyboardSetUnicodeString(_newEventDown, _willContinuteSending ? 16 : _newCharSize - offset, _newCharString);
-        CGEventKeyboardSetUnicodeString(_newEventUp, _willContinuteSending ? 16 : _newCharSize - offset, _newCharString);
-        CGEventTapPostEvent(_proxy, _newEventDown);
-        CGEventTapPostEvent(_proxy, _newEventUp);
-        CFRelease(_newEventDown);
-        CFRelease(_newEventUp);
+        PostUnicodeString(_newCharString, _willContinuteSending ? 16 : _newCharSize - offset);
 
         if (_willContinuteSending) {
             SendNewCharString(dataFromMacro, dataFromMacro ? _k : 16);
