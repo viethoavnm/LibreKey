@@ -1590,7 +1590,12 @@ void vKeyHandleEvent(const vKeyEvent& event,
                         hMacroKey.pop_back();
                     }
                 }
-                for (i = _index - hBPC; i < hNCC + (_index - hBPC); i++) {
+                //what the host writes is the last hNCC letters of the word - plus,
+                //on a restore, the key itself, which insertKey added after them.
+                //Counting from hBPC instead went wrong whenever the two differ:
+                //a lone w (0 back, 1 new) pushed a slot past the end of the word.
+                int written = hNCC + (hCode == vRestore ? 1 : 0);
+                for (i = _index - written < 0 ? 0 : _index - written; i < _index; i++) {
                     hMacroKey.push_back(TypingWord[i]);
                 }
             }
