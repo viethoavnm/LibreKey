@@ -50,9 +50,11 @@
 		AA0200000000000000000004 /* OKAppExclusionList.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000015 /* OKAppExclusionList.m */; };
 		AA0200000000000000000005 /* OKAppExclusionTableControllerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000013 /* OKAppExclusionTableControllerTests.m */; };
 		AA0200000000000000000006 /* OKAppExclusionTableController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000017 /* OKAppExclusionTableController.m */; };
+		AA0200000000000000000007 /* OKTerminalTyping.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000019 /* OKTerminalTyping.m */; };
 		AA0100000000000000000007 /* OKSingleInstanceLock.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000012 /* OKSingleInstanceLock.m */; };
 		AA0100000000000000000008 /* OKAppExclusionList.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000015 /* OKAppExclusionList.m */; };
 		AA0100000000000000000009 /* OKAppExclusionTableController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000017 /* OKAppExclusionTableController.m */; };
+		AA010000000000000000000A /* OKTerminalTyping.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000019 /* OKTerminalTyping.m */; };
 		AA0100000000000000000001 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 237559B52204156000FB8CB9 /* AppDelegate.m */; };
 		AA0100000000000000000002 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 237559BD2204156000FB8CB9 /* main.m */; };
 		AA0100000000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 237559B72204156000FB8CB9 /* Assets.xcassets */; };
@@ -162,6 +164,8 @@
 		AA0100000000000000000015 /* OKAppExclusionList.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKAppExclusionList.m; sourceTree = "<group>"; };
 		AA0100000000000000000016 /* OKAppExclusionTableController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKAppExclusionTableController.h; sourceTree = "<group>"; };
 		AA0100000000000000000017 /* OKAppExclusionTableController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKAppExclusionTableController.m; sourceTree = "<group>"; };
+		AA0100000000000000000018 /* OKTerminalTyping.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKTerminalTyping.h; sourceTree = "<group>"; };
+		AA0100000000000000000019 /* OKTerminalTyping.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKTerminalTyping.m; sourceTree = "<group>"; };
 		AA0100000000000000000010 /* LibreKeyHelper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LibreKeyHelper.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -267,6 +271,8 @@
 				AA0100000000000000000015 /* OKAppExclusionList.m */,
 				AA0100000000000000000016 /* OKAppExclusionTableController.h */,
 				AA0100000000000000000017 /* OKAppExclusionTableController.m */,
+				AA0100000000000000000018 /* OKTerminalTyping.h */,
+				AA0100000000000000000019 /* OKTerminalTyping.m */,
 			);
 			path = ModernKey;
 			sourceTree = "<group>";
@@ -498,6 +504,7 @@
 				AA0100000000000000000007 /* OKSingleInstanceLock.m in Sources */,
 				AA0100000000000000000008 /* OKAppExclusionList.m in Sources */,
 				AA0100000000000000000009 /* OKAppExclusionTableController.m in Sources */,
+				AA010000000000000000000A /* OKTerminalTyping.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -520,6 +527,7 @@
 				AA0200000000000000000004 /* OKAppExclusionList.m in Sources */,
 				AA0200000000000000000005 /* OKAppExclusionTableControllerTests.m in Sources */,
 				AA0200000000000000000006 /* OKAppExclusionTableController.m in Sources */,
+				AA0200000000000000000007 /* OKTerminalTyping.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
