@@ -241,6 +241,35 @@
     XCTAssertTyped("laksw", "laksw");
 }
 
+#pragma mark - Capitalising the first letter of a sentence (#285)
+
+- (NSString *)capitalising:(const char *)keys {
+    OKTypingSettings s;
+    s.upperCaseFirstChar = true;
+    return @(OKTypeKeys(keys, s).text.c_str());
+}
+
+- (void)testSentenceEndsCapitaliseTheNextWord {
+    XCTAssertEqualObjects([self capitalising:"abc. oo"], @"abc. Ô");
+    XCTAssertEqualObjects([self capitalising:"hi! oo"], @"hi! Ô");
+    XCTAssertEqualObjects([self capitalising:"hi? oo"], @"hi? Ô");
+}
+
+/// > is Shift + the dot key; it used to count as a full stop.
+- (void)testGreaterThanDoesNotCapitalise {
+    XCTAssertEqualObjects([self capitalising:"a> oo"], @"a> ô");
+}
+
+/// Backspacing over the space left the capital pending in the middle of text.
+- (void)testBackspaceDropsThePendingCapital {
+    XCTAssertEqualObjects([self capitalising:"abc. {BS}oo"], @"abc.ô");
+}
+
+/// A click elsewhere is a new place in the text: nothing pending carries over.
+- (void)testClickDropsThePendingCapital {
+    XCTAssertEqualObjects([self capitalising:"abc. {CLICK}oo"], @"abc. ô");
+}
+
 /// Backspacing within the letters the undo wrote keeps the undo.
 - (void)testUndoStaysWhileTheWordIsStillUndone {
     OKTypingSettings noSpelling;
