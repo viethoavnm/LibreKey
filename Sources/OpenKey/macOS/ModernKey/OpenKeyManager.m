@@ -64,9 +64,10 @@ static CFRunLoopSourceRef runLoopSource;
                  (1 << kCGEventKeyUp) |
                  (1 << kCGEventFlagsChanged) |
                  (1 << kCGEventLeftMouseDown) |
-                 (1 << kCGEventRightMouseDown) |
-                 (1 << kCGEventLeftMouseDragged) |
-                 (1 << kCGEventRightMouseDragged));
+                 (1 << kCGEventRightMouseDown));
+    //No drags: every drag starts with a mouse down, which already starts a new
+    //word, and tapping them sent each of the hundreds per second of a drag
+    //through the callback for nothing.
     
     eventTap = CGEventTapCreate(kCGSessionEventTap,
                                 kCGHeadInsertEventTap,
