@@ -62,6 +62,16 @@
     }
 }
 
+/// Undoing a circumflex on a vowel that already has a tone ("ầ" + a) handed the
+/// host the raw letter-with-tone, which is no key code: it became U+0000.
+- (void)testUndoingACircumflexUnderAToneSendsNoControlCharacter {
+    for (const char *keys : {"aafa", "oorfo", "arafat", "oroonoko"}) {
+        OKTypingResult r = OKTypeKeys(keys);
+        XCTAssertEqual(r.controlChars, 0, @"keys: %s gave %s", keys, r.text.c_str());
+    }
+    XCTAssertTyped("aafa", "àa");
+}
+
 - (void)testLoneWStillMakesUHorn {
     XCTAssertTyped("w", "ư");
     XCTAssertTyped("tw", "tư");
