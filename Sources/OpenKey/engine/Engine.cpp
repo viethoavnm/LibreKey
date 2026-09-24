@@ -1519,6 +1519,8 @@ void vKeyHandleEvent(const vKeyEvent& event,
                 }
                 if (vCheckSpelling)
                     checkSpelling();
+                else //an undo ("aaa") stops marking the word; with no spelling
+                    tempDisableKey = false; //check to decide, deleting ends it
             }
             if (vUseMacro && hMacroKey.size() > 0) {
                 hMacroKey.pop_back();
