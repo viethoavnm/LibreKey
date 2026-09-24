@@ -217,6 +217,13 @@ void vKeyHandleEvent(const vKeyEvent& event,
 void startNewSession();
 
 /**
+ * Forget everything typed so far - current word, previous words kept for
+ * backspacing into, macro key, pending restore and capitalisation state - as if
+ * the engine had just been created. Settings and the macro table are kept.
+ */
+void vKeyResetState();
+
+/**
  * do some task in english mode (use for macro)
  */
 void vEnglishMode(const vKeyEventState& state, const Uint16& data, const bool& isCaps, const bool& otherControlKey);
