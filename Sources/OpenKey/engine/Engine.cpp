@@ -466,6 +466,44 @@ void startNewSession() {
 }
 
 void vKeyResetState() {
+    //current word and its raw keys
+    _index = 0;
+    _stateIndex = 0;
+    memset(TypingWord, 0, sizeof(TypingWord));
+    memset(KeyStates, 0, sizeof(KeyStates));
+    _longWordHelper.clear();
+
+    //earlier words kept for backspacing into
+    _typingStates.clear();
+    _typingStatesData.clear();
+    _specialChar.clear();
+    _spaceCount = 0;
+
+    //per word flags
+    tempDisableKey = false;
+    isRestoredW = false;
+    isCheckedGrammar = false;
+    isChanged = false;
+    isCorect = false;
+    _isCaps = false;
+    _isCharKeyCode = false;
+    _hasHandledMacro = false;
+    _hasHandleQuickConsonant = false;
+    _willTempOffEngine = false;
+    _upperCaseStatus = 0;
+    _spellingOK = false;
+    _spellingFlag = false;
+    _spellingVowelOK = false;
+    _useSpellCheckingBefore = vCheckSpelling;
+
+    //what the host reads back
+    hCode = vDoNothing;
+    hBPC = 0;
+    hNCC = 0;
+    hExt = 0;
+    memset(hData, 0, sizeof(hData));
+    hMacroKey.clear();
+    hMacroData.clear();
 }
 
 void checkCorrectVowel(vector<vector<Uint16>>& charset, int& i, int& k, const Uint16& markKey) {
