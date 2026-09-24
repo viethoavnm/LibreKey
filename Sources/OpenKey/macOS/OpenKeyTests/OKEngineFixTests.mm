@@ -224,6 +224,23 @@
     XCTAssertTyped("Thuowr", "Thuở");
 }
 
+#pragma mark - Place names ending in k (#134)
+
+/// With spelling off, a final k after a or e takes marks and đ like any
+/// other final: Đắk Lắk typed with the marks at the end.
+- (void)testFinalKTakesMarksWithSpellingOff {
+    OKTypingSettings noSpelling;
+    noSpelling.spelling = false;
+    XCTAssertEqualObjects(@(OKTypeKeys("dakdws", noSpelling).text.c_str()), @"đắk");
+    XCTAssertEqualObjects(@(OKTypeKeys("laksw", noSpelling).text.c_str()), @"lắk");
+    XCTAssertEqualObjects(@(OKTypeKeys("ddawsk", noSpelling).text.c_str()), @"đắk");
+}
+
+/// With spelling on, k is still not a Vietnamese final.
+- (void)testFinalKStillRefusedWithSpellingOn {
+    XCTAssertTyped("laksw", "laksw");
+}
+
 /// Backspacing within the letters the undo wrote keeps the undo.
 - (void)testUndoStaysWhileTheWordIsStillUndone {
     OKTypingSettings noSpelling;
