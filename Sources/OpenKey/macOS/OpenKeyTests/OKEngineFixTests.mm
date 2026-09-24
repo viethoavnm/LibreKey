@@ -166,12 +166,21 @@
 
 #pragma mark - A second w undoes a horn on the second vowel (#216)
 
-/// oa, io and th/q + uo put the horn or breve on the second vowel. A second
-/// w put it on again, so the word stuck at "hoă" and w could not be typed.
+/// oa, io and qu + o put the horn or breve on the second vowel. A second w
+/// put it on again, so the word stuck at "hoă" and w could not be typed.
 - (void)testSecondWUndoesAHornOnTheSecondVowel {
     XCTAssertTyped("hoaww", "hoaw");
     XCTAssertTyped("tioww", "tiow");
-    XCTAssertTyped("thuoww", "thuow");
+    XCTAssertTyped("quoww", "quow");
+}
+
+/// After th the first w horns only the o ("thuơ"). The second one horns the u
+/// as well, as UniKey does - "thươ" is on the way to "thương" - and a third
+/// one undoes.
+- (void)testThUoCyclesThroughBothHornsBeforeUndoing {
+    XCTAssertTyped("thuoww", "thươ");
+    XCTAssertTyped("thuowwng", "thương");
+    XCTAssertTyped("thuowww", "thuow");
 }
 
 - (void)testSecondWUndoesWithSpellingOff {
