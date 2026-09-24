@@ -5,6 +5,26 @@
 
 #import "OKTerminalTyping.h"
 
+//Lowercase. Each one also covers ids hanging off it after a dot or a dash, so
+//the release channels (Warp-Preview, ghostty.debug, ...) come along.
+static NSArray<NSString*>* TerminalBundleIds(void) {
+    static NSArray<NSString*>* ids;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        ids = @[@"com.apple.terminal",
+                @"com.googlecode.iterm2",
+                @"dev.warp.warp",
+                @"net.kovidgoyal.kitty",
+                @"org.alacritty",
+                @"com.github.wez.wezterm",
+                @"com.mitchellh.ghostty",
+                @"co.zeit.hyper",
+                @"org.tabby",
+                @"com.termius"];
+    });
+    return ids;
+}
+
 @implementation OKTypingTarget
 
 - (instancetype)initWithBundleId:(nullable NSString*)bundleId
@@ -36,6 +56,20 @@
 @implementation OKTerminalTyping
 
 + (BOOL)isTerminalBundleId:(nullable NSString*)bundleId {
+    if (bundleId.length == 0)
+        return NO;
+
+    NSString* lowered = bundleId.lowercaseString;
+    for (NSString* known in TerminalBundleIds()) {
+        if (![lowered hasPrefix:known])
+            continue;
+        //A bare prefix would also take org.tabbyml.* for org.tabby.
+        if (lowered.length == known.length)
+            return YES;
+        unichar next = [lowered characterAtIndex:known.length];
+        if (next == '.' || next == '-')
+            return YES;
+    }
     return NO;
 }
 
