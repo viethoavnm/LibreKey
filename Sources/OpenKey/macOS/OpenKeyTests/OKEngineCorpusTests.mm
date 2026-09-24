@@ -18,7 +18,7 @@
 #include "OKEngineCorpus.h"
 
 //Last measured counts. Raise them as fixes land.
-static const int kUniKeyTablePassing = 1264;       //of 1,307
+static const int kUniKeyTablePassing = 1287;       //of 1,307
 static const int kTelexPairsPassing = 30259;       //of 30,337
 static const int kEnglishPassing = 91712;          //of 97,592
 static const int kEnglishOverDeleteRows = 0;

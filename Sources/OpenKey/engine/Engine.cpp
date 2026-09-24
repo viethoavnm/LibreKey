@@ -964,9 +964,13 @@ void insertW(const Uint16& data, const bool& isCaps) {
             tempDisableKey = true;
         } else {
             hCode = vWillProcess;
+            Uint32 firstBefore = TypingWord[VSI], secondBefore = TypingWord[VSI+1];
             
             if ((CHR(VSI) == KEY_U && CHR(VSI+1) == KEY_O)) {
                 if (VSI - 2 >= 0 && TypingWord[VSI - 2] == KEY_T && TypingWord[VSI - 1] == KEY_H) {
+                    if ((TypingWord[VSI+1] & TONEW_MASK) && !(TypingWord[VSI] & TONEW_MASK)) {
+                        TypingWord[VSI] |= TONEW_MASK; //second w: thuơ -> thươ
+                    }
                     TypingWord[VSI+1] |= TONEW_MASK;
                     if (VSI + 2 < _index && CHR(VSI+2) == KEY_N) {
                         TypingWord[VSI] |= TONEW_MASK;
@@ -990,6 +994,20 @@ void insertW(const Uint16& data, const bool& isCaps) {
                 tempDisableKey = true;
                 isChanged = false;
                 hCode = vDoNothing;
+            }
+            
+            //the horn is already where this w would put it - oa, io and th/q + uo
+            //carry it on the second vowel, which the undo test above misses -
+            //so this is a second w: undo, as for a horn on the first vowel
+            if (hCode == vWillProcess && TypingWord[VSI] == firstBefore && TypingWord[VSI+1] == secondBefore) {
+                hCode = vRestore;
+                for (ii = VSI; ii < _index; ii++) {
+                    TypingWord[ii] &= ~TONEW_MASK;
+                    hData[_index - 1 - ii] = GET(TypingWord[ii]) & ~STANDALONE_MASK;
+                }
+                isRestoredW = true;
+                tempDisableKey = true;
+                return;
             }
             
             for (ii = VSI; ii < _index; ii++) {
