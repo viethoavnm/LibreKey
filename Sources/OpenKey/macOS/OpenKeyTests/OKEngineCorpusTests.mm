@@ -20,9 +20,9 @@
 //Last measured counts. Raise them as fixes land.
 static const int kUniKeyTablePassing = 1264;       //of 1,307
 static const int kTelexPairsPassing = 30259;       //of 30,337
-static const int kEnglishPassing = 91669;          //of 97,592
+static const int kEnglishPassing = 91711;          //of 97,592
 static const int kEnglishOverDeleteRows = 1;       //known bugs, to reach 0
-static const int kEnglishControlCharRows = 68;
+static const int kEnglishControlCharRows = 2;
 
 @interface OKEngineCorpusTests : XCTestCase
 @end

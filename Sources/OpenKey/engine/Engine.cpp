@@ -881,8 +881,13 @@ void insertAOE(const Uint16& data, const bool& isCaps) {
     //remove W tone
     for (ii = VSI; ii <= VEI; ii++) {
         TypingWord[ii] &= ~TONEW_MASK;
+        //an ư typed as a lone w is only a u because of its horn: without it,
+        //it is the letter w again (a "standalone u" is no character at all)
+        if ((TypingWord[ii] & STANDALONE_MASK) && CHR(ii) == KEY_U) {
+            TypingWord[ii] = KEY_W | ((TypingWord[ii] & CAPS_MASK) ? CAPS_MASK : 0);
+        }
     }
-    
+
     hCode = vWillProcess;
     hBPC = 0;
     
