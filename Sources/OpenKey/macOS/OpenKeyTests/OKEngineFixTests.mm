@@ -43,4 +43,28 @@
     XCTAssertTyped("dduowcj ", "được ");
 }
 
+#pragma mark - A lone w that loses its horn is a w again
+
+/// "ee" takes the horn off every vowel of the word, including an ư the w typed
+/// on its own. That left a "standalone u" the host turned into U+0000.
+- (void)testLoneWThatLosesItsHornSendsNoControlCharacter {
+    for (const char *keys : {"were", "weeps", "woof", "sweet", "khwaja"}) {
+        OKTypingResult r = OKTypeKeys(keys);
+        XCTAssertEqual(r.controlChars, 0, @"keys: %s gave %s", keys, r.text.c_str());
+    }
+}
+
+- (void)testEnglishWordsWithALoneWComeBackOnRestore {
+    OKTypingSettings restore;
+    restore.restoreIfWrongSpelling = true;
+    for (const char *word : {"were ", "sweet ", "woof ", "weekend "}) {
+        XCTAssertEqualObjects(@(OKTypeKeys(word, restore).text.c_str()), @(word));
+    }
+}
+
+- (void)testLoneWStillMakesUHorn {
+    XCTAssertTyped("w", "ư");
+    XCTAssertTyped("tw", "tư");
+}
+
 @end
