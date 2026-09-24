@@ -74,7 +74,9 @@ static NSArray<NSString*>* TerminalBundleIds(void) {
 }
 
 + (OKTypingPlan*)planForTarget:(OKTypingTarget*)target {
-    return [[OKTypingPlan alloc] initWithAllowsAutocompleteWorkaround:YES oneCharacterPerEvent:NO];
+    BOOL terminal = !target.spotlightVisible && [self isTerminalBundleId:target.bundleId];
+    return [[OKTypingPlan alloc] initWithAllowsAutocompleteWorkaround:!terminal
+                                                 oneCharacterPerEvent:terminal];
 }
 
 @end
