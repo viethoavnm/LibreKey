@@ -108,4 +108,18 @@
     XCTAssertEqualObjects(@([self type:"ddc " macro:"đc" content:"được"].text.c_str()), @"được ");
 }
 
+#pragma mark - Backspacing into a word brings its macro key back (#242)
+
+/// "char" is "chả" in Telex. Backspacing over the space and the ả leaves "ch";
+/// the macro key was left empty, so typing r made it "r" and fired r -> rồi
+/// in the middle of the word.
+- (void)testMacroDoesNotFireInsideAWordBackspacedInto {
+    XCTAssertEqualObjects(@([self type:"char {BS}{BS}r " macro:"r" content:"rồi"].text.c_str()), @"chr ");
+}
+
+/// The word backspaced into is the macro key again.
+- (void)testMacroFiresOnAWordBackspacedInto {
+    XCTAssertEqualObjects(@([self type:"k {BS}o " macro:"ko" content:"không"].text.c_str()), @"không ");
+}
+
 @end
