@@ -65,4 +65,47 @@
     XCTAssertFalse([OKTerminalTyping isTerminalBundleId:@"com.microsoft.VSCode"]);
 }
 
+#pragma mark - planForTarget
+
+- (OKTypingPlan *)planForBundleId:(NSString *)bundleId spotlightVisible:(BOOL)spotlightVisible {
+    OKTypingTarget *target = [[OKTypingTarget alloc] initWithBundleId:bundleId
+                                                     spotlightVisible:spotlightVisible];
+    return [OKTerminalTyping planForTarget:target];
+}
+
+/// Everything outside a terminal must keep posting exactly as before.
+- (void)testRegularAppKeepsTodaysPlan {
+    OKTypingPlan *plan = [self planForBundleId:@"com.apple.TextEdit" spotlightVisible:NO];
+    XCTAssertTrue(plan.allowsAutocompleteWorkaround);
+    XCTAssertFalse(plan.oneCharacterPerEvent);
+}
+
+- (void)testUnknownAppKeepsTodaysPlan {
+    OKTypingPlan *plan = [self planForBundleId:nil spotlightVisible:NO];
+    XCTAssertTrue(plan.allowsAutocompleteWorkaround);
+    XCTAssertFalse(plan.oneCharacterPerEvent);
+}
+
+/// A terminal has no autocomplete to defeat, and the empty character is one
+/// more thing the far end has to receive, draw and erase in step.
+- (void)testTerminalSkipsTheAutocompleteWorkaround {
+    OKTypingPlan *plan = [self planForBundleId:@"com.googlecode.iterm2" spotlightVisible:NO];
+    XCTAssertFalse(plan.allowsAutocompleteWorkaround);
+}
+
+/// Some terminals take a multi-character key event for a paste and drop it,
+/// while the backspaces before it still land.
+- (void)testTerminalGetsOneCharacterPerEvent {
+    OKTypingPlan *plan = [self planForBundleId:@"com.apple.Terminal" spotlightVisible:NO];
+    XCTAssertTrue(plan.oneCharacterPerEvent);
+}
+
+/// Spotlight over a terminal gets the keys, not the terminal, so the terminal
+/// rules must not apply.
+- (void)testSpotlightOverATerminalKeepsTodaysPlan {
+    OKTypingPlan *plan = [self planForBundleId:@"com.apple.Terminal" spotlightVisible:YES];
+    XCTAssertTrue(plan.allowsAutocompleteWorkaround);
+    XCTAssertFalse(plan.oneCharacterPerEvent);
+}
+
 @end
