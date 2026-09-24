@@ -13,6 +13,7 @@
 #import "ViewController.h"
 #import "OpenKeyManager.h"
 #import "OKAppExclusionList.h"
+#import "OKTerminalTyping.h"
 
 #define FRONT_APP [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier
 #define OTHER_CONTROL_KEY (_flag & kCGEventFlagMaskCommand) || (_flag & kCGEventFlagMaskControl) || \
@@ -102,6 +103,9 @@ extern "C" {
     //Whether the app in front is on the user's exclusion list. Read on every
     //keystroke, so it is answered once per app switch instead.
     bool _isFrontAppExcluded = false;
+
+    //How the correction being sent right now is posted. See RefreshTypingPlan.
+    bool _allowsAutocompleteWorkaround = true;
 
     //Re-read on every app activation. The list is small and app switches happen
     //at human speed, so there is nothing to cache - and reading it fresh means
@@ -241,8 +245,25 @@ extern "C" {
         return false;
     }
 
+    //Called for every keystroke that sends a correction, not once per app
+    //switch: Spotlight comes and goes without the front app changing.
+    void RefreshTypingPlan() {
+        NSString* frontApp = FRONT_APP;
+        //Walking the window list costs, and only a terminal needs the answer.
+        BOOL spotlightVisible = [OKTerminalTyping isTerminalBundleId:frontApp] && isSpotlightVisible();
+        OKTypingTarget* target = [[OKTypingTarget alloc] initWithBundleId:frontApp
+                                                         spotlightVisible:spotlightVisible];
+        OKTypingPlan* plan = [OKTerminalTyping planForTarget:target];
+        _allowsAutocompleteWorkaround = plan.allowsAutocompleteWorkaround;
+    }
+
     BOOL shouldUseRecommendWorkaround(NSString* topApp) {
         if (!vFixRecommendBrowser) return false;
+        //A terminal has no autocomplete to defeat. The empty character is just
+        //one more thing the far end of an SSH link has to receive, draw and
+        //erase in step - and when it gets dropped, the extra backspace eats a
+        //real letter.
+        if (!_allowsAutocompleteWorkaround) return false;
         if (isSpotlightVisible()) return false;
         if (topApp == nil) return true;
         return ![_recommendWorkaroundDisabledApp containsObject:topApp];
@@ -597,6 +618,8 @@ extern "C" {
     }
     
     void handleMacro() {
+        RefreshTypingPlan();
+
         //fix autocomplete
         if (shouldUseRecommendWorkaround(FRONT_APP)) {
             SendEmptyCharacter();
@@ -808,7 +831,8 @@ extern "C" {
                 }
                 return event;
             } else if (pData->code == vWillProcess || pData->code == vRestore || pData->code == vRestoreAndStartNewSession) { //handle result signal
-                
+                RefreshTypingPlan();
+
                 //fix autocomplete
                 if (shouldUseRecommendWorkaround(FRONT_APP) && pData->extCode != 4) {
                     if (isChromiumBrowserApp(FRONT_APP)) {
