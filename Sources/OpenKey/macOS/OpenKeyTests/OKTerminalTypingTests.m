@@ -65,6 +65,52 @@
     XCTAssertFalse([OKTerminalTyping isTerminalBundleId:@"com.microsoft.VSCode"]);
 }
 
+#pragma mark - code editor terminal panels
+
+- (void)testCodeEditorsWithATerminalPanel {
+    for (NSString *bundleId in @[@"com.microsoft.VSCode", @"com.microsoft.VSCodeInsiders", @"com.vscodium",
+                                 @"com.todesktop.230313mzl4w4u92", @"com.exafunction.windsurf"]) {
+        XCTAssertTrue([OKTerminalTyping isCodeEditorBundleId:bundleId], @"%@", bundleId);
+    }
+}
+
+- (void)testOtherAppsAreNotCodeEditors {
+    XCTAssertFalse([OKTerminalTyping isCodeEditorBundleId:@"com.apple.TextEdit"]);
+    XCTAssertFalse([OKTerminalTyping isCodeEditorBundleId:@"com.apple.Terminal"]);
+    XCTAssertFalse([OKTerminalTyping isCodeEditorBundleId:nil]);
+}
+
+/// xterm.js labels its input "Terminal 1, zsh ..." (localised builds keep it).
+- (void)testTerminalPanelDescription {
+    XCTAssertTrue([OKTerminalTyping isIntegratedTerminalDescription:@"Terminal 1, zsh Run the command: Toggle Screen Reader Accessibility Mode"]);
+    XCTAssertTrue([OKTerminalTyping isIntegratedTerminalDescription:@"terminal 2, bash"]);
+}
+
+- (void)testEditorDescriptionsAreNotTheTerminal {
+    XCTAssertFalse([OKTerminalTyping isIntegratedTerminalDescription:@"Editor content"]);
+    XCTAssertFalse([OKTerminalTyping isIntegratedTerminalDescription:@"The editor is not accessible at this time."]);
+    XCTAssertFalse([OKTerminalTyping isIntegratedTerminalDescription:@"Terminals"]);
+    XCTAssertFalse([OKTerminalTyping isIntegratedTerminalDescription:@""]);
+    XCTAssertFalse([OKTerminalTyping isIntegratedTerminalDescription:nil]);
+}
+
+- (void)testTerminalPanelGetsTheTerminalPlan {
+    OKTypingTarget *panel = [[OKTypingTarget alloc] initWithBundleId:@"com.microsoft.VSCode"
+                                                    spotlightVisible:NO
+                                                  integratedTerminal:YES];
+    OKTypingPlan *plan = [OKTerminalTyping planForTarget:panel];
+    XCTAssertFalse(plan.allowsAutocompleteWorkaround);
+    XCTAssertTrue(plan.oneCharacterPerEvent);
+    XCTAssertTrue(plan.syntheticLockstep);
+}
+
+- (void)testEditorPaneKeepsTheRegularPlan {
+    OKTypingTarget *editor = [[OKTypingTarget alloc] initWithBundleId:@"com.microsoft.VSCode"
+                                                     spotlightVisible:NO
+                                                   integratedTerminal:NO];
+    XCTAssertTrue([OKTerminalTyping planForTarget:editor].allowsAutocompleteWorkaround);
+}
+
 #pragma mark - planForTarget
 
 - (OKTypingPlan *)planForBundleId:(NSString *)bundleId spotlightVisible:(BOOL)spotlightVisible {
