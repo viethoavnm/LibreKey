@@ -19,6 +19,7 @@
 #import "OKEventStamper.h"
 #import "OKLockstep.h"
 #import "OKCompoundDeletion.h"
+#import "OKAutocompleteGuard.h"
 
 #define FRONT_APP [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier
 #define OTHER_CONTROL_KEY (_flag & kCGEventFlagMaskCommand) || (_flag & kCGEventFlagMaskControl) || \
@@ -285,39 +286,99 @@ extern "C" {
         return cache;
     }
 
-    //Whether the focused element is a code editor's terminal panel. Asking is
-    //an Accessibility round trip to the editor, so the answer is cached like
-    //Spotlight's and dropped on the same events (Ctrl+` toggles the panel).
-    static NSTimeInterval _terminalPanelCheckedAt = -1;
-    static BOOL _terminalPanelFocused = NO;
+    //The focused element and what was read from it. Asking is an Accessibility
+    //round trip to the app, so it is kept like the Spotlight answer and dropped
+    //on the same events - the ones that move focus (Ctrl+` for a terminal
+    //panel, Tab, a click).
+    static AXUIElementRef _focusedElement = NULL;
+    static NSString* _focusedRole = nil;
+    static NSString* _focusedDescription = nil;
+    static BOOL _focusedSelectionMute = NO;     //the app timed out on the selection
+    static NSTimeInterval _focusedCheckedAt = -1;
 
-    BOOL FocusedElementIsTerminalPanel() {
+    static void ForgetFocusedElement() {
+        if (_focusedElement)
+            CFRelease(_focusedElement);
+        _focusedElement = NULL;
+        _focusedRole = nil;
+        _focusedDescription = nil;
+        _focusedSelectionMute = NO;
+        _focusedCheckedAt = -1;
+    }
+
+    static NSString* CopyStringAttribute(AXUIElementRef element, CFStringRef attribute) {
+        CFTypeRef value = NULL;
+        NSString* result = nil;
+        if (AXUIElementCopyAttributeValue(element, attribute, &value) == kAXErrorSuccess && value) {
+            if (CFGetTypeID(value) == CFStringGetTypeID())
+                result = [(__bridge NSString*)value copy];
+            CFRelease(value);
+        }
+        return result;
+    }
+
+    static void RefreshFocusedElement() {
         NSTimeInterval now = [NSProcessInfo processInfo].systemUptime;
-        if (_terminalPanelCheckedAt >= 0 && now >= _terminalPanelCheckedAt && now - _terminalPanelCheckedAt < 2.0)
-            return _terminalPanelFocused;
+        if (_focusedCheckedAt >= 0 && now >= _focusedCheckedAt && now - _focusedCheckedAt < 2.0)
+            return;
+        ForgetFocusedElement();
+        _focusedCheckedAt = now;
 
-        _terminalPanelFocused = NO;
         AXUIElementRef systemWide = AXUIElementCreateSystemWide();
-        //a hung editor must not hold the tap callback until macOS disables it
+        //a hung app must not hold the tap callback until macOS disables it
         AXUIElementSetMessagingTimeout(systemWide, 0.1);
         CFTypeRef focused = NULL;
         if (AXUIElementCopyAttributeValue(systemWide, kAXFocusedUIElementAttribute, &focused) == kAXErrorSuccess && focused) {
-            CFTypeRef description = NULL;
-            if (AXUIElementCopyAttributeValue((AXUIElementRef)focused, kAXDescriptionAttribute, &description) == kAXErrorSuccess && description) {
-                if (CFGetTypeID(description) == CFStringGetTypeID())
-                    _terminalPanelFocused = [OKTerminalTyping isIntegratedTerminalDescription:(__bridge NSString*)description];
-                CFRelease(description);
+            if (CFGetTypeID(focused) == AXUIElementGetTypeID()) {
+                _focusedElement = (AXUIElementRef)focused;
+                AXUIElementSetMessagingTimeout(_focusedElement, 0.05);
+                _focusedRole = CopyStringAttribute(_focusedElement, kAXRoleAttribute);
+                _focusedDescription = CopyStringAttribute(_focusedElement, kAXDescriptionAttribute);
+            } else {
+                CFRelease(focused);
             }
-            CFRelease(focused);
         }
         CFRelease(systemWide);
-        _terminalPanelCheckedAt = now;
-        return _terminalPanelFocused;
+    }
+
+    //Whether the focused element is a code editor's terminal panel.
+    BOOL FocusedElementIsTerminalPanel() {
+        RefreshFocusedElement();
+        return [OKTerminalTyping isIntegratedTerminalDescription:_focusedDescription];
+    }
+
+    //Whether this correction needs the empty character in front, the fix
+    //autocomplete setting allowing it. The selection is read fresh: it changes
+    //with every key.
+    BOOL EmptyCharacterNeeded() {
+        RefreshFocusedElement();
+        BOOL known = NO;
+        NSUInteger length = 0;
+        if ([OKAutocompleteGuard shouldAskSelectionForRole:_focusedRole] && _focusedElement && !_focusedSelectionMute) {
+            CFTypeRef value = NULL;
+            AXError error = AXUIElementCopyAttributeValue(_focusedElement, kAXSelectedTextRangeAttribute, &value);
+            if (error == kAXErrorSuccess && value) {
+                CFRange range;
+                if (CFGetTypeID(value) == AXValueGetTypeID() &&
+                    AXValueGetValue((AXValueRef)value, (AXValueType)kAXValueCFRangeType, &range)) {
+                    known = YES;
+                    length = range.length > 0 ? (NSUInteger)range.length : 0;
+                }
+                CFRelease(value);
+            } else if (error == kAXErrorCannotComplete) {
+                //do not wait on it again for every key
+                _focusedSelectionMute = YES;
+            }
+        }
+        OKFocusedField* field = [[OKFocusedField alloc] initWithRole:_focusedRole
+                                                      selectionKnown:known
+                                                     selectionLength:length];
+        return [OKAutocompleteGuard needsEmptyCharacterForField:field];
     }
 
     void InvalidateFocusState() {
         [SpotlightCache() invalidate];
-        _terminalPanelCheckedAt = -1;
+        ForgetFocusedElement();
     }
 
     BOOL isSpotlightVisible() {
@@ -749,7 +810,7 @@ extern "C" {
         RefreshTypingPlan();
 
         //fix autocomplete
-        if (shouldUseRecommendWorkaround(FRONT_APP)) {
+        if (shouldUseRecommendWorkaround(FRONT_APP) && EmptyCharacterNeeded()) {
             SendEmptyCharacter();
             pData->backspaceCount++;
         }
@@ -825,9 +886,10 @@ extern "C" {
         _keycode = (CGKeyCode)CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
 
         //Cmd+Space, Esc, Return and clicks are how Spotlight opens and closes,
-        //and how focus moves between an editor and its terminal panel
+        //and how focus moves between fields or an editor and its terminal panel
         if (type == kCGEventFlagsChanged || type == kCGEventLeftMouseDown || type == kCGEventRightMouseDown ||
-            (type == kCGEventKeyDown && (_keycode == KEY_ESC || _keycode == KEY_RETURN || _keycode == KEY_ENTER))) {
+            (type == kCGEventKeyDown && (_keycode == KEY_ESC || _keycode == KEY_RETURN || _keycode == KEY_ENTER ||
+                                         _keycode == KEY_TAB))) {
             InvalidateFocusState();
         }
         
@@ -980,10 +1042,9 @@ extern "C" {
                                 PostBackspace();
                             }
                         }
-                    } else {
+                    } else if (EmptyCharacterNeeded()) {
                         SendEmptyCharacter();
                         pData->backspaceCount++;
-                    
                     }
                 }
 
