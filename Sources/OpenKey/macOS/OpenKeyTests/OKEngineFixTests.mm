@@ -301,4 +301,13 @@
     XCTAssertEqualObjects(@(OKTypeKeys("aasb{BS} {BS}{BS}", vni).text.c_str()), @"");
 }
 
+/// Outside Cocoa a backspace takes one code point, so a compound letter (â +
+/// U+0301) needs the host to send one more after the user's (#182).
+- (void)testBackspaceTakesACompoundLetterWhole {
+    OKTypingSettings compound;
+    compound.codeTable = 3;
+    XCTAssertEqualObjects(@(OKTypeKeys("aasb{BS}{BS}", compound).text.c_str()), @"");
+    XCTAssertEqualObjects(@(OKTypeKeys("aasb{BS} {BS}{BS}", compound).text.c_str()), @"");
+}
+
 @end

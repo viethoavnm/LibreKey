@@ -70,7 +70,8 @@ std::vector<Key> parseScript(const std::string& script) {
 
 //The text field plus the part of OpenKey.mm that turns the engine's answer
 //into events. Kept line for line with the host so the tests exercise what
-//users get.
+//users get. The field deletes one code unit per backspace, so for
+//OKCompoundDeletion it is an app outside Cocoa: a two-unit letter takes two.
 struct Host {
     vKeyHookState* pData;
     const OKTypingSettings& settings;
@@ -204,7 +205,7 @@ struct Host {
                 if (pData->extCode == 1) syncKey.clear();
                 else if (pData->extCode == 2) {
                     if (!syncKey.empty()) {
-                        if (syncKey.back() > 1 && vCodeTable == 2) appBackspace();
+                        if (syncKey.back() > 1) appBackspace();
                         syncKey.pop_back();
                     }
                 } else if (pData->extCode == 3) insertKeyLength(1);
