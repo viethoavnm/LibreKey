@@ -91,6 +91,10 @@ vector<Uint32> _typingStatesData;
  */
 static Uint32 KeyStates[MAX_BUFF];
 static Byte _stateIndex = 0;
+//Every key typed for the word, as KeyStates, but keeping the key an undo
+//swallows ("ff", "ss"): KeyStates drops it with the mark it undid.
+static Uint32 RawKeys[MAX_BUFF];
+static Byte _rawIndex = 0;
 
 static bool tempDisableKey = false;
 static int capsElem;
@@ -141,6 +145,7 @@ string wideStringToUtf8(const wstring& str) {
 void* vKeyInit() {
     _index = 0;
     _stateIndex = 0;
+    _rawIndex = 0;
     _useSpellCheckingBefore = vCheckSpelling;
     _typingStatesData.clear();
     _typingStates.clear();
@@ -383,6 +388,12 @@ void insertState(const Uint16& keyCode, const bool& isCaps) {
     } else {
         KeyStates[_stateIndex++] = keyCode | (isCaps ? CAPS_MASK : 0);
     }
+    if (_rawIndex >= MAX_BUFF) {
+        memmove(RawKeys, RawKeys + 1, (MAX_BUFF - 1) * sizeof(Uint32));
+        RawKeys[MAX_BUFF - 1] = keyCode | (isCaps ? CAPS_MASK : 0);
+    } else {
+        RawKeys[_rawIndex++] = keyCode | (isCaps ? CAPS_MASK : 0);
+    }
 }
 
 void saveWord() {
@@ -473,6 +484,7 @@ void startNewSession() {
     hNCC = 0;
     tempDisableKey = false;
     _stateIndex = 0;
+    _rawIndex = 0;
     _hasHandledMacro = false;
     _hasHandleQuickConsonant = false;
     _longWordHelper.clear();
@@ -482,6 +494,7 @@ void vKeyResetState() {
     //current word and its raw keys
     _index = 0;
     _stateIndex = 0;
+    _rawIndex = 0;
     memset(TypingWord, 0, sizeof(TypingWord));
     memset(KeyStates, 0, sizeof(KeyStates));
     _longWordHelper.clear();
@@ -1438,11 +1451,34 @@ void handleQuickTelex(const Uint16& data, const bool& isCaps) {
     insertKey(_quickTelex[data][1], isCaps, false);
 }
 
+//Whether a key typed for the word is missing from it: a doubled key (ff, ss,
+//rr) undid the mark and was swallowed with it. RawKeys must hold the word's
+//letters in order, or it is the log of some other word.
+static bool keysSwallowedInWord() {
+    if (_index == 0 || _rawIndex <= _stateIndex || (Uint16)RawKeys[0] != CHR(0))
+        return false;
+    int key = 0;
+    for (int letter = 0; letter < _index; letter++) {
+        while (key < _rawIndex && (Uint16)RawKeys[key] != CHR(letter))
+            key++;
+        if (key == _rawIndex)
+            return false;
+        key++;
+    }
+    return true;
+}
+
 bool checkRestoreIfWrongSpelling(const int& handleCode) {
+    //what is on screen differs from the keys either by a mark or by a swallowed key
+    bool swallowed = keysSwallowedInWord();
     for (ii = 0; ii < _index; ii++) {
-        if (!IS_CONSONANT(CHR(ii)) &&
-            (TypingWord[ii] & MARK_MASK || TypingWord[ii] & TONE_MASK || TypingWord[ii] & TONEW_MASK)) {
-            
+        if (swallowed || (!IS_CONSONANT(CHR(ii)) &&
+            (TypingWord[ii] & MARK_MASK || TypingWord[ii] & TONE_MASK || TypingWord[ii] & TONEW_MASK))) {
+            //the keys as typed: with the swallowed ones when there are any
+            if (swallowed) {
+                memcpy(KeyStates, RawKeys, _rawIndex * sizeof(Uint32));
+                _stateIndex = _rawIndex;
+            }
             hCode = handleCode;
             hBPC = _index;
             hNCC = _stateIndex;
@@ -1681,6 +1717,9 @@ static void handleKeyEvent(const vKeyEvent& event,
             if (_stateIndex > 0) {
                 _stateIndex--;
             }
+            if (_rawIndex > 0) {
+                _rawIndex--;
+            }
             if (_index > 0){
                 _index--;
                 if (_longWordHelper.size() > 0) {
@@ -1802,6 +1841,7 @@ static void handleKeyEvent(const vKeyEvent& event,
             _index = 0;
             tempDisableKey = false;
             _stateIndex = 0;
+            _rawIndex = 0;
             hExt = 3;
             _specialChar.push_back(data | (_isCaps ? CAPS_MASK : 0));
         }
