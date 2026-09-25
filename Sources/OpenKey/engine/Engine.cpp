@@ -570,6 +570,10 @@ vOutputCheckOut vCheckOutput(const vOutputCheckIn& in) {
     return out;
 }
 
+int vKeyCharsOnScreen() {
+    return 0;
+}
+
 void checkCorrectVowel(vector<vector<Uint16>>& charset, int& i, int& k, const Uint16& markKey) {
     //ignore "qu" case
     if (_index >= 2 && CHR(_index-1) == KEY_U && CHR(_index-2) == KEY_Q) {

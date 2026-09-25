@@ -262,6 +262,7 @@ OKTypingResult OKTypeKeys(const std::string& keys,
     host.guard = host.screen.size();
     host.result = OKTypingResult();
     host.type(keys);
+    host.result.charsOnScreen = vKeyCharsOnScreen();
 
     for (const auto& macro : settings.macros)
         deleteMacro(macro.first);

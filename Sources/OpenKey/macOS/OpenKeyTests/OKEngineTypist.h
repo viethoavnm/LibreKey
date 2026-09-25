@@ -43,6 +43,7 @@ struct OKTypingResult {
     int controlChars = 0;           //characters below U+0020 the host was told to insert
     int synthBackspaces = 0;        //backspaces the host sent on its own
     int synthChars = 0;             //characters the host inserted on its own
+    int charsOnScreen = 0;          //vKeyCharsOnScreen() after the last key
 };
 
 //Types `keys` after `prefix` (whose text must survive: deleting into it counts

@@ -243,6 +243,14 @@ struct vOutputCheckOut {
 vOutputCheckOut vCheckOutput(const vOutputCheckIn& in);
 
 /**
+ * How many characters in front of the cursor a correction may delete: the word
+ * the engine wrote there, 0 when a space or text it never saw is there. Every
+ * vKeyHandleEvent output is held to it with vCheckOutput. A click, Return,
+ * arrow or shortcut makes the engine forget what is in front of the cursor.
+ */
+int vKeyCharsOnScreen();
+
+/**
  * Start a new word
  */
 void startNewSession();
