@@ -100,6 +100,18 @@
     XCTAssertTrue(plan.oneCharacterPerEvent);
 }
 
+/// A real key must not overtake the correction posted before it.
+- (void)testTerminalPostsTheKeysAfterACorrectionItself {
+    OKTypingPlan *plan = [self planForBundleId:@"com.googlecode.iterm2" spotlightVisible:NO];
+    XCTAssertTrue(plan.syntheticLockstep);
+}
+
+- (void)testRegularAppLetsKeysPassOnTheirOwn {
+    OKTypingPlan *plan = [self planForBundleId:@"com.apple.TextEdit" spotlightVisible:NO];
+    XCTAssertFalse(plan.syntheticLockstep);
+    XCTAssertFalse([self planForBundleId:@"com.apple.Terminal" spotlightVisible:YES].syntheticLockstep);
+}
+
 /// Spotlight over a terminal gets the keys, not the terminal, so the terminal
 /// rules must not apply.
 - (void)testSpotlightOverATerminalKeepsTodaysPlan {
