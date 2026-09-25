@@ -515,8 +515,58 @@ void vKeyResetState() {
     hMacroData.clear();
 }
 
+//The first character the host draws for an entry of hData, read the way
+//SendNewCharString in OpenKey.mm reads it.
+static Uint16 firstDrawnCharacter(const Uint32& data, const int& codeTable) {
+    if (data & PURE_CHARACTER_MASK)
+        return (Uint16)data;
+    if (!(data & CHAR_CODE_MASK))
+        return keyCodeToCharacter(data);
+    Uint16 ch = (Uint16)data;
+    if (codeTable == 3) //Unicode compound: the base letter, the mark comes after
+        return ch & 0x1FFF;
+    if (codeTable == 1 || codeTable == 2 || codeTable == 4) //one or two bytes, low first
+        return LOBYTE(ch);
+    return ch;
+}
+
 vOutputCheckOut vCheckOutput(const vOutputCheckIn& in) {
     vOutputCheckOut out = {};
+    out.backspaceCount = in.backspaceCount;
+    out.newCharCount = in.newCharCount;
+    int count = in.newCharCount > MAX_BUFF ? MAX_BUFF : in.newCharCount;
+    if (in.charData)
+        memcpy(out.charData, in.charData, count * sizeof(Uint32));
+
+    //nothing is posted for the other codes
+    if (in.code != vWillProcess && in.code != vRestore &&
+        in.code != vRestoreAndStartNewSession && in.code != vReplaceMaro)
+        return out;
+
+    int reach = in.charsOnScreen < 0 ? 0 : in.charsOnScreen;
+    if (in.backspaceCount > reach) {
+        out.backspaceCount = (Byte)reach;
+        out.clampedBackspaces = true;
+    }
+
+    //a macro's content comes from macroData
+    if (in.code == vReplaceMaro || !in.charData)
+        return out;
+
+    if (in.newCharCount > MAX_BUFF)
+        out.droppedCharacters = true;
+    Byte kept = 0;
+    for (int n = 0; n < count; n++) {
+        Uint16 ch = firstDrawnCharacter(in.charData[n], in.codeTable);
+        if (ch < 0x20 || ch == 0x7F) {
+            out.droppedCharacters = true;
+            continue;
+        }
+        out.charData[kept++] = in.charData[n];
+    }
+    for (int n = kept; n < count; n++)
+        out.charData[n] = 0;
+    out.newCharCount = kept;
     return out;
 }
 
