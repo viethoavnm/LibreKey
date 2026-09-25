@@ -23,12 +23,20 @@
 
 @implementation OKAutocompleteGuard
 
+//Multi-line text: documents, notes, mail bodies, code. Autocomplete there
+//shows as ghost text or a list, not as a selection put up behind the cursor.
+static NSString* const kMultiLineRole = @"AXTextArea";
+
 + (BOOL)shouldAskSelectionForRole:(NSString*)role {
-    return NO;
+    return [role isEqualToString:kMultiLineRole];
 }
 
 + (BOOL)needsEmptyCharacterForField:(OKFocusedField*)field {
-    return NO;
+    if (![self shouldAskSelectionForRole:field.role])
+        return YES;
+    if (!field.selectionKnown)
+        return YES;
+    return field.selectionLength > 0;
 }
 
 @end
