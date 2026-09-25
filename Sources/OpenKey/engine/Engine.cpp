@@ -91,6 +91,10 @@ vector<Uint32> _typingStatesData;
  */
 static Uint32 KeyStates[MAX_BUFF];
 static Byte _stateIndex = 0;
+//Every key typed for the word, as KeyStates, but keeping the key an undo
+//swallows ("ff", "ss"): KeyStates drops it with the mark it undid.
+static Uint32 RawKeys[MAX_BUFF];
+static Byte _rawIndex = 0;
 
 static bool tempDisableKey = false;
 static int capsElem;
@@ -118,6 +122,12 @@ static vector<Uint32> _specialChar;
 static bool _useSpellCheckingBefore;
 static bool _hasHandleQuickConsonant;
 static bool _willTempOffEngine = false;
+static int _autoHornIndex = -1; //the o checkGrammar horned by itself, see insertW
+//What the engine let through and wrote in front of the cursor since it last
+//forgot the text there, as runs: a word (> 0 characters) or spaces (< 0). The
+//last run is the one at the cursor. See vKeyCharsOnScreen.
+static vector<int> _screenRuns;
+static bool _forgetScreen = false; //the key being handled moves the cursor or edits beyond the word
 
 //function prototype
 void findAndCalculateVowel(const bool& forGrammar=false);
@@ -135,6 +145,7 @@ string wideStringToUtf8(const wstring& str) {
 void* vKeyInit() {
     _index = 0;
     _stateIndex = 0;
+    _rawIndex = 0;
     _useSpellCheckingBefore = vCheckSpelling;
     _typingStatesData.clear();
     _typingStates.clear();
@@ -303,9 +314,10 @@ void checkGrammar(const int& deltaBackSpace) {
     if (_index >= 3) {
         for (i = _index-1; i >= 0; i--) {
             if (CHR(i) == KEY_N || CHR(i) == KEY_C || CHR(i) == KEY_I ||
-                CHR(i) == KEY_M || CHR(i) == KEY_P || CHR(i) == KEY_T) {
+                CHR(i) == KEY_M || CHR(i) == KEY_P || CHR(i) == KEY_T || CHR(i) == KEY_U) {
                 if (i - 2 >= 0 && CHR(i - 1) == KEY_O && CHR(i - 2) == KEY_U) {
                     if ((TypingWord[i-1] & TONEW_MASK) ^ (TypingWord[i-2] & TONEW_MASK)) {
+                        _autoHornIndex = (TypingWord[i-1] & TONEW_MASK) ? i - 2 : i - 1;
                         TypingWord[i - 2] |= TONEW_MASK;
                         TypingWord[i - 1] |= TONEW_MASK;
                         isCheckedGrammar = true;
@@ -376,6 +388,12 @@ void insertState(const Uint16& keyCode, const bool& isCaps) {
     } else {
         KeyStates[_stateIndex++] = keyCode | (isCaps ? CAPS_MASK : 0);
     }
+    if (_rawIndex >= MAX_BUFF) {
+        memmove(RawKeys, RawKeys + 1, (MAX_BUFF - 1) * sizeof(Uint32));
+        RawKeys[MAX_BUFF - 1] = keyCode | (isCaps ? CAPS_MASK : 0);
+    } else {
+        RawKeys[_rawIndex++] = keyCode | (isCaps ? CAPS_MASK : 0);
+    }
 }
 
 void saveWord() {
@@ -437,32 +455,216 @@ void restoreLastTypingState() {
         _typingStatesData = _typingStates.back();
         _typingStates.pop_back();
         if (_typingStatesData.size() > 0){
+            //the macro key has to describe the text now in front of the cursor
+            //again, or a later key rebuilds it from nothing
             if (_typingStatesData[0] == KEY_SPACE) {
                 _spaceCount = (int)_typingStatesData.size();
                 _index = 0;
+                hMacroKey.clear();
             } else if (std::find(_charKeyCode.begin(), _charKeyCode.end(), (Uint16)_typingStatesData[0]) != _charKeyCode.end()) {
                 _index = 0;
                 _specialChar = _typingStatesData;
+                hMacroKey = _typingStatesData;
                 checkSpelling();
             } else {
                 for (i = 0; i < _typingStatesData.size(); i++) {
                     TypingWord[i] = _typingStatesData[i];
                 }
                 _index = (Byte)_typingStatesData.size();
+                hMacroKey.assign(TypingWord, TypingWord + _index);
             }
         }
     }
 }
 
 void startNewSession() {
+    _autoHornIndex = -1;
     _index = 0;
     hBPC = 0;
     hNCC = 0;
     tempDisableKey = false;
     _stateIndex = 0;
+    _rawIndex = 0;
     _hasHandledMacro = false;
     _hasHandleQuickConsonant = false;
     _longWordHelper.clear();
+}
+
+void vKeyResetState() {
+    //current word and its raw keys
+    _index = 0;
+    _stateIndex = 0;
+    _rawIndex = 0;
+    memset(TypingWord, 0, sizeof(TypingWord));
+    memset(KeyStates, 0, sizeof(KeyStates));
+    _longWordHelper.clear();
+
+    //earlier words kept for backspacing into
+    _typingStates.clear();
+    _typingStatesData.clear();
+    _specialChar.clear();
+    _spaceCount = 0;
+
+    //per word flags
+    tempDisableKey = false;
+    isRestoredW = false;
+    isCheckedGrammar = false;
+    isChanged = false;
+    isCorect = false;
+    _isCaps = false;
+    _isCharKeyCode = false;
+    _hasHandledMacro = false;
+    _hasHandleQuickConsonant = false;
+    _willTempOffEngine = false;
+    _autoHornIndex = -1;
+    _upperCaseStatus = 0;
+    _screenRuns.clear();
+    _forgetScreen = false;
+    _spellingOK = false;
+    _spellingFlag = false;
+    _spellingVowelOK = false;
+    _useSpellCheckingBefore = vCheckSpelling;
+
+    //what the host reads back
+    hCode = vDoNothing;
+    hBPC = 0;
+    hNCC = 0;
+    hExt = 0;
+    memset(hData, 0, sizeof(hData));
+    hMacroKey.clear();
+    hMacroData.clear();
+}
+
+//The first character the host draws for an entry of hData, read the way
+//SendNewCharString in OpenKey.mm reads it.
+static Uint16 firstDrawnCharacter(const Uint32& data, const int& codeTable) {
+    if (data & PURE_CHARACTER_MASK)
+        return (Uint16)data;
+    if (!(data & CHAR_CODE_MASK))
+        return keyCodeToCharacter(data);
+    Uint16 ch = (Uint16)data;
+    if (codeTable == 3) //Unicode compound: the base letter, the mark comes after
+        return ch & 0x1FFF;
+    if (codeTable == 1 || codeTable == 2 || codeTable == 4) //one or two bytes, low first
+        return LOBYTE(ch);
+    return ch;
+}
+
+vOutputCheckOut vCheckOutput(const vOutputCheckIn& in) {
+    vOutputCheckOut out = {};
+    out.backspaceCount = in.backspaceCount;
+    out.newCharCount = in.newCharCount;
+    int count = in.newCharCount > MAX_BUFF ? MAX_BUFF : in.newCharCount;
+    if (in.charData)
+        memcpy(out.charData, in.charData, count * sizeof(Uint32));
+
+    //nothing is posted for the other codes
+    if (in.code != vWillProcess && in.code != vRestore &&
+        in.code != vRestoreAndStartNewSession && in.code != vReplaceMaro)
+        return out;
+
+    int reach = in.charsOnScreen < 0 ? 0 : in.charsOnScreen;
+    if (in.backspaceCount > reach) {
+        out.backspaceCount = (Byte)reach;
+        out.clampedBackspaces = true;
+    }
+
+    //a macro's content comes from macroData
+    if (in.code == vReplaceMaro || !in.charData)
+        return out;
+
+    if (in.newCharCount > MAX_BUFF)
+        out.droppedCharacters = true;
+    Byte kept = 0;
+    for (int n = 0; n < count; n++) {
+        Uint16 ch = firstDrawnCharacter(in.charData[n], in.codeTable);
+        if (ch < 0x20 || ch == 0x7F) {
+            out.droppedCharacters = true;
+            continue;
+        }
+        out.charData[kept++] = in.charData[n];
+    }
+    for (int n = kept; n < count; n++)
+        out.charData[n] = 0;
+    out.newCharCount = kept;
+    return out;
+}
+
+int vKeyCharsOnScreen() {
+    return _screenRuns.empty() || _screenRuns.back() < 0 ? 0 : _screenRuns.back();
+}
+
+//Characters written to, or deleted from, the word at the cursor.
+static void screenWordAdd(const int& count) {
+    if (_screenRuns.empty() || _screenRuns.back() < 0) {
+        if (count <= 0)
+            return;
+        _screenRuns.push_back(0);
+    }
+    _screenRuns.back() += count;
+    if (_screenRuns.back() < 0)
+        _screenRuns.back() = 0;
+}
+
+static void screenSpaceAdd() {
+    if (!_screenRuns.empty() && _screenRuns.back() == 0)
+        _screenRuns.pop_back();
+    if (_screenRuns.empty() || _screenRuns.back() > 0)
+        _screenRuns.push_back(0);
+    _screenRuns.back()--;
+}
+
+//One backspace: back over the space, and the word before it is at the cursor
+static void screenDeleteOne() {
+    while (!_screenRuns.empty() && _screenRuns.back() == 0)
+        _screenRuns.pop_back();
+    if (_screenRuns.empty())
+        return;
+    _screenRuns.back() += _screenRuns.back() > 0 ? -1 : 1;
+    if (_screenRuns.back() == 0)
+        _screenRuns.pop_back();
+}
+
+//The key goes on screen after whatever the host posted for it.
+static void screenKeyAdd(const vKeyEvent& event, const Uint16& data) {
+    if (event != vKeyEvent::Keyboard)
+        return;
+    if (data == KEY_DELETE)
+        screenDeleteOne();
+    else if (data == KEY_SPACE)
+        screenSpaceAdd();
+    else
+        screenWordAdd(1);
+}
+
+//Holds the answer for this key to what is on screen, then follows it there.
+//Counted from what the host posts, not from the engine's idea of the word, so
+//a bug in the latter cannot delete more than the engine itself wrote.
+static void followScreen(const vKeyEvent& event, const Uint16& data) {
+    if (hCode == vWillProcess || hCode == vRestore || hCode == vRestoreAndStartNewSession || hCode == vReplaceMaro) {
+        //a key that starts a word is corrected within that word
+        if (event == vKeyEvent::Keyboard && data != KEY_SPACE && data != KEY_DELETE && !_forgetScreen &&
+            (_screenRuns.empty() || _screenRuns.back() < 0))
+            _screenRuns.push_back(0);
+
+        vOutputCheckIn in = {hCode, hBPC, hNCC, hData, vKeyCharsOnScreen(), vCodeTable};
+        vOutputCheckOut out = vCheckOutput(in);
+        hBPC = out.backspaceCount;
+        if (out.droppedCharacters) {
+            memcpy(hData, out.charData, (hNCC > MAX_BUFF ? MAX_BUFF : hNCC) * sizeof(Uint32));
+            hNCC = out.newCharCount;
+        }
+
+        screenWordAdd(-hBPC);
+        screenWordAdd(hCode == vReplaceMaro ? (int)hMacroData.size() : hNCC);
+        //the host sends the key itself after a restore or a macro
+        if (hCode != vWillProcess)
+            screenKeyAdd(event, data);
+    } else {
+        screenKeyAdd(event, data);
+    }
+    if (_forgetScreen)
+        _screenRuns.clear();
 }
 
 void checkCorrectVowel(vector<vector<Uint16>>& charset, int& i, int& k, const Uint16& markKey) {
@@ -473,7 +675,11 @@ void checkCorrectVowel(vector<vector<Uint16>>& charset, int& i, int& k, const Ui
     }
     k = _index - 1;
     for (j = (int)charset[i].size() - 1; j >= 0; j--) {
-        if ((charset[i][j] & ~(vQuickEndConsonant ? END_CONSONANT_MASK : 0)) != CHR(k)) {
+        //the finals marked END_CONSONANT_MASK (k, g, h after a vowel) are only
+        //shorthands for ch, ng, nh; they are real finals too when quick end
+        //consonants are on, or when there is no spelling check to refuse them
+        //- "Đắk Lắk" typed with the marks after the k
+        if ((charset[i][j] & ~((vQuickEndConsonant || !vCheckSpelling) ? END_CONSONANT_MASK : 0)) != CHR(k)) {
             isCorect = false;
             return;
         }
@@ -836,8 +1042,13 @@ void insertAOE(const Uint16& data, const bool& isCaps) {
     //remove W tone
     for (ii = VSI; ii <= VEI; ii++) {
         TypingWord[ii] &= ~TONEW_MASK;
+        //an ư typed as a lone w is only a u because of its horn: without it,
+        //it is the letter w again (a "standalone u" is no character at all)
+        if ((TypingWord[ii] & STANDALONE_MASK) && CHR(ii) == KEY_U) {
+            TypingWord[ii] = KEY_W | ((TypingWord[ii] & CAPS_MASK) ? CAPS_MASK : 0);
+        }
     }
-    
+
     hCode = vWillProcess;
     hBPC = 0;
     
@@ -848,7 +1059,9 @@ void insertAOE(const Uint16& data, const bool& isCaps) {
                 //restore and disable temporary
                 hCode = vRestore;
                 TypingWord[ii] &= ~TONE_MASK;
-                hData[_index - 1 - ii] = TypingWord[ii];
+                //through GET like every other letter here: a vowel that still
+                //has a tone ("ầ" -> "à") is a character, not a key code
+                hData[_index - 1 - ii] = GET(TypingWord[ii]);
                 //_index = 0;
                 if (data != KEY_O) //case thoòng
                     tempDisableKey = true;
@@ -882,6 +1095,19 @@ void insertW(const Uint16& data, const bool& isCaps) {
         hBPC = _index - VSI;
         hNCC = hBPC;
         
+        //the user asks for the horn checkGrammar already put on ("buwoi" + w):
+        //keep it, instead of reading the w as an undo of both
+        if ((TypingWord[VSI] & TONEW_MASK) && (TypingWord[VSI+1] & TONEW_MASK) &&
+            (_autoHornIndex == VSI || _autoHornIndex == VSI + 1)) {
+            _autoHornIndex = -1;
+            hCode = vWillProcess;
+            for (ii = VSI; ii < _index; ii++) {
+                hData[_index - 1 - ii] = GET(TypingWord[ii]);
+            }
+            return;
+        }
+        _autoHornIndex = -1;
+        
         if (((TypingWord[VSI] & TONEW_MASK) && (TypingWord[VSI+1] & TONEW_MASK)) ||
             ((TypingWord[VSI] & TONEW_MASK) && CHR(VSI+1) == KEY_I) ||
             ((TypingWord[VSI] & TONEW_MASK) && CHR(VSI+1) == KEY_A)){
@@ -896,9 +1122,19 @@ void insertW(const Uint16& data, const bool& isCaps) {
             tempDisableKey = true;
         } else {
             hCode = vWillProcess;
+            Uint32 firstBefore = TypingWord[VSI], secondBefore = TypingWord[VSI+1];
             
             if ((CHR(VSI) == KEY_U && CHR(VSI+1) == KEY_O)) {
-                if (VSI - 2 >= 0 && TypingWord[VSI - 2] == KEY_T && TypingWord[VSI - 1] == KEY_H) {
+                //uơ, not ươ, after th, h, kh or no onset while nothing follows
+                //("thuở", "huơ", "khuơ", "uở"); checkGrammar turns it into ươ
+                //once a consonant or i/u comes. CHR ignores the case of the onset.
+                bool onsetTh = VSI == 2 && CHR(0) == KEY_T && CHR(1) == KEY_H;
+                bool onsetH = (VSI == 1 && CHR(0) == KEY_H) || (VSI == 2 && CHR(0) == KEY_K && CHR(1) == KEY_H);
+                bool nothingAfter = VSI + 2 == _index;
+                if (onsetTh || ((onsetH || VSI == 0) && nothingAfter)) {
+                    if ((TypingWord[VSI+1] & TONEW_MASK) && !(TypingWord[VSI] & TONEW_MASK)) {
+                        TypingWord[VSI] |= TONEW_MASK; //second w: thuơ -> thươ
+                    }
                     TypingWord[VSI+1] |= TONEW_MASK;
                     if (VSI + 2 < _index && CHR(VSI+2) == KEY_N) {
                         TypingWord[VSI] |= TONEW_MASK;
@@ -922,6 +1158,20 @@ void insertW(const Uint16& data, const bool& isCaps) {
                 tempDisableKey = true;
                 isChanged = false;
                 hCode = vDoNothing;
+            }
+            
+            //the horn is already where this w would put it - oa, io and th/q + uo
+            //carry it on the second vowel, which the undo test above misses -
+            //so this is a second w: undo, as for a horn on the first vowel
+            if (hCode == vWillProcess && TypingWord[VSI] == firstBefore && TypingWord[VSI+1] == secondBefore) {
+                hCode = vRestore;
+                for (ii = VSI; ii < _index; ii++) {
+                    TypingWord[ii] &= ~TONEW_MASK;
+                    hData[_index - 1 - ii] = GET(TypingWord[ii]) & ~STANDALONE_MASK;
+                }
+                isRestoredW = true;
+                tempDisableKey = true;
+                return;
             }
             
             for (ii = VSI; ii < _index; ii++) {
@@ -1201,23 +1451,61 @@ void handleQuickTelex(const Uint16& data, const bool& isCaps) {
     insertKey(_quickTelex[data][1], isCaps, false);
 }
 
-bool checkRestoreIfWrongSpelling(const int& handleCode) {
-    for (ii = 0; ii < _index; ii++) {
-        if (!IS_CONSONANT(CHR(ii)) &&
-            (TypingWord[ii] & MARK_MASK || TypingWord[ii] & TONE_MASK || TypingWord[ii] & TONEW_MASK)) {
-            
-            hCode = handleCode;
-            hBPC = _index;
-            hNCC = _stateIndex;
-            for (i = 0; i < _stateIndex; i++) {
-                TypingWord[i] = KeyStates[i];
-                hData[_stateIndex - 1 - i] = TypingWord[i];
-            }
-            _index = _stateIndex;
-            return true;
+//Whether the letters of the word can be read in order from these keys, the
+//first letter from the first key: each letter is its own key, but an ư or ơ
+//may have been typed as w, [ or ] alone. After backspacing into an earlier
+//word the logs hold another word's keys, and this is how that is told.
+static bool keysSpellWord(const Uint32* keys, const int& count) {
+    if (_index == 0 || count < _index)
+        return false;
+    int key = 0;
+    for (int letter = 0; letter < _index; letter++) {
+        Uint16 ch = CHR(letter);
+        bool horned = (TypingWord[letter] & TONEW_MASK) && (ch == KEY_U || ch == KEY_O);
+        while (key < count) {
+            Uint16 typed = (Uint16)keys[key];
+            if (typed == ch || (horned && (typed == KEY_W || typed == KEY_LEFT_BRACKET || typed == KEY_RIGHT_BRACKET)))
+                break;
+            if (letter == 0)
+                return false;
+            key++;
         }
+        if (key == count)
+            return false;
+        key++;
     }
-    return false;
+    return true;
+}
+
+bool checkRestoreIfWrongSpelling(const int& handleCode) {
+    //KeyStates drops a key an undo swallowed ("ff", "ss"); RawKeys keeps it
+    bool swallowed = _rawIndex > _stateIndex && keysSpellWord(RawKeys, _rawIndex);
+    if (swallowed) {
+        memcpy(KeyStates, RawKeys, _rawIndex * sizeof(Uint32));
+        _stateIndex = _rawIndex;
+    }
+    //never write keys that are not this word's over it
+    if (!keysSpellWord(KeyStates, _stateIndex))
+        return false;
+
+    //what is on screen is not what was typed: a mark, a swallowed key, a mark taken off
+    bool differs = _stateIndex != _index;
+    for (ii = 0; ii < _index && !differs; ii++) {
+        differs = CHR(ii) != (Uint16)KeyStates[ii] ||
+                  (!IS_CONSONANT(CHR(ii)) && (TypingWord[ii] & (MARK_MASK | TONE_MASK | TONEW_MASK)));
+    }
+    if (!differs)
+        return false;
+
+    hCode = handleCode;
+    hBPC = _index;
+    hNCC = _stateIndex;
+    for (i = 0; i < _stateIndex; i++) {
+        TypingWord[i] = KeyStates[i];
+        hData[_stateIndex - 1 - i] = TypingWord[i];
+    }
+    _index = _stateIndex;
+    return true;
 }
 
 void vTempOffSpellChecking() {
@@ -1311,11 +1599,11 @@ void vEnglishMode(const vKeyEventState& state, const Uint16& data, const bool& i
     }
 }
 
-void vKeyHandleEvent(const vKeyEvent& event,
-                     const vKeyEventState& state,
-                     const Uint16& data,
-                     const Uint8& capsStatus,
-                     const bool& otherControlKey) {
+static void handleKeyEvent(const vKeyEvent& event,
+                           const vKeyEventState& state,
+                           const Uint16& data,
+                           const Uint8& capsStatus,
+                           const bool& otherControlKey) {
     _isCaps = (capsStatus == 1 || //shift
                capsStatus == 2); //caps lock
     if ((IS_NUMBER_KEY(data) && capsStatus == 1)
@@ -1325,10 +1613,12 @@ void vKeyHandleEvent(const vKeyEvent& event,
         hNCC = 0;
         hExt = 1; //word break
         
-        //check macro feature
-        if (vUseMacro && isMacroBreakCode(data) && !_hasHandledMacro && findMacro(hMacroKey, hMacroData)) {
+        //check macro feature; a shifted digit is punctuation too: ) ! * ...
+        int macroLength = 0;
+        if (vUseMacro && (isMacroBreakCode(data) || (IS_NUMBER_KEY(data) && capsStatus == 1)) && !_hasHandledMacro &&
+            findMacroSkippingLeadingPunctuation(hMacroKey, hMacroData, macroLength)) {
             hCode = vReplaceMaro;
-            hBPC = (Byte)hMacroKey.size();
+            hBPC = (Byte)macroLength;
             _hasHandledMacro = true;
         } else if ((vQuickStartConsonant || vQuickEndConsonant) && !tempDisableKey && isMacroBreakCode(data)) {
             checkQuickConsonant();
@@ -1345,6 +1635,7 @@ void vKeyHandleEvent(const vKeyEvent& event,
         if (!_isCharKeyCode) { //clear all line cache
             _specialChar.clear();
             _typingStates.clear();
+            _forgetScreen = true;
         } else { //check and save current word
             if (_spaceCount > 0) {
                 saveWord(KEY_SPACE, _spaceCount);
@@ -1374,7 +1665,8 @@ void vKeyHandleEvent(const vKeyEvent& event,
         }
         
         if (vUpperCaseFirstChar) {
-            if (data == KEY_DOT)
+            //. ! ? end a sentence; Shift + dot is >, which does not
+            if ((data == KEY_DOT && capsStatus != 1) || (capsStatus == 1 && (data == KEY_1 || data == KEY_SLASH)))
                 _upperCaseStatus = 1;
             else if (data == KEY_ENTER || data == KEY_RETURN)
                 _upperCaseStatus = 2;
@@ -1382,12 +1674,16 @@ void vKeyHandleEvent(const vKeyEvent& event,
                 _upperCaseStatus = 0;
         }
     } else if (data == KEY_SPACE) {
+        //one unit on screen like any key; left alone it kept the code of the key
+        //before, and after a backspace the host took the space for another one
+        hExt = 3;
         if (!tempDisableKey && vCheckSpelling) {
             checkSpelling(true); //force check spelling
         }
-        if (vUseMacro && !_hasHandledMacro && findMacro(hMacroKey, hMacroData)) { //macro
+        int macroLength = 0;
+        if (vUseMacro && !_hasHandledMacro && findMacroSkippingLeadingPunctuation(hMacroKey, hMacroData, macroLength)) { //macro
             hCode = vReplaceMaro;
-            hBPC = (Byte)hMacroKey.size();
+            hBPC = (Byte)macroLength;
             _spaceCount++;
             _hasHandledMacro = true;
         } else if ((vQuickStartConsonant || vQuickEndConsonant) && !tempDisableKey && checkQuickConsonant()) {
@@ -1418,6 +1714,8 @@ void vKeyHandleEvent(const vKeyEvent& event,
         vCheckSpelling = _useSpellCheckingBefore;
         _willTempOffEngine = false;
     } else if (data == KEY_DELETE) {
+        _autoHornIndex = -1;
+        _upperCaseStatus = 0; //what was pending may just have been deleted
         hCode = vDoNothing;
         hExt = 2; //delete
         if (_specialChar.size() > 0) {
@@ -1434,6 +1732,9 @@ void vKeyHandleEvent(const vKeyEvent& event,
             if (_stateIndex > 0) {
                 _stateIndex--;
             }
+            if (_rawIndex > 0) {
+                _rawIndex--;
+            }
             if (_index > 0){
                 _index--;
                 if (_longWordHelper.size() > 0) {
@@ -1447,6 +1748,8 @@ void vKeyHandleEvent(const vKeyEvent& event,
                 }
                 if (vCheckSpelling)
                     checkSpelling();
+                else //an undo ("aaa") stops marking the word; with no spelling
+                    tempDisableKey = false; //check to decide, deleting ends it
             }
             if (vUseMacro && hMacroKey.size() > 0) {
                 hMacroKey.pop_back();
@@ -1502,7 +1805,9 @@ void vKeyHandleEvent(const vKeyEvent& event,
         }
 
         if (!vFreeMark && !IS_KEY_D(data)) {
-            if (hCode == vDoNothing) {
+            //the char of this key is not on screen yet: the key passes through,
+            //or it is a lone w/[/] whose ư/ơ the host has still to draw
+            if (hCode == vDoNothing || (hCode == vWillProcess && hExt == 4 && hBPC == 0)) {
                 checkGrammar(-1);
             } else {
                 checkGrammar(0);
@@ -1524,7 +1829,12 @@ void vKeyHandleEvent(const vKeyEvent& event,
                         hMacroKey.pop_back();
                     }
                 }
-                for (i = _index - hBPC; i < hNCC + (_index - hBPC); i++) {
+                //what the host writes is the last hNCC letters of the word - plus,
+                //on a restore, the key itself, which insertKey added after them.
+                //Counting from hBPC instead went wrong whenever the two differ:
+                //a lone w (0 back, 1 new) pushed a slot past the end of the word.
+                int written = hNCC + (hCode == vRestore ? 1 : 0);
+                for (i = _index - written < 0 ? 0 : _index - written; i < _index; i++) {
                     hMacroKey.push_back(TypingWord[i]);
                 }
             }
@@ -1546,6 +1856,7 @@ void vKeyHandleEvent(const vKeyEvent& event,
             _index = 0;
             tempDisableKey = false;
             _stateIndex = 0;
+            _rawIndex = 0;
             hExt = 3;
             _specialChar.push_back(data | (_isCaps ? CAPS_MASK : 0));
         }
@@ -1555,4 +1866,14 @@ void vKeyHandleEvent(const vKeyEvent& event,
     //cout<<"index "<<(int)_index<< ", stateIndex "<<(int)_stateIndex<<", word "<<_typingStates.size()<<", long word "<<_longWordHelper.size()<< endl;
     //cout<<"backspace "<<(int)hBPC<<endl;
     //cout<<"new char "<<(int)hNCC<<endl<<endl;
+}
+
+void vKeyHandleEvent(const vKeyEvent& event,
+                     const vKeyEventState& state,
+                     const Uint16& data,
+                     const Uint8& capsStatus,
+                     const bool& otherControlKey) {
+    _forgetScreen = false;
+    handleKeyEvent(event, state, data, capsStatus, otherControlKey);
+    followScreen(event, data);
 }

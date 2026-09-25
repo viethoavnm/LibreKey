@@ -90,18 +90,18 @@ string convertUtil(const string& sourceString) {
                 target = _codeTable[convertToolToCode][j][k];
                 if ((convertToolToAllCaps || shouldUpperCase) && k % 2 != 0) {
                     target = _codeTable[convertToolToCode][j][k-1];
-                } else if ((convertToolToAllNonCaps || !shouldUpperCase) && k % 2 == 0) {
+                } else if (convertToolToAllNonCaps && k % 2 == 0) { //no option: keep the letter's case
                     target = _codeTable[convertToolToCode][j][k+1];
                 }
                 
-                //remove mark/tone
+                //remove mark/tone, in the case the text asks for: an option forces
+                //it, or else it is the case of the marked letter (even column = upper)
                 if (convertToolRemoveMark) {
                     target = keyCodeToCharacter((Uint8)j);
-                    if (convertToolToAllCaps) {
+                    if (convertToolToAllCaps || shouldUpperCase || (!convertToolToAllNonCaps && k % 2 == 0))
                         target = towupper(target);
-                    } else if (convertToolToAllNonCaps) {
+                    else
                         target = towlower(target);
-                    }
                 }
                 
                 if (convertToolToCode == 0 || convertToolToCode == 1) { //Unicode
@@ -133,18 +133,18 @@ string convertUtil(const string& sourceString) {
             target = _codeTable[convertToolToCode][j][k];
             if ((convertToolToAllCaps || shouldUpperCase) && k % 2 != 0) {
                 target = _codeTable[convertToolToCode][j][k-1];
-            } else if ((convertToolToAllNonCaps || !shouldUpperCase) && k % 2 == 0) {
+            } else if (convertToolToAllNonCaps && k % 2 == 0) { //no option: keep the letter's case
                 target = _codeTable[convertToolToCode][j][k+1];
             }
             
-            //remove mark/tone
+            //remove mark/tone, in the case the text asks for: an option forces
+            //it, or else it is the case of the marked letter (even column = upper)
             if (convertToolRemoveMark) {
                 target = keyCodeToCharacter((Uint8)j);
-                if (convertToolToAllCaps) {
+                if (convertToolToAllCaps || shouldUpperCase || (!convertToolToAllNonCaps && k % 2 == 0))
                     target = towupper(target);
-                } else if (convertToolToAllNonCaps){
+                else
                     target = towlower(target);
-                }
             }
             
             _temp.push_back(target);
@@ -156,7 +156,7 @@ string convertUtil(const string& sourceString) {
         //if dont find => normal char
         if (convertToolToAllCaps || shouldUpperCase)
             _temp.push_back(towupper(data[i]));
-        else if (convertToolToAllNonCaps || !shouldUpperCase)
+        else if (convertToolToAllNonCaps)
             _temp.push_back(towlower(data[i]));
         else
             _temp.push_back(data[i]);

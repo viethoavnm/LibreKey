@@ -236,7 +236,9 @@ Nói thẳng để bạn biết chỗ nào chắc chắn, chỗ nào chưa.
 - Không tự thoát khi thiếu quyền Accessibility — chạy thật
 - Helper được nhúng đúng vị trí trong bundle
 - Tab Loại trừ: thêm ứng dụng, ghi xuống `NSUserDefaults`, hiện đúng trong bảng
-- **38 unit test** (`LibreKeyTests`) — kho gốc không có test nào
+- **211 unit test** (`LibreKeyTests`) — kho gốc không có test nào. Có cả cổng
+  corpus: bảng đối chiếu UniKey chạy mặc định, còn 30.337 cặp Telex và 97.592 từ
+  tiếng Anh chạy khi đặt `TEST_RUNNER_LIBREKEY_CORPUS_DIR`
 
 **Chưa kiểm chứng** — cần một bản có chữ ký hợp lệ, một máy có hai tài khoản, và
 một máy Windows
@@ -244,6 +246,11 @@ một máy Windows
 - Gõ tiếng Việt trên chính bản LibreKey
 - Cổng chặn phím trong ứng dụng bị loại trừ (logic quyết định đã có test, nhưng
   phần nối vào event tap thì chưa chạy thật)
+- Cách gửi phím riêng cho terminal (logic chọn cách gửi đã có test, nhưng chưa
+  gõ thật qua SSH trên từng terminal)
+- Các phần hỏi Accessibility (terminal trong VS Code, bỏ ký tự rỗng trong ô
+  nhiều dòng), đổi phím theo layout AZERTY/QWERTZ/Dvorak, và Unicode tổ hợp
+  trong Chromium: logic đã có test, nhưng phần nối vào event tap chưa gõ thật
 - **Toàn bộ bản Windows** — build sạch trên CI và đã kiểm tra chuỗi trong binary,
   nhưng chưa ai chạy thử
 
@@ -280,7 +287,7 @@ cd Sources/OpenKey/macOS
 # build bản Release
 xcodebuild -project OpenKey.xcodeproj -scheme LibreKey -configuration Release build
 
-# chạy toàn bộ 38 unit test
+# chạy toàn bộ 211 unit test (2 test corpus lớn bị bỏ qua nếu không có dữ liệu)
 xcodebuild -project OpenKey.xcodeproj -scheme LibreKey test
 ```
 

@@ -7,6 +7,7 @@
 //
 
 #include "Macro.h"
+#include <cctype>
 #include "Vietnamese.h"
 #include "Engine.h"
 #include <iostream>
@@ -191,6 +192,33 @@ bool findMacro(vector<Uint32>& key, vector<Uint32>& macroContentCode) {
                 }
                 return true;
             }
+        }
+    }
+    return false;
+}
+
+//A key entry typed as punctuation - a quote, a bracket - rather than a letter
+//or a digit. Vietnamese letters are character codes, never punctuation.
+static bool isPunctuationEntry(const Uint32& entry) {
+    Uint32 code = getCharacterCode(entry);
+    if (code & (CHAR_CODE_MASK | PURE_CHARACTER_MASK))
+        return false;
+    Uint16 ch = keyCodeToCharacter(code);
+    return ch > 0 && ch < 128 && ispunct(ch);
+}
+
+bool findMacroSkippingLeadingPunctuation(const vector<Uint32>& key,
+                                         vector<Uint32>& macroContentCode,
+                                         int& matchedLength) {
+    matchedLength = 0;
+    for (size_t start = 0; start < key.size(); start++) {
+        //only ever drop punctuation: "xbtw" is another word, not btw
+        if (start > 0 && !isPunctuationEntry(key[start - 1]))
+            break;
+        vector<Uint32> rest(key.begin() + start, key.end());   //findMacro rewrites its key
+        if (findMacro(rest, macroContentCode)) {
+            matchedLength = (int)rest.size();
+            return true;
         }
     }
     return false;

@@ -13,6 +13,14 @@
 #import "ViewController.h"
 #import "OpenKeyManager.h"
 #import "OKAppExclusionList.h"
+#import "OKTerminalTyping.h"
+#import "OKSpotlightDetector.h"
+#import "OKInputSourceFilter.h"
+#import "OKEventStamper.h"
+#import "OKLockstep.h"
+#import "OKCompoundDeletion.h"
+#import "OKAutocompleteGuard.h"
+#import "OKLayoutRemap.h"
 
 #define FRONT_APP [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier
 #define OTHER_CONTROL_KEY (_flag & kCGEventFlagMaskCommand) || (_flag & kCGEventFlagMaskControl) || \
@@ -54,10 +62,6 @@ extern "C" {
                                @"com.sublimetext.2",
                              ];
     
-    //app which error with unicode Compound
-    NSArray* _unicodeCompoundApp = @[@"com.apple.",
-                                     @"com.google.Chrome", @"com.brave.Browser",
-                                     @"com.microsoft.edgemac.Dev", @"com.microsoft.edgemac.Beta", @"com.microsoft.Edge.Dev", @"com.microsoft.Edge"];
     NSArray* _recommendWorkaroundDisabledApp = @[@"com.apple.Spotlight"];
 
     //Chromium based browsers, which need the selection workaround instead of the
@@ -74,8 +78,6 @@ extern "C" {
 
     CGEventSourceRef myEventSource = NULL;
     vKeyHookState* pData;
-    CGEventRef eventBackSpaceDown;
-    CGEventRef eventBackSpaceUp;
     UniChar _newChar, _newCharHi;
     CGEventRef _newEventDown, _newEventUp;
     CGKeyCode _keycode;
@@ -103,10 +105,81 @@ extern "C" {
     //keystroke, so it is answered once per app switch instead.
     bool _isFrontAppExcluded = false;
 
+    //How the correction being sent right now is posted. See RefreshTypingPlan.
+    bool _allowsAutocompleteWorkaround = true;
+    bool _oneCharacterPerEvent = false;
+    static OKTypingPlan* _typingPlan = nil;
+
+    //Keys LibreKey posts itself so they cannot overtake a correction it posted
+    //before them - in terminals, where that has been seen. 150 ms covers the
+    //first keys of the next word, typed while the correction is still queued.
+    static OKLockstep* Lockstep() {
+        static OKLockstep* lockstep = [[OKLockstep alloc] initWithWindow:0.15];
+        return lockstep;
+    }
+
+    void InvalidateFocusState();
+
+    //Whether the selected system input source is not English, for the "turn
+    //Vietnamese off in other languages" setting. The callback used to ask the
+    //Text Input Sources API on every key down and up (about 7 us each, over-
+    //releasing a string it did not own and leaking the source when it was not
+    //English); the answer only changes with the input source, so it is read
+    //when that happens - the TIS notification, app switches and start up.
+    bool _inputSourceIsForeign = false;
+
+    void RefreshInputSourceLanguage() {
+        TISInputSourceRef source = TISCopyCurrentKeyboardInputSource();
+        if (source == NULL) {
+            _inputSourceIsForeign = false;
+            return;
+        }
+        NSArray* languages = (__bridge NSArray*)TISGetInputSourceProperty(source, kTISPropertyInputSourceLanguages);
+        _inputSourceIsForeign = [OKInputSourceFilter shouldBypassForLanguages:languages];
+        CFRelease(source);
+    }
+
+    //Which US key the engine should see for each key of the selected layout,
+    //when layout compat is off - see OKLayoutRemap. Read at the same moments as
+    //the language.
+    static OKLayoutRemap* _layoutRemap = nil;
+
+    void RefreshLayoutRemap() {
+        NSMutableDictionary<NSNumber*, NSString*>* characters = [NSMutableDictionary dictionary];
+        TISInputSourceRef source = TISCopyCurrentKeyboardLayoutInputSource();
+        if (source) {
+            CFDataRef data = (CFDataRef)TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData);
+            if (data) {
+                const UCKeyboardLayout* layout = (const UCKeyboardLayout*)CFDataGetBytePtr(data);
+                for (UInt16 keyCode = 0; keyCode <= 50; keyCode++) {
+                    UInt32 deadKeyState = 0;
+                    UniChar buffer[4];
+                    UniCharCount length = 0;
+                    if (UCKeyTranslate(layout, keyCode, kUCKeyActionDown, 0, LMGetKbdType(), kUCKeyTranslateNoDeadKeysMask,
+                                       &deadKeyState, 4, &length, buffer) == noErr && length > 0)
+                        characters[@(keyCode)] = [NSString stringWithCharacters:buffer length:length];
+                }
+            }
+            CFRelease(source);
+        }
+        _layoutRemap = [OKLayoutRemap remapForCharacters:characters];
+    }
+
+    static void InputSourceChanged(CFNotificationCenterRef center, void* observer, CFNotificationName name,
+                                   const void* object, CFDictionaryRef userInfo) {
+        RefreshInputSourceLanguage();
+        RefreshLayoutRemap();
+    }
+
     //Re-read on every app activation. The list is small and app switches happen
     //at human speed, so there is nothing to cache - and reading it fresh means
     //edits made in the panel take effect the moment the user switches away.
     void ReloadAppExclusionState() {
+        InvalidateFocusState();
+        [Lockstep() reset];
+        //macOS can switch the input source per document when the app changes
+        RefreshInputSourceLanguage();
+        RefreshLayoutRemap();
         bool wasExcluded = _isFrontAppExcluded;
         NSArray* entries = [OKAppExclusionList entriesFromDefaults:[NSUserDefaults standardUserDefaults]];
         _isFrontAppExcluded = [OKAppExclusionList entries:entries containBundleId:FRONT_APP];
@@ -173,11 +246,13 @@ extern "C" {
             return;
         engineInited = true;
 
+        CFNotificationCenterAddObserver(CFNotificationCenterGetDistributedCenter(), NULL, InputSourceChanged,
+                                        kTISNotifySelectedKeyboardInputSourceChanged, NULL,
+                                        CFNotificationSuspensionBehaviorDeliverImmediately);
+
         myEventSource = CGEventSourceCreate(kCGEventSourceStatePrivate);
         pData = (vKeyHookState*)vKeyInit();
 
-        eventBackSpaceDown = CGEventCreateKeyboardEvent (myEventSource, 51, true);
-        eventBackSpaceUp = CGEventCreateKeyboardEvent (myEventSource, 51, false);
 
         NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
 
@@ -193,6 +268,7 @@ extern "C" {
     void RequestNewSession() {
         //send event signal to Engine
         vKeyHandleEvent(vKeyEvent::Mouse, vKeyEventState::MouseDown, 0);
+        [Lockstep() reset];
         
         if (IS_DOUBLE_CODE(vCodeTable)) { //VNI
             _syncKey.clear();
@@ -212,13 +288,13 @@ extern "C" {
         return [NSString stringWithUTF8String:convertUtil([str UTF8String]).c_str()];
     }
     
-    BOOL containUnicodeCompoundApp(NSString* topApp) {
-        if (topApp == nil) return false;
-        for (_j = 0; _j < [_unicodeCompoundApp count]; _j++) {
-            if ([topApp hasPrefix:[_unicodeCompoundApp objectAtIndex:_j]] || [[_unicodeCompoundApp objectAtIndex:_j] isEqualToString:topApp])
-                return true;
-        }
-        return false;
+    //What it takes, in the app in front, to remove the letter _syncKey says is
+    //last on screen. Call only with _syncKey not empty.
+    OKLetterRemoval* RemovalOfLastLetter() {
+        OKWrittenLetter* letter = [[OKWrittenLetter alloc] initWithUnits:_syncKey.back()
+                                                               codeTable:vCodeTable
+                                                                bundleId:FRONT_APP];
+        return [OKCompoundDeletion removalOfLetter:letter];
     }
 
     BOOL isChromiumBrowserApp(NSString* topApp) {
@@ -230,19 +306,145 @@ extern "C" {
         return false;
     }
 
-    BOOL isSpotlightVisible() {
-        NSArray *windows = CFBridgingRelease(CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
-                                                                        kCGNullWindowID));
-        for (NSDictionary *window in windows) {
-            if ([[window objectForKey:(__bridge NSString *)kCGWindowOwnerName] isEqualToString:@"Spotlight"]) {
-                return true;
+    //Reading the window list takes about half a millisecond and a correction
+    //asked up to three times. The answer is kept for two seconds, and dropped as
+    //soon as something that can open or close Spotlight happens - see
+    //InvalidateFocusState - so it is read about once per Spotlight session.
+    static OKSpotlightDetector* SpotlightCache() {
+        static OKSpotlightDetector* cache = [[OKSpotlightDetector alloc] initWithLifetime:2.0];
+        return cache;
+    }
+
+    //The focused element and what was read from it. Asking is an Accessibility
+    //round trip to the app, so it is kept like the Spotlight answer and dropped
+    //on the same events - the ones that move focus (Ctrl+` for a terminal
+    //panel, Tab, a click).
+    static AXUIElementRef _focusedElement = NULL;
+    static NSString* _focusedRole = nil;
+    static NSString* _focusedDescription = nil;
+    static BOOL _focusedSelectionMute = NO;     //the app timed out on the selection
+    static NSTimeInterval _focusedCheckedAt = -1;
+
+    static void ForgetFocusedElement() {
+        if (_focusedElement)
+            CFRelease(_focusedElement);
+        _focusedElement = NULL;
+        _focusedRole = nil;
+        _focusedDescription = nil;
+        _focusedSelectionMute = NO;
+        _focusedCheckedAt = -1;
+    }
+
+    static NSString* CopyStringAttribute(AXUIElementRef element, CFStringRef attribute) {
+        CFTypeRef value = NULL;
+        NSString* result = nil;
+        if (AXUIElementCopyAttributeValue(element, attribute, &value) == kAXErrorSuccess && value) {
+            if (CFGetTypeID(value) == CFStringGetTypeID())
+                result = [(__bridge NSString*)value copy];
+            CFRelease(value);
+        }
+        return result;
+    }
+
+    static void RefreshFocusedElement() {
+        NSTimeInterval now = [NSProcessInfo processInfo].systemUptime;
+        if (_focusedCheckedAt >= 0 && now >= _focusedCheckedAt && now - _focusedCheckedAt < 2.0)
+            return;
+        ForgetFocusedElement();
+        _focusedCheckedAt = now;
+
+        AXUIElementRef systemWide = AXUIElementCreateSystemWide();
+        //a hung app must not hold the tap callback until macOS disables it
+        AXUIElementSetMessagingTimeout(systemWide, 0.1);
+        CFTypeRef focused = NULL;
+        if (AXUIElementCopyAttributeValue(systemWide, kAXFocusedUIElementAttribute, &focused) == kAXErrorSuccess && focused) {
+            if (CFGetTypeID(focused) == AXUIElementGetTypeID()) {
+                _focusedElement = (AXUIElementRef)focused;
+                AXUIElementSetMessagingTimeout(_focusedElement, 0.05);
+                _focusedRole = CopyStringAttribute(_focusedElement, kAXRoleAttribute);
+                _focusedDescription = CopyStringAttribute(_focusedElement, kAXDescriptionAttribute);
+            } else {
+                CFRelease(focused);
             }
         }
-        return false;
+        CFRelease(systemWide);
+    }
+
+    //Whether the focused element is a code editor's terminal panel.
+    BOOL FocusedElementIsTerminalPanel() {
+        RefreshFocusedElement();
+        return [OKTerminalTyping isIntegratedTerminalDescription:_focusedDescription];
+    }
+
+    //Whether this correction needs the empty character in front, the fix
+    //autocomplete setting allowing it. The selection is read fresh: it changes
+    //with every key.
+    BOOL EmptyCharacterNeeded() {
+        RefreshFocusedElement();
+        BOOL known = NO;
+        NSUInteger length = 0;
+        if ([OKAutocompleteGuard shouldAskSelectionForRole:_focusedRole] && _focusedElement && !_focusedSelectionMute) {
+            CFTypeRef value = NULL;
+            AXError error = AXUIElementCopyAttributeValue(_focusedElement, kAXSelectedTextRangeAttribute, &value);
+            if (error == kAXErrorSuccess && value) {
+                CFRange range;
+                if (CFGetTypeID(value) == AXValueGetTypeID() &&
+                    AXValueGetValue((AXValueRef)value, (AXValueType)kAXValueCFRangeType, &range)) {
+                    known = YES;
+                    length = range.length > 0 ? (NSUInteger)range.length : 0;
+                }
+                CFRelease(value);
+            } else if (error == kAXErrorCannotComplete) {
+                //do not wait on it again for every key
+                _focusedSelectionMute = YES;
+            }
+        }
+        OKFocusedField* field = [[OKFocusedField alloc] initWithRole:_focusedRole
+                                                      selectionKnown:known
+                                                     selectionLength:length];
+        return [OKAutocompleteGuard needsEmptyCharacterForField:field];
+    }
+
+    void InvalidateFocusState() {
+        [SpotlightCache() invalidate];
+        ForgetFocusedElement();
+    }
+
+    BOOL isSpotlightVisible() {
+        OKSpotlightDetector* cache = SpotlightCache();
+        NSTimeInterval now = [NSProcessInfo processInfo].systemUptime;
+        if (![cache hasAnswerAt:now]) {
+            NSArray *windows = CFBridgingRelease(CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
+                                                                            kCGNullWindowID));
+            [cache storeAnswer:[OKSpotlightDetector windowListShowsSpotlight:windows] at:now];
+        }
+        return cache.answer;
+    }
+
+    //Called for every keystroke that sends a correction, not once per app
+    //switch: Spotlight comes and goes without the front app changing.
+    void RefreshTypingPlan() {
+        NSString* frontApp = FRONT_APP;
+        //only a code editor has a terminal panel worth asking Accessibility about
+        BOOL integratedTerminal = [OKTerminalTyping isCodeEditorBundleId:frontApp] && FocusedElementIsTerminalPanel();
+        //and only a terminal needs to know about Spotlight
+        BOOL spotlightVisible = ([OKTerminalTyping isTerminalBundleId:frontApp] || integratedTerminal) && isSpotlightVisible();
+        OKTypingTarget* target = [[OKTypingTarget alloc] initWithBundleId:frontApp
+                                                         spotlightVisible:spotlightVisible
+                                                       integratedTerminal:integratedTerminal];
+        OKTypingPlan* plan = [OKTerminalTyping planForTarget:target];
+        _allowsAutocompleteWorkaround = plan.allowsAutocompleteWorkaround;
+        _oneCharacterPerEvent = plan.oneCharacterPerEvent;
+        _typingPlan = plan;
     }
 
     BOOL shouldUseRecommendWorkaround(NSString* topApp) {
         if (!vFixRecommendBrowser) return false;
+        //A terminal has no autocomplete to defeat. The empty character is just
+        //one more thing the far end of an SSH link has to receive, draw and
+        //erase in step - and when it gets dropped, the extra backspace eats a
+        //real letter.
+        if (!_allowsAutocompleteWorkaround) return false;
         if (isSpotlightVisible()) return false;
         if (topApp == nil) return true;
         return ![_recommendWorkaroundDisabledApp containsObject:topApp];
@@ -305,13 +507,41 @@ extern "C" {
         _syncKey.push_back(len);
     }
     
+    //Every event LibreKey posts goes out through PostEvent: stamped strictly
+    //after the previous one, so the window server cannot reorder a burst - the
+    //stamp starts from the one the event got when it was created, in whatever
+    //unit the system uses - and tagged, so the tap knows it when it comes back.
+    static const int64_t kLibreKeyEventTag = 0x4C4B4559; //"LKEY"
+
+    static OKEventStamper* EventStamper() {
+        static OKEventStamper* stamper = [OKEventStamper new];
+        return stamper;
+    }
+
+    void PostEvent(CGEventRef event) {
+        CGEventSetTimestamp(event, [EventStamper() stampForTime:CGEventGetTimestamp(event)]);
+        CGEventSetIntegerValueField(event, kCGEventSourceUserData, kLibreKeyEventTag);
+        CGEventTapPostEvent(_proxy, event);
+    }
+
+    //Fresh events each time: the pair created once at start up carried that
+    //moment's timestamp into every backspace sent afterwards.
+    void PostBackspace() {
+        CGEventRef down = CGEventCreateKeyboardEvent(myEventSource, KEY_DELETE, true);
+        CGEventRef up = CGEventCreateKeyboardEvent(myEventSource, KEY_DELETE, false);
+        PostEvent(down);
+        PostEvent(up);
+        CFRelease(down);
+        CFRelease(up);
+    }
+
     void SendPureCharacter(const Uint16& ch) {
         _newEventDown = CGEventCreateKeyboardEvent(myEventSource, 0, true);
         _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
         CGEventKeyboardSetUnicodeString(_newEventDown, 1, &ch);
         CGEventKeyboardSetUnicodeString(_newEventUp, 1, &ch);
-        CGEventTapPostEvent(_proxy, _newEventDown);
-        CGEventTapPostEvent(_proxy, _newEventUp);
+        PostEvent(_newEventDown);
+        PostEvent(_newEventUp);
         CFRelease(_newEventDown);
         CFRelease(_newEventUp);
         if (IS_DOUBLE_CODE(vCodeTable)) {
@@ -338,16 +568,16 @@ extern "C" {
             
             CGEventSetFlags(_newEventDown, _privateFlag);
             CGEventSetFlags(_newEventUp, _privateFlag);
-            CGEventTapPostEvent(_proxy, _newEventDown);
-            CGEventTapPostEvent(_proxy, _newEventUp);
+            PostEvent(_newEventDown);
+            PostEvent(_newEventUp);
         } else {
             if (vCodeTable == 0) { //unicode 2 bytes code
                 _newEventDown = CGEventCreateKeyboardEvent(myEventSource, 0, true);
                 _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
                 CGEventKeyboardSetUnicodeString(_newEventDown, 1, &_newChar);
                 CGEventKeyboardSetUnicodeString(_newEventUp, 1, &_newChar);
-                CGEventTapPostEvent(_proxy, _newEventDown);
-                CGEventTapPostEvent(_proxy, _newEventUp);
+                PostEvent(_newEventDown);
+                PostEvent(_newEventUp);
             } else if (vCodeTable == 1 || vCodeTable == 2 || vCodeTable == 4) { //others such as VNI Windows, TCVN3: 1 byte code
                 _newCharHi = HIBYTE(_newChar);
                 _newChar = LOBYTE(_newChar);
@@ -356,8 +586,8 @@ extern "C" {
                 _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
                 CGEventKeyboardSetUnicodeString(_newEventDown, 1, &_newChar);
                 CGEventKeyboardSetUnicodeString(_newEventUp, 1, &_newChar);
-                CGEventTapPostEvent(_proxy, _newEventDown);
-                CGEventTapPostEvent(_proxy, _newEventUp);
+                PostEvent(_newEventDown);
+                PostEvent(_newEventUp);
                 if (_newCharHi > 32) {
                     if (vCodeTable == 2) //VNI
                         InsertKeyLength(2);
@@ -367,8 +597,8 @@ extern "C" {
                     _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
                     CGEventKeyboardSetUnicodeString(_newEventDown, 1, &_newCharHi);
                     CGEventKeyboardSetUnicodeString(_newEventUp, 1, &_newCharHi);
-                    CGEventTapPostEvent(_proxy, _newEventDown);
-                    CGEventTapPostEvent(_proxy, _newEventUp);
+                    PostEvent(_newEventDown);
+                    PostEvent(_newEventUp);
                 } else {
                     if (vCodeTable == 2) //VNI
                         InsertKeyLength(1);
@@ -383,8 +613,8 @@ extern "C" {
                 _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
                 CGEventKeyboardSetUnicodeString(_newEventDown, (_newCharHi > 0 ? 2 : 1), _uniChar);
                 CGEventKeyboardSetUnicodeString(_newEventUp, (_newCharHi > 0 ? 2 : 1), _uniChar);
-                CGEventTapPostEvent(_proxy, _newEventDown);
-                CGEventTapPostEvent(_proxy, _newEventUp);
+                PostEvent(_newEventDown);
+                PostEvent(_newEventUp);
             }
         }
         CFRelease(_newEventDown);
@@ -404,8 +634,8 @@ extern "C" {
         _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
         CGEventKeyboardSetUnicodeString(_newEventDown, 1, &_newChar);
         CGEventKeyboardSetUnicodeString(_newEventUp, 1, &_newChar);
-        CGEventTapPostEvent(_proxy, _newEventDown);
-        CGEventTapPostEvent(_proxy, _newEventUp);
+        PostEvent(_newEventDown);
+        PostEvent(_newEventUp);
         CFRelease(_newEventDown);
         CFRelease(_newEventUp);
     }
@@ -414,24 +644,19 @@ extern "C" {
         CGEventRef eventVkeyDown = CGEventCreateKeyboardEvent (myEventSource, vKey, true);
         CGEventRef eventVkeyUp = CGEventCreateKeyboardEvent (myEventSource, vKey, false);
         
-        CGEventTapPostEvent(_proxy, eventVkeyDown);
-        CGEventTapPostEvent(_proxy, eventVkeyUp);
+        PostEvent(eventVkeyDown);
+        PostEvent(eventVkeyUp);
         
         CFRelease(eventVkeyDown);
         CFRelease(eventVkeyUp);
     }
 
     void SendBackspace() {
-        CGEventTapPostEvent(_proxy, eventBackSpaceDown);
-        CGEventTapPostEvent(_proxy, eventBackSpaceUp);
+        PostBackspace();
         
         if (IS_DOUBLE_CODE(vCodeTable) && !_syncKey.empty()) { //VNI or Unicode Compound
-            if (_syncKey.back() > 1) {
-                if (!(vCodeTable == 3 && containUnicodeCompoundApp(FRONT_APP))) {
-                    CGEventTapPostEvent(_proxy, eventBackSpaceDown);
-                    CGEventTapPostEvent(_proxy, eventBackSpaceUp);
-                }
-            }
+            for (NSUInteger press = RemovalOfLastLetter().backspaces; press > 1; press--)
+                PostBackspace();
             _syncKey.pop_back();
         }
     }
@@ -444,15 +669,13 @@ extern "C" {
         CGEventSetFlags(eventVkeyDown, _privateFlag);
         CGEventSetFlags(eventVkeyUp, _privateFlag);
         
-        CGEventTapPostEvent(_proxy, eventVkeyDown);
-        CGEventTapPostEvent(_proxy, eventVkeyUp);
+        PostEvent(eventVkeyDown);
+        PostEvent(eventVkeyUp);
         
         if (IS_DOUBLE_CODE(vCodeTable) && !_syncKey.empty()) { //VNI or Unicode Compound
-            if (_syncKey.back() > 1) {
-                if (!(vCodeTable == 3 && containUnicodeCompoundApp(FRONT_APP))) {
-                    CGEventTapPostEvent(_proxy, eventVkeyDown);
-                    CGEventTapPostEvent(_proxy, eventVkeyUp);
-                }
+            for (NSUInteger press = RemovalOfLastLetter().selectionSteps; press > 1; press--) {
+                PostEvent(eventVkeyDown);
+                PostEvent(eventVkeyUp);
             }
             _syncKey.pop_back();
         }
@@ -468,13 +691,34 @@ extern "C" {
         CGEventSetFlags(eventVkeyDown, _privateFlag);
         CGEventSetFlags(eventVkeyUp, _privateFlag);
         
-        CGEventTapPostEvent(_proxy, eventVkeyDown);
-        CGEventTapPostEvent(_proxy, eventVkeyUp);
+        PostEvent(eventVkeyDown);
+        PostEvent(eventVkeyUp);
         
         CFRelease(eventVkeyDown);
         CFRelease(eventVkeyUp);
     }
     
+    //Terminals get one character per key event. A multi-character event does
+    //not look like typing to all of them: the xterm.js based ones (Hyper,
+    //Tabby, Termius...) take it for a paste and drop it, while the backspaces
+    //before it still land - from then on every correction deletes into text
+    //the engine never knew was there.
+    void PostUnicodeString(const Uint16* chars, const int& count) {
+        const int step = (_oneCharacterPerEvent && count > 1) ? 1 : count;
+        int start = 0;
+        do {
+            _newEventDown = CGEventCreateKeyboardEvent(myEventSource, 0, true);
+            _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
+            CGEventKeyboardSetUnicodeString(_newEventDown, step, chars + start);
+            CGEventKeyboardSetUnicodeString(_newEventUp, step, chars + start);
+            PostEvent(_newEventDown);
+            PostEvent(_newEventUp);
+            CFRelease(_newEventDown);
+            CFRelease(_newEventUp);
+            start += step;
+        } while (start < count);
+    }
+
     void SendNewCharString(const bool& dataFromMacro=false, const Uint16& offset=0) {
         _j = 0;
         _newCharSize = dataFromMacro ? pData->macroData.size() : pData->newCharCount;
@@ -548,14 +792,7 @@ extern "C" {
             startNewSession();
         }
         
-        _newEventDown = CGEventCreateKeyboardEvent(myEventSource, 0, true);
-        _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
-        CGEventKeyboardSetUnicodeString(_newEventDown, _willContinuteSending ? 16 : _newCharSize - offset, _newCharString);
-        CGEventKeyboardSetUnicodeString(_newEventUp, _willContinuteSending ? 16 : _newCharSize - offset, _newCharString);
-        CGEventTapPostEvent(_proxy, _newEventDown);
-        CGEventTapPostEvent(_proxy, _newEventUp);
-        CFRelease(_newEventDown);
-        CFRelease(_newEventUp);
+        PostUnicodeString(_newCharString, _willContinuteSending ? 16 : _newCharSize - offset);
 
         if (_willContinuteSending) {
             SendNewCharString(dataFromMacro, dataFromMacro ? _k : 16);
@@ -593,12 +830,16 @@ extern "C" {
         if (HAS_BEEP(vSwitchKeyStatus))
             NSBeep();
         [appDelegate onImputMethodChanged:YES];
-        startNewSession();
+        //like a click: what came before - a pending capital, VNI key lengths -
+        //belongs to text typed in the other language
+        RequestNewSession();
     }
     
     void handleMacro() {
+        RefreshTypingPlan();
+
         //fix autocomplete
-        if (shouldUseRecommendWorkaround(FRONT_APP)) {
+        if (shouldUseRecommendWorkaround(FRONT_APP) && EmptyCharacterNeeded()) {
             SendEmptyCharacter();
             pData->backspaceCount++;
         }
@@ -665,12 +906,21 @@ extern "C" {
         }
 
         //dont handle my event
-        if (CGEventGetIntegerValueField(event, kCGEventSourceStateID) == CGEventSourceGetSourceStateID(myEventSource)) {
+        if (CGEventGetIntegerValueField(event, kCGEventSourceStateID) == CGEventSourceGetSourceStateID(myEventSource) ||
+            CGEventGetIntegerValueField(event, kCGEventSourceUserData) == kLibreKeyEventTag) {
             return event;
         }
         
         _flag = CGEventGetFlags(event);
         _keycode = (CGKeyCode)CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
+
+        //Cmd+Space, Esc, Return and clicks are how Spotlight opens and closes,
+        //and how focus moves between fields or an editor and its terminal panel
+        if (type == kCGEventFlagsChanged || type == kCGEventLeftMouseDown || type == kCGEventRightMouseDown ||
+            (type == kCGEventKeyDown && (_keycode == KEY_ESC || _keycode == KEY_RETURN || _keycode == KEY_ENTER ||
+                                         _keycode == KEY_TAB))) {
+            InvalidateFocusState();
+        }
         
         if (type == kCGEventKeyDown && vPerformLayoutCompat) {
             // If conversion fail, use current keycode
@@ -727,8 +977,7 @@ extern "C" {
 
         // Also check correct event hooked
         if ((type != kCGEventKeyDown) && (type != kCGEventKeyUp) &&
-            (type != kCGEventLeftMouseDown) && (type != kCGEventRightMouseDown) &&
-            (type != kCGEventLeftMouseDragged) && (type != kCGEventRightMouseDragged))
+            (type != kCGEventLeftMouseDown) && (type != kCGEventRightMouseDown))
             return event;
 
         //The user asked us to stay out of this app: hand every key straight
@@ -736,6 +985,12 @@ extern "C" {
         //work, because those are global shortcuts rather than typing.
         if (_isFrontAppExcluded)
             return event;
+
+        //AZERTY, QWERTZ, Dvorak... with layout compat off: the engine gets the
+        //US key of the letter printed on the key. After the hotkeys, which the
+        //user recorded by position.
+        if (type == kCGEventKeyDown && !vPerformLayoutCompat && _layoutRemap && !_layoutRemap.isIdentity)
+            _keycode = [_layoutRemap usKeyCodeFor:_keycode];
 
         _proxy = proxy;
         
@@ -756,29 +1011,14 @@ extern "C" {
         }
         
         //handle mouse
-        if (type == kCGEventLeftMouseDown || type == kCGEventRightMouseDown || type == kCGEventLeftMouseDragged || type == kCGEventRightMouseDragged) {
+        if (type == kCGEventLeftMouseDown || type == kCGEventRightMouseDown) {
             RequestNewSession();
             return event;
         }
 
         //if "turn off Vietnamese when in other language" mode on
-        if(vOtherLanguage){
-            TISInputSourceRef isource = TISCopyCurrentKeyboardInputSource();
-            if ( isource != NULL )
-            {
-                CFArrayRef languages = (CFArrayRef) TISGetInputSourceProperty(isource, kTISPropertyInputSourceLanguages);
-                
-                if (CFArrayGetCount(languages) > 0) {
-                    CFStringRef langRef = (CFStringRef)CFArrayGetValueAtIndex(languages, 0);
-                    NSString *currentLanguage = (__bridge NSString *)langRef;
-                    if(![currentLanguage isLike:@"en"]){
-                        return event;
-                    }
-                    CFRelease(langRef);
-                    CFRelease(isource);
-                }
-            }
-        }
+        if (vOtherLanguage && _inputSourceIsForeign)
+            return event;
         
         //handle keyboard
         if (type == kCGEventKeyDown) {
@@ -794,11 +1034,9 @@ extern "C" {
                         _syncKey.clear();
                     } else if (pData->extCode == 2) { //delete key
                         if (_syncKey.size() > 0) {
-                            if (_syncKey.back() > 1 && (vCodeTable == 2 || !containUnicodeCompoundApp(FRONT_APP))) {
-                                //send one more backspace
-                                CGEventTapPostEvent(_proxy, eventBackSpaceDown);
-                                CGEventTapPostEvent(_proxy, eventBackSpaceUp);
-                            }
+                            //the user's backspace took the first press
+                            for (NSUInteger press = RemovalOfLastLetter().backspaces; press > 1; press--)
+                                PostBackspace();
                             _syncKey.pop_back();
                         }
                        
@@ -806,9 +1044,22 @@ extern "C" {
                         InsertKeyLength(1);
                     }
                 }
+                //after a correction in this word, a terminal gets this key from
+                //us too, behind the correction, instead of letting it race ahead
+                if (_typingPlan && [Lockstep() shouldPostKeyAt:[NSProcessInfo processInfo].systemUptime
+                                                         plan:_typingPlan
+                                                     endsWord:pData->extCode == 1 || _keycode == KEY_SPACE
+                                                     shortcut:(_flag & (kCGEventFlagMaskCommand | kCGEventFlagMaskControl |
+                                                                        kCGEventFlagMaskAlternate)) != 0]) {
+                    CGEventRef copy = CGEventCreateCopy(event);
+                    PostEvent(copy);
+                    CFRelease(copy);
+                    return NULL;
+                }
                 return event;
             } else if (pData->code == vWillProcess || pData->code == vRestore || pData->code == vRestoreAndStartNewSession) { //handle result signal
-                
+                RefreshTypingPlan();
+
                 //fix autocomplete
                 if (shouldUseRecommendWorkaround(FRONT_APP) && pData->extCode != 4) {
                     if (isChromiumBrowserApp(FRONT_APP)) {
@@ -823,14 +1074,12 @@ extern "C" {
                                 //_syncKey again for the unit Shift+Left just popped,
                                 //and could re-send the extra backspace that the
                                 //second Shift+Left already covered.
-                                CGEventTapPostEvent(_proxy, eventBackSpaceDown);
-                                CGEventTapPostEvent(_proxy, eventBackSpaceUp);
+                                PostBackspace();
                             }
                         }
-                    } else {
+                    } else if (EmptyCharacterNeeded()) {
                         SendEmptyCharacter();
                         pData->backspaceCount++;
-                    
                     }
                 }
 
@@ -867,6 +1116,7 @@ extern "C" {
             } else if (pData->code == vReplaceMaro) { //MACRO
                 handleMacro();
             }
+            [Lockstep() noteCorrectionPostedAt:[NSProcessInfo processInfo].systemUptime];
             
             return NULL;
         }

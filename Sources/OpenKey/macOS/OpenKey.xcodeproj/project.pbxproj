@@ -50,9 +50,50 @@
 		AA0200000000000000000004 /* OKAppExclusionList.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000015 /* OKAppExclusionList.m */; };
 		AA0200000000000000000005 /* OKAppExclusionTableControllerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000013 /* OKAppExclusionTableControllerTests.m */; };
 		AA0200000000000000000006 /* OKAppExclusionTableController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000017 /* OKAppExclusionTableController.m */; };
+		AA0200000000000000000007 /* OKTerminalTyping.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000019 /* OKTerminalTyping.m */; };
+		AA0200000000000000000048 /* OKSpotlightDetector.m in Sources */ = {isa = PBXBuildFile; fileRef = AA010000000000000000001B /* OKSpotlightDetector.m */; };
+		AA020000000000000000004A /* OKInputSourceFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = AA010000000000000000001D /* OKInputSourceFilter.m */; };
+		AA020000000000000000004C /* OKEventStamper.m in Sources */ = {isa = PBXBuildFile; fileRef = AA010000000000000000001F /* OKEventStamper.m */; };
+		AA020000000000000000004E /* OKLockstep.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000061 /* OKLockstep.m */; };
+		AA0200000000000000000055 /* OKCompoundDeletion.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000063 /* OKCompoundDeletion.m */; };
+		AA0200000000000000000057 /* OKAutocompleteGuard.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000065 /* OKAutocompleteGuard.m */; };
+		AA0200000000000000000059 /* OKLayoutRemap.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000068 /* OKLayoutRemap.m */; };
+		AA0200000000000000000008 /* OKTerminalTypingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000014 /* OKTerminalTypingTests.m */; };
+		AA0200000000000000000009 /* Engine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23E2E49A2314FD3A006CCC3E /* Engine.cpp */; };
+		AA020000000000000000000A /* Vietnamese.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23E2E49B2314FD3A006CCC3E /* Vietnamese.cpp */; };
+		AA020000000000000000000B /* Macro.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23E2E4952314FD3A006CCC3E /* Macro.cpp */; };
+		AA020000000000000000000C /* SmartSwitchKey.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23E2E4982314FD3A006CCC3E /* SmartSwitchKey.cpp */; };
+		AA020000000000000000000D /* ConvertTool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233C4A6F231F937900DD7052 /* ConvertTool.cpp */; };
+		AA020000000000000000000E /* OKEngineTestGlobals.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000015 /* OKEngineTestGlobals.mm */; };
+		AA020000000000000000000F /* OKEngineResetTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000016 /* OKEngineResetTests.mm */; };
+		AA0200000000000000000040 /* OKEngineTypist.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000018 /* OKEngineTypist.mm */; };
+		AA0200000000000000000041 /* OKEngineTypistTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000019 /* OKEngineTypistTests.mm */; };
+		AA0200000000000000000042 /* OKEngineCorpus.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA020000000000000000001B /* OKEngineCorpus.mm */; };
+		AA0200000000000000000043 /* OKEngineCorpusRunnerTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA020000000000000000001C /* OKEngineCorpusRunnerTests.mm */; };
+		AA0200000000000000000044 /* OKEngineCorpusTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA020000000000000000001D /* OKEngineCorpusTests.mm */; };
+		AA0200000000000000000045 /* OKEngineFixTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA020000000000000000001E /* OKEngineFixTests.mm */; };
+		AA0200000000000000000046 /* OKMacroLookupTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA020000000000000000001F /* OKMacroLookupTests.mm */; };
+		AA0200000000000000000047 /* OKConvertToolTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000023 /* OKConvertToolTests.mm */; };
+		AA0200000000000000000049 /* OKSpotlightDetectorTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000024 /* OKSpotlightDetectorTests.m */; };
+		AA020000000000000000004B /* OKInputSourceFilterTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000025 /* OKInputSourceFilterTests.m */; };
+		AA020000000000000000004D /* OKEventStamperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000026 /* OKEventStamperTests.m */; };
+		AA020000000000000000004F /* OKLockstepTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000027 /* OKLockstepTests.m */; };
+		AA0200000000000000000053 /* OKOutputCheckTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000028 /* OKOutputCheckTests.mm */; };
+		AA0200000000000000000054 /* OKCharsOnScreenTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000029 /* OKCharsOnScreenTests.mm */; };
+		AA0200000000000000000056 /* OKCompoundDeletionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA020000000000000000002A /* OKCompoundDeletionTests.m */; };
+		AA0200000000000000000058 /* OKAutocompleteGuardTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA020000000000000000002B /* OKAutocompleteGuardTests.m */; };
+		AA020000000000000000005A /* OKLayoutRemapTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA020000000000000000002C /* OKLayoutRemapTests.m */; };
 		AA0100000000000000000007 /* OKSingleInstanceLock.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000012 /* OKSingleInstanceLock.m */; };
 		AA0100000000000000000008 /* OKAppExclusionList.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000015 /* OKAppExclusionList.m */; };
 		AA0100000000000000000009 /* OKAppExclusionTableController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000017 /* OKAppExclusionTableController.m */; };
+		AA010000000000000000000A /* OKTerminalTyping.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000019 /* OKTerminalTyping.m */; };
+		AA010000000000000000000B /* OKSpotlightDetector.m in Sources */ = {isa = PBXBuildFile; fileRef = AA010000000000000000001B /* OKSpotlightDetector.m */; };
+		AA010000000000000000000C /* OKInputSourceFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = AA010000000000000000001D /* OKInputSourceFilter.m */; };
+		AA010000000000000000000D /* OKEventStamper.m in Sources */ = {isa = PBXBuildFile; fileRef = AA010000000000000000001F /* OKEventStamper.m */; };
+		AA010000000000000000000E /* OKLockstep.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000061 /* OKLockstep.m */; };
+		AA010000000000000000000F /* OKCompoundDeletion.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000063 /* OKCompoundDeletion.m */; };
+		AA0100000000000000000066 /* OKAutocompleteGuard.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000065 /* OKAutocompleteGuard.m */; };
+		AA0100000000000000000069 /* OKLayoutRemap.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000068 /* OKLayoutRemap.m */; };
 		AA0100000000000000000001 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 237559B52204156000FB8CB9 /* AppDelegate.m */; };
 		AA0100000000000000000002 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 237559BD2204156000FB8CB9 /* main.m */; };
 		AA0100000000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 237559B72204156000FB8CB9 /* Assets.xcassets */; };
@@ -155,6 +196,28 @@
 		AA0200000000000000000011 /* OKSingleInstanceLockTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKSingleInstanceLockTests.m; sourceTree = "<group>"; };
 		AA0200000000000000000012 /* OKAppExclusionListTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKAppExclusionListTests.m; sourceTree = "<group>"; };
 		AA0200000000000000000013 /* OKAppExclusionTableControllerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKAppExclusionTableControllerTests.m; sourceTree = "<group>"; };
+		AA0200000000000000000014 /* OKTerminalTypingTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKTerminalTypingTests.m; sourceTree = "<group>"; };
+		AA0200000000000000000015 /* OKEngineTestGlobals.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OKEngineTestGlobals.mm; sourceTree = "<group>"; };
+		AA0200000000000000000016 /* OKEngineResetTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OKEngineResetTests.mm; sourceTree = "<group>"; };
+		AA0200000000000000000017 /* OKEngineTypist.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKEngineTypist.h; sourceTree = "<group>"; };
+		AA0200000000000000000018 /* OKEngineTypist.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OKEngineTypist.mm; sourceTree = "<group>"; };
+		AA0200000000000000000019 /* OKEngineTypistTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OKEngineTypistTests.mm; sourceTree = "<group>"; };
+		AA020000000000000000001A /* OKEngineCorpus.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKEngineCorpus.h; sourceTree = "<group>"; };
+		AA020000000000000000001B /* OKEngineCorpus.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OKEngineCorpus.mm; sourceTree = "<group>"; };
+		AA020000000000000000001C /* OKEngineCorpusRunnerTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OKEngineCorpusRunnerTests.mm; sourceTree = "<group>"; };
+		AA020000000000000000001D /* OKEngineCorpusTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OKEngineCorpusTests.mm; sourceTree = "<group>"; };
+		AA020000000000000000001E /* OKEngineFixTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OKEngineFixTests.mm; sourceTree = "<group>"; };
+		AA020000000000000000001F /* OKMacroLookupTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OKMacroLookupTests.mm; sourceTree = "<group>"; };
+		AA0200000000000000000023 /* OKConvertToolTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OKConvertToolTests.mm; sourceTree = "<group>"; };
+		AA0200000000000000000024 /* OKSpotlightDetectorTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKSpotlightDetectorTests.m; sourceTree = "<group>"; };
+		AA0200000000000000000025 /* OKInputSourceFilterTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKInputSourceFilterTests.m; sourceTree = "<group>"; };
+		AA0200000000000000000026 /* OKEventStamperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKEventStamperTests.m; sourceTree = "<group>"; };
+		AA0200000000000000000027 /* OKLockstepTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKLockstepTests.m; sourceTree = "<group>"; };
+		AA0200000000000000000028 /* OKOutputCheckTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OKOutputCheckTests.mm; sourceTree = "<group>"; };
+		AA0200000000000000000029 /* OKCharsOnScreenTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = OKCharsOnScreenTests.mm; sourceTree = "<group>"; };
+		AA020000000000000000002A /* OKCompoundDeletionTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKCompoundDeletionTests.m; sourceTree = "<group>"; };
+		AA020000000000000000002B /* OKAutocompleteGuardTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKAutocompleteGuardTests.m; sourceTree = "<group>"; };
+		AA020000000000000000002C /* OKLayoutRemapTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKLayoutRemapTests.m; sourceTree = "<group>"; };
 		AA0100000000000000000013 /* LibreKeyBranding.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LibreKeyBranding.h; sourceTree = "<group>"; };
 		AA0100000000000000000011 /* OKSingleInstanceLock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKSingleInstanceLock.h; sourceTree = "<group>"; };
 		AA0100000000000000000012 /* OKSingleInstanceLock.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKSingleInstanceLock.m; sourceTree = "<group>"; };
@@ -162,6 +225,22 @@
 		AA0100000000000000000015 /* OKAppExclusionList.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKAppExclusionList.m; sourceTree = "<group>"; };
 		AA0100000000000000000016 /* OKAppExclusionTableController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKAppExclusionTableController.h; sourceTree = "<group>"; };
 		AA0100000000000000000017 /* OKAppExclusionTableController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKAppExclusionTableController.m; sourceTree = "<group>"; };
+		AA0100000000000000000018 /* OKTerminalTyping.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKTerminalTyping.h; sourceTree = "<group>"; };
+		AA0100000000000000000019 /* OKTerminalTyping.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKTerminalTyping.m; sourceTree = "<group>"; };
+		AA010000000000000000001A /* OKSpotlightDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKSpotlightDetector.h; sourceTree = "<group>"; };
+		AA010000000000000000001B /* OKSpotlightDetector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKSpotlightDetector.m; sourceTree = "<group>"; };
+		AA010000000000000000001C /* OKInputSourceFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKInputSourceFilter.h; sourceTree = "<group>"; };
+		AA010000000000000000001D /* OKInputSourceFilter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKInputSourceFilter.m; sourceTree = "<group>"; };
+		AA010000000000000000001E /* OKEventStamper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKEventStamper.h; sourceTree = "<group>"; };
+		AA010000000000000000001F /* OKEventStamper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKEventStamper.m; sourceTree = "<group>"; };
+		AA0100000000000000000060 /* OKLockstep.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKLockstep.h; sourceTree = "<group>"; };
+		AA0100000000000000000061 /* OKLockstep.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKLockstep.m; sourceTree = "<group>"; };
+		AA0100000000000000000062 /* OKCompoundDeletion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKCompoundDeletion.h; sourceTree = "<group>"; };
+		AA0100000000000000000063 /* OKCompoundDeletion.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKCompoundDeletion.m; sourceTree = "<group>"; };
+		AA0100000000000000000064 /* OKAutocompleteGuard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKAutocompleteGuard.h; sourceTree = "<group>"; };
+		AA0100000000000000000065 /* OKAutocompleteGuard.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKAutocompleteGuard.m; sourceTree = "<group>"; };
+		AA0100000000000000000067 /* OKLayoutRemap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKLayoutRemap.h; sourceTree = "<group>"; };
+		AA0100000000000000000068 /* OKLayoutRemap.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKLayoutRemap.m; sourceTree = "<group>"; };
 		AA0100000000000000000010 /* LibreKeyHelper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LibreKeyHelper.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -267,6 +346,22 @@
 				AA0100000000000000000015 /* OKAppExclusionList.m */,
 				AA0100000000000000000016 /* OKAppExclusionTableController.h */,
 				AA0100000000000000000017 /* OKAppExclusionTableController.m */,
+				AA0100000000000000000018 /* OKTerminalTyping.h */,
+				AA0100000000000000000019 /* OKTerminalTyping.m */,
+				AA010000000000000000001A /* OKSpotlightDetector.h */,
+				AA010000000000000000001B /* OKSpotlightDetector.m */,
+				AA010000000000000000001C /* OKInputSourceFilter.h */,
+				AA010000000000000000001D /* OKInputSourceFilter.m */,
+				AA010000000000000000001E /* OKEventStamper.h */,
+				AA010000000000000000001F /* OKEventStamper.m */,
+				AA0100000000000000000060 /* OKLockstep.h */,
+				AA0100000000000000000061 /* OKLockstep.m */,
+				AA0100000000000000000062 /* OKCompoundDeletion.h */,
+				AA0100000000000000000063 /* OKCompoundDeletion.m */,
+				AA0100000000000000000064 /* OKAutocompleteGuard.h */,
+				AA0100000000000000000065 /* OKAutocompleteGuard.m */,
+				AA0100000000000000000067 /* OKLayoutRemap.h */,
+				AA0100000000000000000068 /* OKLayoutRemap.m */,
 			);
 			path = ModernKey;
 			sourceTree = "<group>";
@@ -277,6 +372,28 @@
 				AA0200000000000000000011 /* OKSingleInstanceLockTests.m */,
 				AA0200000000000000000012 /* OKAppExclusionListTests.m */,
 				AA0200000000000000000013 /* OKAppExclusionTableControllerTests.m */,
+				AA0200000000000000000014 /* OKTerminalTypingTests.m */,
+				AA0200000000000000000015 /* OKEngineTestGlobals.mm */,
+				AA0200000000000000000016 /* OKEngineResetTests.mm */,
+				AA0200000000000000000017 /* OKEngineTypist.h */,
+				AA0200000000000000000018 /* OKEngineTypist.mm */,
+				AA0200000000000000000019 /* OKEngineTypistTests.mm */,
+				AA020000000000000000001A /* OKEngineCorpus.h */,
+				AA020000000000000000001B /* OKEngineCorpus.mm */,
+				AA020000000000000000001C /* OKEngineCorpusRunnerTests.mm */,
+				AA020000000000000000001D /* OKEngineCorpusTests.mm */,
+				AA020000000000000000001E /* OKEngineFixTests.mm */,
+				AA020000000000000000001F /* OKMacroLookupTests.mm */,
+				AA0200000000000000000023 /* OKConvertToolTests.mm */,
+				AA0200000000000000000024 /* OKSpotlightDetectorTests.m */,
+				AA0200000000000000000025 /* OKInputSourceFilterTests.m */,
+				AA0200000000000000000026 /* OKEventStamperTests.m */,
+				AA0200000000000000000027 /* OKLockstepTests.m */,
+				AA0200000000000000000028 /* OKOutputCheckTests.mm */,
+				AA0200000000000000000029 /* OKCharsOnScreenTests.mm */,
+				AA020000000000000000002A /* OKCompoundDeletionTests.m */,
+				AA020000000000000000002B /* OKAutocompleteGuardTests.m */,
+				AA020000000000000000002C /* OKLayoutRemapTests.m */,
 			);
 			path = OpenKeyTests;
 			sourceTree = "<group>";
@@ -498,6 +615,14 @@
 				AA0100000000000000000007 /* OKSingleInstanceLock.m in Sources */,
 				AA0100000000000000000008 /* OKAppExclusionList.m in Sources */,
 				AA0100000000000000000009 /* OKAppExclusionTableController.m in Sources */,
+				AA010000000000000000000A /* OKTerminalTyping.m in Sources */,
+				AA010000000000000000000B /* OKSpotlightDetector.m in Sources */,
+				AA010000000000000000000C /* OKInputSourceFilter.m in Sources */,
+				AA010000000000000000000D /* OKEventStamper.m in Sources */,
+				AA010000000000000000000E /* OKLockstep.m in Sources */,
+				AA010000000000000000000F /* OKCompoundDeletion.m in Sources */,
+				AA0100000000000000000066 /* OKAutocompleteGuard.m in Sources */,
+				AA0100000000000000000069 /* OKLayoutRemap.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -520,6 +645,39 @@
 				AA0200000000000000000004 /* OKAppExclusionList.m in Sources */,
 				AA0200000000000000000005 /* OKAppExclusionTableControllerTests.m in Sources */,
 				AA0200000000000000000006 /* OKAppExclusionTableController.m in Sources */,
+				AA0200000000000000000007 /* OKTerminalTyping.m in Sources */,
+				AA0200000000000000000048 /* OKSpotlightDetector.m in Sources */,
+				AA020000000000000000004A /* OKInputSourceFilter.m in Sources */,
+				AA020000000000000000004C /* OKEventStamper.m in Sources */,
+				AA020000000000000000004E /* OKLockstep.m in Sources */,
+				AA0200000000000000000055 /* OKCompoundDeletion.m in Sources */,
+				AA0200000000000000000057 /* OKAutocompleteGuard.m in Sources */,
+				AA0200000000000000000059 /* OKLayoutRemap.m in Sources */,
+				AA0200000000000000000008 /* OKTerminalTypingTests.m in Sources */,
+				AA0200000000000000000009 /* Engine.cpp in Sources */,
+				AA020000000000000000000A /* Vietnamese.cpp in Sources */,
+				AA020000000000000000000B /* Macro.cpp in Sources */,
+				AA020000000000000000000C /* SmartSwitchKey.cpp in Sources */,
+				AA020000000000000000000D /* ConvertTool.cpp in Sources */,
+				AA020000000000000000000E /* OKEngineTestGlobals.mm in Sources */,
+				AA020000000000000000000F /* OKEngineResetTests.mm in Sources */,
+				AA0200000000000000000040 /* OKEngineTypist.mm in Sources */,
+				AA0200000000000000000041 /* OKEngineTypistTests.mm in Sources */,
+				AA0200000000000000000042 /* OKEngineCorpus.mm in Sources */,
+				AA0200000000000000000043 /* OKEngineCorpusRunnerTests.mm in Sources */,
+				AA0200000000000000000044 /* OKEngineCorpusTests.mm in Sources */,
+				AA0200000000000000000045 /* OKEngineFixTests.mm in Sources */,
+				AA0200000000000000000046 /* OKMacroLookupTests.mm in Sources */,
+				AA0200000000000000000047 /* OKConvertToolTests.mm in Sources */,
+				AA0200000000000000000049 /* OKSpotlightDetectorTests.m in Sources */,
+				AA020000000000000000004B /* OKInputSourceFilterTests.m in Sources */,
+				AA020000000000000000004D /* OKEventStamperTests.m in Sources */,
+				AA020000000000000000004F /* OKLockstepTests.m in Sources */,
+				AA0200000000000000000053 /* OKOutputCheckTests.mm in Sources */,
+				AA0200000000000000000054 /* OKCharsOnScreenTests.mm in Sources */,
+				AA0200000000000000000056 /* OKCompoundDeletionTests.m in Sources */,
+				AA0200000000000000000058 /* OKAutocompleteGuardTests.m in Sources */,
+				AA020000000000000000005A /* OKLayoutRemapTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

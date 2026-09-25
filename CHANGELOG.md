@@ -13,6 +13,93 @@ kho gốc; file này chỉ ghi những gì LibreKey khác đi.
   30 fork, hoặc 30 watcher). Cask được workflow `homebrew-bump.yml` cập nhật tự
   động mỗi khi có release mới, nên không có bước sửa `sha256` bằng tay. Ứng dụng
   không đổi một dòng nào.
+- **Sửa lỗi chữ nhảy loạn khi gõ trong terminal, nhất là qua SSH lúc mạng kém**
+  (macOS). Trong terminal, người sửa chữ không phải terminal mà là shell hay
+  chương trình ở đầu bên kia; byte tới đó bị mạng cắt và gộp tuỳ ý, nên mọi
+  thao tác thừa đều là thêm một chỗ để lệch nhịp với engine. Có hai thao tác
+  thừa như vậy:
+  - *Ký tự rỗng của "sửa lỗi gợi ý".* Tuỳ chọn này bật sẵn và gửi U+202F kèm một
+    backspace thừa trước **mỗi** lần bỏ dấu, ở mọi ứng dụng trừ Spotlight và
+    Chromium — kể cả terminal, nơi không có ô gợi ý nào để lách. Chỗ nào làm rơi
+    ký tự rỗng (iTerm2, xem OpenKey #95) thì backspace thừa ăn mất một chữ thật.
+    Nay terminal không nhận ký tự rỗng nữa, bất kể tuỳ chọn bật hay tắt.
+  - *Cả cụm chữ mới trong một event.* Terminal dựng trên xterm.js (Hyper, Tabby,
+    Termius) coi event nhiều ký tự mà không có composition là paste và bỏ đi,
+    trong khi các backspace trước nó vẫn tới shell. Dòng lệnh tụt lại sau engine
+    và từ đó mỗi lần sửa lại xoá nhầm chữ. Nay terminal nhận mỗi ký tự một event.
+
+  - *Phím thật vượt lên trước phần sửa.* Terminal (hay pty, hay xterm.js) có thể
+    cho một phím thật đi trước các event tổng hợp còn trong hàng đợi. Nay khi
+    một từ đã có lần sửa, LibreKey tự gửi lại các phím tiếp theo của từ đó ngay
+    sau phần sửa (`OKLockstep`), cho tới hết từ và thêm 0,15 giây.
+  - *Event tái sử dụng, timestamp cũ.* Mỗi event gửi đi giờ là event mới, có
+    timestamp tăng dần và được đánh dấu là của LibreKey.
+
+  Nhận diện theo bundle id: Terminal, iTerm2, Warp, kitty, Alacritty, WezTerm,
+  Ghostty, Hyper, Tabby, Termius. **Terminal trong VS Code** (cùng VS Code
+  Insiders, VSCodium, Cursor, Windsurf) được nhận diện qua Accessibility: ô đang
+  focus là terminal khi mô tả của nó bắt đầu bằng "Terminal", còn khung soạn
+  thảo vẫn đi đường cũ. Khi Spotlight đang mở phía trên terminal thì phím vào
+  Spotlight nên vẫn đi đường cũ. Ứng dụng khác không đổi gì. Logic nằm trong
+  `OKTerminalTyping` và `OKLockstep`, đều có unit test.
+
+  Không sửa được từ phía bộ gõ: chương trình ở remote đọc mỗi lần một chunk và
+  không xử lý backspace nằm lẫn trong chunk đó (các TUI dựng trên Ink, ví dụ
+  Claude Code bản cũ). Mạng kém khiến chunk bị gộp nhiều hơn, nên lỗi này nằm
+  ở chương trình đó chứ không ở LibreKey.
+- **Engine gõ đúng hơn.** Đo trên 30.337 cặp Telex tiếng Việt, tỉ lệ đúng tăng từ
+  96,33% lên 99,76%. Trên bảng đối chiếu của UniKey (1.307 dòng) tăng từ 1.264 lên
+  1.302 dòng. Trên 97.592 từ tiếng Anh khi bật tự khôi phục, tỉ lệ tăng từ 93,93% lên
+  97,43%. Các sửa đổi chính:
+  - `w` xác nhận móc mà engine đã tự thêm, thay vì huỷ nó; `w` thứ hai huỷ móc ở
+    nguyên âm thứ hai (#216); `huơ`, `khuơ`, `uở` gõ theo UniKey (#229).
+  - Macro: khoá macro dựng lại khi xoá lùi vào một từ (#242), cập nhật theo đúng
+    chữ host viết (#313), và macro nằm trong dấu câu vẫn được bung (#279).
+  - Xoá lùi kết thúc thao tác huỷ khi tắt kiểm tra chính tả (#145). Phụ âm cuối
+    `k` nhận dấu khi tắt kiểm tra chính tả, cho địa danh như Đắk Lắk (#134).
+  - Viết hoa đầu câu sau `!` và `?` nhưng không sau `>`, và bỏ khi xoá lùi (#285).
+  - Tự khôi phục từ sai giờ cũng khôi phục khi phím gõ đôi đã huỷ dấu và bị
+    nuốt mất: `official` không còn ra `oficial`, `necessary` không còn ra
+    `necesary` (#141). Engine giữ thêm một log phím gốc cho mỗi từ. Khôi phục
+    chỉ dùng phím của chính từ đó: trước đây xoá lùi vào một từ cũ rồi gõ sai
+    có thể xoá mất cả từ.
+  - Công cụ chuyển mã giữ nguyên kiểu chữ khi bỏ dấu (#297).
+  - Hết các trường hợp engine gửi ký tự U+0000.
+- **Engine không bao giờ xoá quá phần chính nó viết.** Engine tự đếm những gì nó
+  đã cho qua và đã viết trước con trỏ, theo từng từ, và quên hết sau click,
+  Return, phím mũi tên hay phím tắt. Mọi lần sửa đều được kiểm tra trước khi tới
+  host (`vCheckOutput`): số backspace không vượt quá phần đó, và không có ký tự
+  điều khiển. Nếu một lỗi logic khác có đòi xoá thêm thì thiệt hại cũng chỉ nằm
+  trong từ đang gõ.
+- **Sửa dấu cách sau backspace với bảng mã VNI và Unicode tổ hợp** (macOS và
+  Windows). Dấu cách mang theo mã "xoá" của phím trước đó, nên host tưởng đó là
+  một lần xoá nữa và xoá mất nửa chữ hai byte (VNI `ấ` = `a` + byte dấu).
+- **Unicode tổ hợp trong Chrome, Brave, Edge** (#182). Chromium chọn cả chữ và
+  dấu tổ hợp một lượt nhưng xoá từng code point, nên `conff` ra `coonf`. Nay mỗi
+  ứng dụng được hỏi riêng cần bao nhiêu lần Backspace và Shift+Left
+  (`OKCompoundDeletion`).
+- **Ít ký tự rỗng hơn.** U+202F của "sửa lỗi gợi ý" chỉ còn được gửi khi có thể
+  có gợi ý bôi đen sau con trỏ. Trong ô nhiều dòng (TextEdit, Notes, Mail...) mà
+  Accessibility báo không có gì được chọn thì không gửi, nên không còn thừa một
+  bước trong lịch sử hoàn tác. Ô một dòng và ứng dụng không đọc được qua
+  Accessibility vẫn như cũ (`OKAutocompleteGuard`).
+- **Bàn phím AZERTY, QWERTZ, Dvorak** khi chưa bật "tương thích bố cục". Engine
+  đặt tên phím theo vị trí trên bàn phím US, nên Telex `w` trên AZERTY bị đọc
+  thành `z`, còn trên Dvorak gần như chữ nào cũng sai. Nay LibreKey đọc layout
+  đang chọn và đưa cho engine đúng chữ in trên phím. Chỉ áp dụng cho chữ cái và
+  dấu câu không cần Shift của bàn US; phím gõ ra `é`, `&`, `ü` vẫn giữ như trước.
+  Phím tắt đã ghi theo vị trí không bị ảnh hưởng (`OKLayoutRemap`).
+- **Bớt việc trên mỗi phím** (macOS). Danh sách cửa sổ để dò Spotlight chỉ còn
+  được đọc một lần cho mỗi lần Spotlight mở, thay vì tới ba lần mỗi lần sửa.
+  Ngôn ngữ của nguồn nhập được đọc khi nó đổi, thay vì ở mỗi lần nhấn và nhả
+  phím; việc này cũng sửa một lần `CFRelease` thừa và một chỗ rò bộ nhớ. Event
+  tap không còn nhận sự kiện kéo chuột.
+- **Windows: Shift + số** luôn được đưa vào engine như phím có Shift, dù có bật
+  Caps Lock hay không (#290).
+- **211 unit test** (trước là 50), gồm một bộ gõ mô phỏng dùng đúng engine và
+  logic gửi phím của host, cùng bảng đối chiếu UniKey (GPL-2+) có sẵn trong kho.
+  Hai tập corpus lớn (cặp Telex và từ tiếng Anh) nằm ngoài kho. Muốn chạy thì trỏ
+  `TEST_RUNNER_LIBREKEY_CORPUS_DIR` tới thư mục chứa chúng.
 
 ## 1.2.0 — 16/08/2026
 

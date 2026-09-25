@@ -38,6 +38,16 @@ void getMacroSaveData(vector<Byte>& outData);
 bool findMacro(vector<Uint32>& key, vector<Uint32>& macroContentCode);
 
 /**
+ * findMacro for the key typed since the last space. When the whole key has no
+ * macro, tries again without the punctuation typed in front of the word, so
+ * "\"btw" or "(btw" still finds btw. matchedLength receives how many entries at
+ * the end of the key the macro replaces. The key itself is left untouched.
+ */
+bool findMacroSkippingLeadingPunctuation(const vector<Uint32>& key,
+                                         vector<Uint32>& macroContentCode,
+                                         int& matchedLength);
+
+/**
  * check has this macro or not
  */
 bool hasMacro(const string& macroName);

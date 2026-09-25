@@ -212,9 +212,55 @@ void vKeyHandleEvent(const vKeyEvent& event,
                      const bool& otherControlKey=false);
 
 /**
+ * Input of vCheckOutput: a correction the engine is about to hand the host.
+ */
+struct vOutputCheckIn {
+    Byte code;              //hCode: vWillProcess, vRestore, vReplaceMaro...
+    Byte backspaceCount;    //hBPC
+    Byte newCharCount;      //hNCC
+    const Uint32* charData; //hData, last character first
+    int charsOnScreen;      //characters the engine put in front of the cursor and can still reach
+    int codeTable;          //vCodeTable, to read charData the way the host does
+};
+
+/**
+ * Output of vCheckOutput: the same correction, safe to post.
+ */
+struct vOutputCheckOut {
+    Byte backspaceCount;        //never more than charsOnScreen
+    Byte newCharCount;          //without the characters dropped
+    Uint32 charData[MAX_BUFF];  //hData order, without the characters dropped
+    bool clampedBackspaces;     //the engine asked to delete text it never wrote
+    bool droppedCharacters;     //a character would have drawn as a control character
+};
+
+/**
+ * Last line of defence between the engine and the host. A backspace past what
+ * the engine wrote deletes the user's own text, a control character (NUL from a
+ * missing table entry) corrupts it; neither should ever be asked for, and if a
+ * bug does, the damage stays inside the word being typed.
+ */
+vOutputCheckOut vCheckOutput(const vOutputCheckIn& in);
+
+/**
+ * How many characters in front of the cursor a correction may delete: the word
+ * the engine wrote there, 0 when a space or text it never saw is there. Every
+ * vKeyHandleEvent output is held to it with vCheckOutput. A click, Return,
+ * arrow or shortcut makes the engine forget what is in front of the cursor.
+ */
+int vKeyCharsOnScreen();
+
+/**
  * Start a new word
  */
 void startNewSession();
+
+/**
+ * Forget everything typed so far - current word, previous words kept for
+ * backspacing into, macro key, pending restore and capitalisation state - as if
+ * the engine had just been created. Settings and the macro table are kept.
+ */
+void vKeyResetState();
 
 /**
  * do some task in english mode (use for macro)
