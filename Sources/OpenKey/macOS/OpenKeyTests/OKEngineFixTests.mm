@@ -310,4 +310,35 @@
     XCTAssertEqualObjects(@(OKTypeKeys("aasb{BS} {BS}{BS}", compound).text.c_str()), @"");
 }
 
+#pragma mark - Restoring a wrong word whose doubled key undid a mark (#141)
+
+- (NSString *)restoring:(const char *)keys {
+    OKTypingSettings restore;
+    restore.restoreIfWrongSpelling = true;
+    return @(OKTypeKeys(keys, restore).text.c_str());
+}
+
+/// The second f undid the mark and was eaten with it, leaving no mark for the
+/// restore to notice: "official" came out "oficial".
+- (void)testWordWithAnUndoneMarkIsRestored {
+    XCTAssertEqualObjects([self restoring:"official "], @"official ");
+    XCTAssertEqualObjects([self restoring:"necessary "], @"necessary ");
+    XCTAssertEqualObjects([self restoring:"different "], @"different ");
+    XCTAssertEqualObjects([self restoring:"less "], @"less ");
+    XCTAssertEqualObjects([self restoring:"error "], @"error ");
+    XCTAssertEqualObjects([self restoring:"add "], @"add ");
+}
+
+- (void)testWordTypedAsItIsStaysAsItIs {
+    XCTAssertEqualObjects([self restoring:"base "], @"base ");
+    XCTAssertEqualObjects([self restoring:"text "], @"text ");
+}
+
+/// Vietnamese comes first: a real word is never restored.
+- (void)testVietnameseWordsAreNotRestored {
+    XCTAssertEqualObjects([self restoring:"khoong "], @"không ");
+    XCTAssertEqualObjects([self restoring:"has "], @"há ");
+    XCTAssertEqualObjects([self restoring:"chaof "], @"chào ");
+}
+
 @end
