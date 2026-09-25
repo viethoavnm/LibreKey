@@ -16,6 +16,7 @@
 #import "OKTerminalTyping.h"
 #import "OKSpotlightDetector.h"
 #import "OKInputSourceFilter.h"
+#import "OKEventStamper.h"
 
 #define FRONT_APP [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier
 #define OTHER_CONTROL_KEY (_flag & kCGEventFlagMaskCommand) || (_flag & kCGEventFlagMaskControl) || \
@@ -77,8 +78,6 @@ extern "C" {
 
     CGEventSourceRef myEventSource = NULL;
     vKeyHookState* pData;
-    CGEventRef eventBackSpaceDown;
-    CGEventRef eventBackSpaceUp;
     UniChar _newChar, _newCharHi;
     CGEventRef _newEventDown, _newEventUp;
     CGKeyCode _keycode;
@@ -216,8 +215,6 @@ extern "C" {
         myEventSource = CGEventSourceCreate(kCGEventSourceStatePrivate);
         pData = (vKeyHookState*)vKeyInit();
 
-        eventBackSpaceDown = CGEventCreateKeyboardEvent (myEventSource, 51, true);
-        eventBackSpaceUp = CGEventCreateKeyboardEvent (myEventSource, 51, false);
 
         NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
 
@@ -376,13 +373,41 @@ extern "C" {
         _syncKey.push_back(len);
     }
     
+    //Every event LibreKey posts goes out through PostEvent: stamped strictly
+    //after the previous one, so the window server cannot reorder a burst - the
+    //stamp starts from the one the event got when it was created, in whatever
+    //unit the system uses - and tagged, so the tap knows it when it comes back.
+    static const int64_t kLibreKeyEventTag = 0x4C4B4559; //"LKEY"
+
+    static OKEventStamper* EventStamper() {
+        static OKEventStamper* stamper = [OKEventStamper new];
+        return stamper;
+    }
+
+    void PostEvent(CGEventRef event) {
+        CGEventSetTimestamp(event, [EventStamper() stampForTime:CGEventGetTimestamp(event)]);
+        CGEventSetIntegerValueField(event, kCGEventSourceUserData, kLibreKeyEventTag);
+        CGEventTapPostEvent(_proxy, event);
+    }
+
+    //Fresh events each time: the pair created once at start up carried that
+    //moment's timestamp into every backspace sent afterwards.
+    void PostBackspace() {
+        CGEventRef down = CGEventCreateKeyboardEvent(myEventSource, KEY_DELETE, true);
+        CGEventRef up = CGEventCreateKeyboardEvent(myEventSource, KEY_DELETE, false);
+        PostEvent(down);
+        PostEvent(up);
+        CFRelease(down);
+        CFRelease(up);
+    }
+
     void SendPureCharacter(const Uint16& ch) {
         _newEventDown = CGEventCreateKeyboardEvent(myEventSource, 0, true);
         _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
         CGEventKeyboardSetUnicodeString(_newEventDown, 1, &ch);
         CGEventKeyboardSetUnicodeString(_newEventUp, 1, &ch);
-        CGEventTapPostEvent(_proxy, _newEventDown);
-        CGEventTapPostEvent(_proxy, _newEventUp);
+        PostEvent(_newEventDown);
+        PostEvent(_newEventUp);
         CFRelease(_newEventDown);
         CFRelease(_newEventUp);
         if (IS_DOUBLE_CODE(vCodeTable)) {
@@ -409,16 +434,16 @@ extern "C" {
             
             CGEventSetFlags(_newEventDown, _privateFlag);
             CGEventSetFlags(_newEventUp, _privateFlag);
-            CGEventTapPostEvent(_proxy, _newEventDown);
-            CGEventTapPostEvent(_proxy, _newEventUp);
+            PostEvent(_newEventDown);
+            PostEvent(_newEventUp);
         } else {
             if (vCodeTable == 0) { //unicode 2 bytes code
                 _newEventDown = CGEventCreateKeyboardEvent(myEventSource, 0, true);
                 _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
                 CGEventKeyboardSetUnicodeString(_newEventDown, 1, &_newChar);
                 CGEventKeyboardSetUnicodeString(_newEventUp, 1, &_newChar);
-                CGEventTapPostEvent(_proxy, _newEventDown);
-                CGEventTapPostEvent(_proxy, _newEventUp);
+                PostEvent(_newEventDown);
+                PostEvent(_newEventUp);
             } else if (vCodeTable == 1 || vCodeTable == 2 || vCodeTable == 4) { //others such as VNI Windows, TCVN3: 1 byte code
                 _newCharHi = HIBYTE(_newChar);
                 _newChar = LOBYTE(_newChar);
@@ -427,8 +452,8 @@ extern "C" {
                 _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
                 CGEventKeyboardSetUnicodeString(_newEventDown, 1, &_newChar);
                 CGEventKeyboardSetUnicodeString(_newEventUp, 1, &_newChar);
-                CGEventTapPostEvent(_proxy, _newEventDown);
-                CGEventTapPostEvent(_proxy, _newEventUp);
+                PostEvent(_newEventDown);
+                PostEvent(_newEventUp);
                 if (_newCharHi > 32) {
                     if (vCodeTable == 2) //VNI
                         InsertKeyLength(2);
@@ -438,8 +463,8 @@ extern "C" {
                     _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
                     CGEventKeyboardSetUnicodeString(_newEventDown, 1, &_newCharHi);
                     CGEventKeyboardSetUnicodeString(_newEventUp, 1, &_newCharHi);
-                    CGEventTapPostEvent(_proxy, _newEventDown);
-                    CGEventTapPostEvent(_proxy, _newEventUp);
+                    PostEvent(_newEventDown);
+                    PostEvent(_newEventUp);
                 } else {
                     if (vCodeTable == 2) //VNI
                         InsertKeyLength(1);
@@ -454,8 +479,8 @@ extern "C" {
                 _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
                 CGEventKeyboardSetUnicodeString(_newEventDown, (_newCharHi > 0 ? 2 : 1), _uniChar);
                 CGEventKeyboardSetUnicodeString(_newEventUp, (_newCharHi > 0 ? 2 : 1), _uniChar);
-                CGEventTapPostEvent(_proxy, _newEventDown);
-                CGEventTapPostEvent(_proxy, _newEventUp);
+                PostEvent(_newEventDown);
+                PostEvent(_newEventUp);
             }
         }
         CFRelease(_newEventDown);
@@ -475,8 +500,8 @@ extern "C" {
         _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
         CGEventKeyboardSetUnicodeString(_newEventDown, 1, &_newChar);
         CGEventKeyboardSetUnicodeString(_newEventUp, 1, &_newChar);
-        CGEventTapPostEvent(_proxy, _newEventDown);
-        CGEventTapPostEvent(_proxy, _newEventUp);
+        PostEvent(_newEventDown);
+        PostEvent(_newEventUp);
         CFRelease(_newEventDown);
         CFRelease(_newEventUp);
     }
@@ -485,22 +510,20 @@ extern "C" {
         CGEventRef eventVkeyDown = CGEventCreateKeyboardEvent (myEventSource, vKey, true);
         CGEventRef eventVkeyUp = CGEventCreateKeyboardEvent (myEventSource, vKey, false);
         
-        CGEventTapPostEvent(_proxy, eventVkeyDown);
-        CGEventTapPostEvent(_proxy, eventVkeyUp);
+        PostEvent(eventVkeyDown);
+        PostEvent(eventVkeyUp);
         
         CFRelease(eventVkeyDown);
         CFRelease(eventVkeyUp);
     }
 
     void SendBackspace() {
-        CGEventTapPostEvent(_proxy, eventBackSpaceDown);
-        CGEventTapPostEvent(_proxy, eventBackSpaceUp);
+        PostBackspace();
         
         if (IS_DOUBLE_CODE(vCodeTable) && !_syncKey.empty()) { //VNI or Unicode Compound
             if (_syncKey.back() > 1) {
                 if (!(vCodeTable == 3 && containUnicodeCompoundApp(FRONT_APP))) {
-                    CGEventTapPostEvent(_proxy, eventBackSpaceDown);
-                    CGEventTapPostEvent(_proxy, eventBackSpaceUp);
+                    PostBackspace();
                 }
             }
             _syncKey.pop_back();
@@ -515,14 +538,14 @@ extern "C" {
         CGEventSetFlags(eventVkeyDown, _privateFlag);
         CGEventSetFlags(eventVkeyUp, _privateFlag);
         
-        CGEventTapPostEvent(_proxy, eventVkeyDown);
-        CGEventTapPostEvent(_proxy, eventVkeyUp);
+        PostEvent(eventVkeyDown);
+        PostEvent(eventVkeyUp);
         
         if (IS_DOUBLE_CODE(vCodeTable) && !_syncKey.empty()) { //VNI or Unicode Compound
             if (_syncKey.back() > 1) {
                 if (!(vCodeTable == 3 && containUnicodeCompoundApp(FRONT_APP))) {
-                    CGEventTapPostEvent(_proxy, eventVkeyDown);
-                    CGEventTapPostEvent(_proxy, eventVkeyUp);
+                    PostEvent(eventVkeyDown);
+                    PostEvent(eventVkeyUp);
                 }
             }
             _syncKey.pop_back();
@@ -539,8 +562,8 @@ extern "C" {
         CGEventSetFlags(eventVkeyDown, _privateFlag);
         CGEventSetFlags(eventVkeyUp, _privateFlag);
         
-        CGEventTapPostEvent(_proxy, eventVkeyDown);
-        CGEventTapPostEvent(_proxy, eventVkeyUp);
+        PostEvent(eventVkeyDown);
+        PostEvent(eventVkeyUp);
         
         CFRelease(eventVkeyDown);
         CFRelease(eventVkeyUp);
@@ -559,8 +582,8 @@ extern "C" {
             _newEventUp = CGEventCreateKeyboardEvent(myEventSource, 0, false);
             CGEventKeyboardSetUnicodeString(_newEventDown, step, chars + start);
             CGEventKeyboardSetUnicodeString(_newEventUp, step, chars + start);
-            CGEventTapPostEvent(_proxy, _newEventDown);
-            CGEventTapPostEvent(_proxy, _newEventUp);
+            PostEvent(_newEventDown);
+            PostEvent(_newEventUp);
             CFRelease(_newEventDown);
             CFRelease(_newEventUp);
             start += step;
@@ -754,7 +777,8 @@ extern "C" {
         }
 
         //dont handle my event
-        if (CGEventGetIntegerValueField(event, kCGEventSourceStateID) == CGEventSourceGetSourceStateID(myEventSource)) {
+        if (CGEventGetIntegerValueField(event, kCGEventSourceStateID) == CGEventSourceGetSourceStateID(myEventSource) ||
+            CGEventGetIntegerValueField(event, kCGEventSourceUserData) == kLibreKeyEventTag) {
             return event;
         }
         
@@ -875,8 +899,7 @@ extern "C" {
                         if (_syncKey.size() > 0) {
                             if (_syncKey.back() > 1 && (vCodeTable == 2 || !containUnicodeCompoundApp(FRONT_APP))) {
                                 //send one more backspace
-                                CGEventTapPostEvent(_proxy, eventBackSpaceDown);
-                                CGEventTapPostEvent(_proxy, eventBackSpaceUp);
+                                PostBackspace();
                             }
                             _syncKey.pop_back();
                         }
@@ -903,8 +926,7 @@ extern "C" {
                                 //_syncKey again for the unit Shift+Left just popped,
                                 //and could re-send the extra backspace that the
                                 //second Shift+Left already covered.
-                                CGEventTapPostEvent(_proxy, eventBackSpaceDown);
-                                CGEventTapPostEvent(_proxy, eventBackSpaceUp);
+                                PostBackspace();
                             }
                         }
                     } else {
