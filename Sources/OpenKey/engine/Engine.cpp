@@ -1451,17 +1451,26 @@ void handleQuickTelex(const Uint16& data, const bool& isCaps) {
     insertKey(_quickTelex[data][1], isCaps, false);
 }
 
-//Whether a key typed for the word is missing from it: a doubled key (ff, ss,
-//rr) undid the mark and was swallowed with it. RawKeys must hold the word's
-//letters in order, or it is the log of some other word.
-static bool keysSwallowedInWord() {
-    if (_index == 0 || _rawIndex <= _stateIndex || (Uint16)RawKeys[0] != CHR(0))
+//Whether the letters of the word can be read in order from these keys, the
+//first letter from the first key: each letter is its own key, but an ư or ơ
+//may have been typed as w, [ or ] alone. After backspacing into an earlier
+//word the logs hold another word's keys, and this is how that is told.
+static bool keysSpellWord(const Uint32* keys, const int& count) {
+    if (_index == 0 || count < _index)
         return false;
     int key = 0;
     for (int letter = 0; letter < _index; letter++) {
-        while (key < _rawIndex && (Uint16)RawKeys[key] != CHR(letter))
+        Uint16 ch = CHR(letter);
+        bool horned = (TypingWord[letter] & TONEW_MASK) && (ch == KEY_U || ch == KEY_O);
+        while (key < count) {
+            Uint16 typed = (Uint16)keys[key];
+            if (typed == ch || (horned && (typed == KEY_W || typed == KEY_LEFT_BRACKET || typed == KEY_RIGHT_BRACKET)))
+                break;
+            if (letter == 0)
+                return false;
             key++;
-        if (key == _rawIndex)
+        }
+        if (key == count)
             return false;
         key++;
     }
@@ -1469,28 +1478,34 @@ static bool keysSwallowedInWord() {
 }
 
 bool checkRestoreIfWrongSpelling(const int& handleCode) {
-    //what is on screen differs from the keys either by a mark or by a swallowed key
-    bool swallowed = keysSwallowedInWord();
-    for (ii = 0; ii < _index; ii++) {
-        if (swallowed || (!IS_CONSONANT(CHR(ii)) &&
-            (TypingWord[ii] & MARK_MASK || TypingWord[ii] & TONE_MASK || TypingWord[ii] & TONEW_MASK))) {
-            //the keys as typed: with the swallowed ones when there are any
-            if (swallowed) {
-                memcpy(KeyStates, RawKeys, _rawIndex * sizeof(Uint32));
-                _stateIndex = _rawIndex;
-            }
-            hCode = handleCode;
-            hBPC = _index;
-            hNCC = _stateIndex;
-            for (i = 0; i < _stateIndex; i++) {
-                TypingWord[i] = KeyStates[i];
-                hData[_stateIndex - 1 - i] = TypingWord[i];
-            }
-            _index = _stateIndex;
-            return true;
-        }
+    //KeyStates drops a key an undo swallowed ("ff", "ss"); RawKeys keeps it
+    bool swallowed = _rawIndex > _stateIndex && keysSpellWord(RawKeys, _rawIndex);
+    if (swallowed) {
+        memcpy(KeyStates, RawKeys, _rawIndex * sizeof(Uint32));
+        _stateIndex = _rawIndex;
     }
-    return false;
+    //never write keys that are not this word's over it
+    if (!keysSpellWord(KeyStates, _stateIndex))
+        return false;
+
+    //what is on screen is not what was typed: a mark, a swallowed key, a mark taken off
+    bool differs = _stateIndex != _index;
+    for (ii = 0; ii < _index && !differs; ii++) {
+        differs = CHR(ii) != (Uint16)KeyStates[ii] ||
+                  (!IS_CONSONANT(CHR(ii)) && (TypingWord[ii] & (MARK_MASK | TONE_MASK | TONEW_MASK)));
+    }
+    if (!differs)
+        return false;
+
+    hCode = handleCode;
+    hBPC = _index;
+    hNCC = _stateIndex;
+    for (i = 0; i < _stateIndex; i++) {
+        TypingWord[i] = KeyStates[i];
+        hData[_stateIndex - 1 - i] = TypingWord[i];
+    }
+    _index = _stateIndex;
+    return true;
 }
 
 void vTempOffSpellChecking() {

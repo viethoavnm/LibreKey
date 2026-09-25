@@ -20,7 +20,7 @@
 //Last measured counts. Raise them as fixes land.
 static const int kUniKeyTablePassing = 1302;       //of 1,307
 static const int kTelexPairsPassing = 30263;       //of 30,337
-static const int kEnglishPassing = 94864;          //of 97,592
+static const int kEnglishPassing = 95079;          //of 97,592
 static const int kEnglishOverDeleteRows = 0;
 static const int kEnglishControlCharRows = 0;
 
