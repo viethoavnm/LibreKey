@@ -17,6 +17,7 @@
 #import "OKSpotlightDetector.h"
 #import "OKInputSourceFilter.h"
 #import "OKEventStamper.h"
+#import "OKLockstep.h"
 
 #define FRONT_APP [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier
 #define OTHER_CONTROL_KEY (_flag & kCGEventFlagMaskCommand) || (_flag & kCGEventFlagMaskControl) || \
@@ -108,6 +109,15 @@ extern "C" {
     //How the correction being sent right now is posted. See RefreshTypingPlan.
     bool _allowsAutocompleteWorkaround = true;
     bool _oneCharacterPerEvent = false;
+    static OKTypingPlan* _typingPlan = nil;
+
+    //Keys LibreKey posts itself so they cannot overtake a correction it posted
+    //before them - in terminals, where that has been seen. 150 ms covers the
+    //first keys of the next word, typed while the correction is still queued.
+    static OKLockstep* Lockstep() {
+        static OKLockstep* lockstep = [[OKLockstep alloc] initWithWindow:0.15];
+        return lockstep;
+    }
 
     void InvalidateSpotlightState();
 
@@ -140,6 +150,7 @@ extern "C" {
     //edits made in the panel take effect the moment the user switches away.
     void ReloadAppExclusionState() {
         InvalidateSpotlightState();
+        [Lockstep() reset];
         //macOS can switch the input source per document when the app changes
         RefreshInputSourceLanguage();
         bool wasExcluded = _isFrontAppExcluded;
@@ -230,6 +241,7 @@ extern "C" {
     void RequestNewSession() {
         //send event signal to Engine
         vKeyHandleEvent(vKeyEvent::Mouse, vKeyEventState::MouseDown, 0);
+        [Lockstep() reset];
         
         if (IS_DOUBLE_CODE(vCodeTable)) { //VNI
             _syncKey.clear();
@@ -302,6 +314,7 @@ extern "C" {
         OKTypingPlan* plan = [OKTerminalTyping planForTarget:target];
         _allowsAutocompleteWorkaround = plan.allowsAutocompleteWorkaround;
         _oneCharacterPerEvent = plan.oneCharacterPerEvent;
+        _typingPlan = plan;
     }
 
     BOOL shouldUseRecommendWorkaround(NSString* topApp) {
@@ -908,6 +921,18 @@ extern "C" {
                         InsertKeyLength(1);
                     }
                 }
+                //after a correction in this word, a terminal gets this key from
+                //us too, behind the correction, instead of letting it race ahead
+                if (_typingPlan && [Lockstep() shouldPostKeyAt:[NSProcessInfo processInfo].systemUptime
+                                                         plan:_typingPlan
+                                                     endsWord:pData->extCode == 1
+                                                     shortcut:(_flag & (kCGEventFlagMaskCommand | kCGEventFlagMaskControl |
+                                                                        kCGEventFlagMaskAlternate)) != 0]) {
+                    CGEventRef copy = CGEventCreateCopy(event);
+                    PostEvent(copy);
+                    CFRelease(copy);
+                    return NULL;
+                }
                 return event;
             } else if (pData->code == vWillProcess || pData->code == vRestore || pData->code == vRestoreAndStartNewSession) { //handle result signal
                 RefreshTypingPlan();
@@ -969,6 +994,7 @@ extern "C" {
             } else if (pData->code == vReplaceMaro) { //MACRO
                 handleMacro();
             }
+            [Lockstep() noteCorrectionPostedAt:[NSProcessInfo processInfo].systemUptime];
             
             return NULL;
         }
