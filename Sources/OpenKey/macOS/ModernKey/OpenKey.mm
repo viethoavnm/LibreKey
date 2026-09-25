@@ -20,6 +20,7 @@
 #import "OKLockstep.h"
 #import "OKCompoundDeletion.h"
 #import "OKAutocompleteGuard.h"
+#import "OKLayoutRemap.h"
 
 #define FRONT_APP [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier
 #define OTHER_CONTROL_KEY (_flag & kCGEventFlagMaskCommand) || (_flag & kCGEventFlagMaskControl) || \
@@ -138,9 +139,36 @@ extern "C" {
         CFRelease(source);
     }
 
+    //Which US key the engine should see for each key of the selected layout,
+    //when layout compat is off - see OKLayoutRemap. Read at the same moments as
+    //the language.
+    static OKLayoutRemap* _layoutRemap = nil;
+
+    void RefreshLayoutRemap() {
+        NSMutableDictionary<NSNumber*, NSString*>* characters = [NSMutableDictionary dictionary];
+        TISInputSourceRef source = TISCopyCurrentKeyboardLayoutInputSource();
+        if (source) {
+            CFDataRef data = (CFDataRef)TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData);
+            if (data) {
+                const UCKeyboardLayout* layout = (const UCKeyboardLayout*)CFDataGetBytePtr(data);
+                for (UInt16 keyCode = 0; keyCode <= 50; keyCode++) {
+                    UInt32 deadKeyState = 0;
+                    UniChar buffer[4];
+                    UniCharCount length = 0;
+                    if (UCKeyTranslate(layout, keyCode, kUCKeyActionDown, 0, LMGetKbdType(), kUCKeyTranslateNoDeadKeysMask,
+                                       &deadKeyState, 4, &length, buffer) == noErr && length > 0)
+                        characters[@(keyCode)] = [NSString stringWithCharacters:buffer length:length];
+                }
+            }
+            CFRelease(source);
+        }
+        _layoutRemap = [OKLayoutRemap remapForCharacters:characters];
+    }
+
     static void InputSourceChanged(CFNotificationCenterRef center, void* observer, CFNotificationName name,
                                    const void* object, CFDictionaryRef userInfo) {
         RefreshInputSourceLanguage();
+        RefreshLayoutRemap();
     }
 
     //Re-read on every app activation. The list is small and app switches happen
@@ -151,6 +179,7 @@ extern "C" {
         [Lockstep() reset];
         //macOS can switch the input source per document when the app changes
         RefreshInputSourceLanguage();
+        RefreshLayoutRemap();
         bool wasExcluded = _isFrontAppExcluded;
         NSArray* entries = [OKAppExclusionList entriesFromDefaults:[NSUserDefaults standardUserDefaults]];
         _isFrontAppExcluded = [OKAppExclusionList entries:entries containBundleId:FRONT_APP];
@@ -956,6 +985,12 @@ extern "C" {
         //work, because those are global shortcuts rather than typing.
         if (_isFrontAppExcluded)
             return event;
+
+        //AZERTY, QWERTZ, Dvorak... with layout compat off: the engine gets the
+        //US key of the letter printed on the key. After the hotkeys, which the
+        //user recorded by position.
+        if (type == kCGEventKeyDown && !vPerformLayoutCompat && _layoutRemap && !_layoutRemap.isIdentity)
+            _keycode = [_layoutRemap usKeyCodeFor:_keycode];
 
         _proxy = proxy;
         
