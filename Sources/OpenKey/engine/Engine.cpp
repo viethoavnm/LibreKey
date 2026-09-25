@@ -1623,6 +1623,9 @@ static void handleKeyEvent(const vKeyEvent& event,
                 _upperCaseStatus = 0;
         }
     } else if (data == KEY_SPACE) {
+        //one unit on screen like any key; left alone it kept the code of the key
+        //before, and after a backspace the host took the space for another one
+        hExt = 3;
         if (!tempDisableKey && vCheckSpelling) {
             checkSpelling(true); //force check spelling
         }
