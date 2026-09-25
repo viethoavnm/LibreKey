@@ -37,8 +37,38 @@
 
 @implementation OKCompoundDeletion
 
+//Whether bundleId is `known` or one of its channels (known.beta, known.Dev...).
+static BOOL MatchesApp(NSString* bundleId, NSString* known) {
+    NSString* lower = bundleId.lowercaseString;
+    NSString* knownLower = known.lowercaseString;
+    return [lower isEqualToString:knownLower] || [lower hasPrefix:[knownLower stringByAppendingString:@"."]];
+}
+
+//Cocoa text: a base letter and its combining marks are one character.
+static BOOL IsCocoaApp(NSString* bundleId) {
+    return [bundleId.lowercaseString hasPrefix:@"com.apple."];
+}
+
+//Chromium: Shift+Left moves by grapheme, a backspace by code point.
+static BOOL IsChromiumApp(NSString* bundleId) {
+    for (NSString* known in @[@"com.google.Chrome", @"com.brave.Browser",
+                              @"com.microsoft.edgemac", @"com.microsoft.Edge"]) {
+        if (MatchesApp(bundleId, known))
+            return YES;
+    }
+    return NO;
+}
+
 + (OKLetterRemoval*)removalOfLetter:(OKWrittenLetter*)letter {
-    return [[OKLetterRemoval alloc] initWithBackspaces:0 selectionSteps:0];
+    NSUInteger units = letter.units > 0 ? letter.units : 1;
+    //only a Unicode compound letter is one character made of several units
+    if (units == 1 || letter.codeTable != 3 || letter.bundleId == nil)
+        return [[OKLetterRemoval alloc] initWithBackspaces:units selectionSteps:units];
+    if (IsCocoaApp(letter.bundleId))
+        return [[OKLetterRemoval alloc] initWithBackspaces:1 selectionSteps:1];
+    if (IsChromiumApp(letter.bundleId))
+        return [[OKLetterRemoval alloc] initWithBackspaces:units selectionSteps:1];
+    return [[OKLetterRemoval alloc] initWithBackspaces:units selectionSteps:units];
 }
 
 @end
