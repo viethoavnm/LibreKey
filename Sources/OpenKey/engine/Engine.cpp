@@ -119,6 +119,11 @@ static bool _useSpellCheckingBefore;
 static bool _hasHandleQuickConsonant;
 static bool _willTempOffEngine = false;
 static int _autoHornIndex = -1; //the o checkGrammar horned by itself, see insertW
+//What the engine let through and wrote in front of the cursor since it last
+//forgot the text there, as runs: a word (> 0 characters) or spaces (< 0). The
+//last run is the one at the cursor. See vKeyCharsOnScreen.
+static vector<int> _screenRuns;
+static bool _forgetScreen = false; //the key being handled moves the cursor or edits beyond the word
 
 //function prototype
 void findAndCalculateVowel(const bool& forGrammar=false);
@@ -500,6 +505,8 @@ void vKeyResetState() {
     _willTempOffEngine = false;
     _autoHornIndex = -1;
     _upperCaseStatus = 0;
+    _screenRuns.clear();
+    _forgetScreen = false;
     _spellingOK = false;
     _spellingFlag = false;
     _spellingVowelOK = false;
@@ -571,7 +578,80 @@ vOutputCheckOut vCheckOutput(const vOutputCheckIn& in) {
 }
 
 int vKeyCharsOnScreen() {
-    return 0;
+    return _screenRuns.empty() || _screenRuns.back() < 0 ? 0 : _screenRuns.back();
+}
+
+//Characters written to, or deleted from, the word at the cursor.
+static void screenWordAdd(const int& count) {
+    if (_screenRuns.empty() || _screenRuns.back() < 0) {
+        if (count <= 0)
+            return;
+        _screenRuns.push_back(0);
+    }
+    _screenRuns.back() += count;
+    if (_screenRuns.back() < 0)
+        _screenRuns.back() = 0;
+}
+
+static void screenSpaceAdd() {
+    if (!_screenRuns.empty() && _screenRuns.back() == 0)
+        _screenRuns.pop_back();
+    if (_screenRuns.empty() || _screenRuns.back() > 0)
+        _screenRuns.push_back(0);
+    _screenRuns.back()--;
+}
+
+//One backspace: back over the space, and the word before it is at the cursor
+static void screenDeleteOne() {
+    while (!_screenRuns.empty() && _screenRuns.back() == 0)
+        _screenRuns.pop_back();
+    if (_screenRuns.empty())
+        return;
+    _screenRuns.back() += _screenRuns.back() > 0 ? -1 : 1;
+    if (_screenRuns.back() == 0)
+        _screenRuns.pop_back();
+}
+
+//The key goes on screen after whatever the host posted for it.
+static void screenKeyAdd(const vKeyEvent& event, const Uint16& data) {
+    if (event != vKeyEvent::Keyboard)
+        return;
+    if (data == KEY_DELETE)
+        screenDeleteOne();
+    else if (data == KEY_SPACE)
+        screenSpaceAdd();
+    else
+        screenWordAdd(1);
+}
+
+//Holds the answer for this key to what is on screen, then follows it there.
+//Counted from what the host posts, not from the engine's idea of the word, so
+//a bug in the latter cannot delete more than the engine itself wrote.
+static void followScreen(const vKeyEvent& event, const Uint16& data) {
+    if (hCode == vWillProcess || hCode == vRestore || hCode == vRestoreAndStartNewSession || hCode == vReplaceMaro) {
+        //a key that starts a word is corrected within that word
+        if (event == vKeyEvent::Keyboard && data != KEY_SPACE && data != KEY_DELETE && !_forgetScreen &&
+            (_screenRuns.empty() || _screenRuns.back() < 0))
+            _screenRuns.push_back(0);
+
+        vOutputCheckIn in = {hCode, hBPC, hNCC, hData, vKeyCharsOnScreen(), vCodeTable};
+        vOutputCheckOut out = vCheckOutput(in);
+        hBPC = out.backspaceCount;
+        if (out.droppedCharacters) {
+            memcpy(hData, out.charData, (hNCC > MAX_BUFF ? MAX_BUFF : hNCC) * sizeof(Uint32));
+            hNCC = out.newCharCount;
+        }
+
+        screenWordAdd(-hBPC);
+        screenWordAdd(hCode == vReplaceMaro ? (int)hMacroData.size() : hNCC);
+        //the host sends the key itself after a restore or a macro
+        if (hCode != vWillProcess)
+            screenKeyAdd(event, data);
+    } else {
+        screenKeyAdd(event, data);
+    }
+    if (_forgetScreen)
+        _screenRuns.clear();
 }
 
 void checkCorrectVowel(vector<vector<Uint16>>& charset, int& i, int& k, const Uint16& markKey) {
@@ -1468,11 +1548,11 @@ void vEnglishMode(const vKeyEventState& state, const Uint16& data, const bool& i
     }
 }
 
-void vKeyHandleEvent(const vKeyEvent& event,
-                     const vKeyEventState& state,
-                     const Uint16& data,
-                     const Uint8& capsStatus,
-                     const bool& otherControlKey) {
+static void handleKeyEvent(const vKeyEvent& event,
+                           const vKeyEventState& state,
+                           const Uint16& data,
+                           const Uint8& capsStatus,
+                           const bool& otherControlKey) {
     _isCaps = (capsStatus == 1 || //shift
                capsStatus == 2); //caps lock
     if ((IS_NUMBER_KEY(data) && capsStatus == 1)
@@ -1504,6 +1584,7 @@ void vKeyHandleEvent(const vKeyEvent& event,
         if (!_isCharKeyCode) { //clear all line cache
             _specialChar.clear();
             _typingStates.clear();
+            _forgetScreen = true;
         } else { //check and save current word
             if (_spaceCount > 0) {
                 saveWord(KEY_SPACE, _spaceCount);
@@ -1727,4 +1808,14 @@ void vKeyHandleEvent(const vKeyEvent& event,
     //cout<<"index "<<(int)_index<< ", stateIndex "<<(int)_stateIndex<<", word "<<_typingStates.size()<<", long word "<<_longWordHelper.size()<< endl;
     //cout<<"backspace "<<(int)hBPC<<endl;
     //cout<<"new char "<<(int)hNCC<<endl<<endl;
+}
+
+void vKeyHandleEvent(const vKeyEvent& event,
+                     const vKeyEventState& state,
+                     const Uint16& data,
+                     const Uint8& capsStatus,
+                     const bool& otherControlKey) {
+    _forgetScreen = false;
+    handleKeyEvent(event, state, data, capsStatus, otherControlKey);
+    followScreen(event, data);
 }
