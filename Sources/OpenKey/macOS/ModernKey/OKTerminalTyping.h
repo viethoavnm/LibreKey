@@ -38,9 +38,14 @@ NS_ASSUME_NONNULL_BEGIN
 //YES means every character goes in a key event of its own, instead of the whole
 //replacement in one.
 @property (nonatomic, readonly) BOOL oneCharacterPerEvent;
+//YES means that once a word has had a correction, the keys after it are posted
+//by LibreKey too instead of passing on their own: a terminal (or its pty, or an
+//xterm.js renderer) can let a real key overtake synthetic ones still queued.
+@property (nonatomic, readonly) BOOL syntheticLockstep;
 
 - (instancetype)initWithAllowsAutocompleteWorkaround:(BOOL)allowsAutocompleteWorkaround
-                                oneCharacterPerEvent:(BOOL)oneCharacterPerEvent;
+                                oneCharacterPerEvent:(BOOL)oneCharacterPerEvent
+                                   syntheticLockstep:(BOOL)syntheticLockstep;
 
 @end
 

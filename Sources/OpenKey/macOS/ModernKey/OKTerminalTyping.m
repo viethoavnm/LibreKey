@@ -42,11 +42,13 @@ static NSArray<NSString*>* TerminalBundleIds(void) {
 @implementation OKTypingPlan
 
 - (instancetype)initWithAllowsAutocompleteWorkaround:(BOOL)allowsAutocompleteWorkaround
-                                oneCharacterPerEvent:(BOOL)oneCharacterPerEvent {
+                                oneCharacterPerEvent:(BOOL)oneCharacterPerEvent
+                                   syntheticLockstep:(BOOL)syntheticLockstep {
     self = [super init];
     if (self) {
         _allowsAutocompleteWorkaround = allowsAutocompleteWorkaround;
         _oneCharacterPerEvent = oneCharacterPerEvent;
+        _syntheticLockstep = syntheticLockstep;
     }
     return self;
 }
@@ -76,7 +78,8 @@ static NSArray<NSString*>* TerminalBundleIds(void) {
 + (OKTypingPlan*)planForTarget:(OKTypingTarget*)target {
     BOOL terminal = !target.spotlightVisible && [self isTerminalBundleId:target.bundleId];
     return [[OKTypingPlan alloc] initWithAllowsAutocompleteWorkaround:!terminal
-                                                 oneCharacterPerEvent:terminal];
+                                                 oneCharacterPerEvent:terminal
+                                                    syntheticLockstep:NO];
 }
 
 @end
