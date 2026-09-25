@@ -29,10 +29,17 @@ static NSArray<NSString*>* TerminalBundleIds(void) {
 
 - (instancetype)initWithBundleId:(nullable NSString*)bundleId
                 spotlightVisible:(BOOL)spotlightVisible {
+    return [self initWithBundleId:bundleId spotlightVisible:spotlightVisible integratedTerminal:NO];
+}
+
+- (instancetype)initWithBundleId:(nullable NSString*)bundleId
+                spotlightVisible:(BOOL)spotlightVisible
+              integratedTerminal:(BOOL)integratedTerminal {
     self = [super init];
     if (self) {
         _bundleId = [bundleId copy];
         _spotlightVisible = spotlightVisible;
+        _integratedTerminal = integratedTerminal;
     }
     return self;
 }
@@ -72,6 +79,14 @@ static NSArray<NSString*>* TerminalBundleIds(void) {
         if (next == '.' || next == '-')
             return YES;
     }
+    return NO;
+}
+
++ (BOOL)isCodeEditorBundleId:(nullable NSString*)bundleId {
+    return NO;
+}
+
++ (BOOL)isIntegratedTerminalDescription:(nullable NSString*)description {
     return NO;
 }
 

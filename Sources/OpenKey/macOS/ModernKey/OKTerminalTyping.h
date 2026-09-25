@@ -23,9 +23,15 @@ NS_ASSUME_NONNULL_BEGIN
 //Spotlight takes the keyboard without becoming the front app, so a terminal can
 //be in front while the user is really typing into Spotlight.
 @property (nonatomic, readonly) BOOL spotlightVisible;
+//The focused element is the terminal panel of a code editor (VS Code and its
+//forks), which the bundle id alone cannot tell from the editor pane.
+@property (nonatomic, readonly) BOOL integratedTerminal;
 
 - (instancetype)initWithBundleId:(nullable NSString*)bundleId
                 spotlightVisible:(BOOL)spotlightVisible;
+- (instancetype)initWithBundleId:(nullable NSString*)bundleId
+                spotlightVisible:(BOOL)spotlightVisible
+              integratedTerminal:(BOOL)integratedTerminal;
 
 @end
 
@@ -53,6 +59,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 //Whether the bundle id belongs to a known terminal emulator. nil never does.
 + (BOOL)isTerminalBundleId:(nullable NSString*)bundleId;
+
+//Whether the bundle id is a code editor with a terminal panel - VS Code, its
+//Insiders build and forks (VSCodium, Cursor, Windsurf). Only for these is the
+//focused element worth asking about.
++ (BOOL)isCodeEditorBundleId:(nullable NSString*)bundleId;
+
+//Whether the Accessibility description of the focused element is the input of
+//such a terminal panel: xterm.js labels it "Terminal 1, zsh ...".
++ (BOOL)isIntegratedTerminalDescription:(nullable NSString*)description;
 
 + (OKTypingPlan*)planForTarget:(OKTypingTarget*)target;
 
