@@ -960,7 +960,7 @@ extern "C" {
                 //us too, behind the correction, instead of letting it race ahead
                 if (_typingPlan && [Lockstep() shouldPostKeyAt:[NSProcessInfo processInfo].systemUptime
                                                          plan:_typingPlan
-                                                     endsWord:pData->extCode == 1
+                                                     endsWord:pData->extCode == 1 || _keycode == KEY_SPACE
                                                      shortcut:(_flag & (kCGEventFlagMaskCommand | kCGEventFlagMaskControl |
                                                                         kCGEventFlagMaskAlternate)) != 0]) {
                     CGEventRef copy = CGEventCreateCopy(event);
