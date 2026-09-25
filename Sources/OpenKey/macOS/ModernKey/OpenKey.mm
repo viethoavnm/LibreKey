@@ -18,6 +18,7 @@
 #import "OKInputSourceFilter.h"
 #import "OKEventStamper.h"
 #import "OKLockstep.h"
+#import "OKCompoundDeletion.h"
 
 #define FRONT_APP [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier
 #define OTHER_CONTROL_KEY (_flag & kCGEventFlagMaskCommand) || (_flag & kCGEventFlagMaskControl) || \
@@ -59,10 +60,6 @@ extern "C" {
                                @"com.sublimetext.2",
                              ];
     
-    //app which error with unicode Compound
-    NSArray* _unicodeCompoundApp = @[@"com.apple.",
-                                     @"com.google.Chrome", @"com.brave.Browser",
-                                     @"com.microsoft.edgemac.Dev", @"com.microsoft.edgemac.Beta", @"com.microsoft.Edge.Dev", @"com.microsoft.Edge"];
     NSArray* _recommendWorkaroundDisabledApp = @[@"com.apple.Spotlight"];
 
     //Chromium based browsers, which need the selection workaround instead of the
@@ -261,13 +258,13 @@ extern "C" {
         return [NSString stringWithUTF8String:convertUtil([str UTF8String]).c_str()];
     }
     
-    BOOL containUnicodeCompoundApp(NSString* topApp) {
-        if (topApp == nil) return false;
-        for (_j = 0; _j < [_unicodeCompoundApp count]; _j++) {
-            if ([topApp hasPrefix:[_unicodeCompoundApp objectAtIndex:_j]] || [[_unicodeCompoundApp objectAtIndex:_j] isEqualToString:topApp])
-                return true;
-        }
-        return false;
+    //What it takes, in the app in front, to remove the letter _syncKey says is
+    //last on screen. Call only with _syncKey not empty.
+    OKLetterRemoval* RemovalOfLastLetter() {
+        OKWrittenLetter* letter = [[OKWrittenLetter alloc] initWithUnits:_syncKey.back()
+                                                               codeTable:vCodeTable
+                                                                bundleId:FRONT_APP];
+        return [OKCompoundDeletion removalOfLetter:letter];
     }
 
     BOOL isChromiumBrowserApp(NSString* topApp) {
@@ -568,11 +565,8 @@ extern "C" {
         PostBackspace();
         
         if (IS_DOUBLE_CODE(vCodeTable) && !_syncKey.empty()) { //VNI or Unicode Compound
-            if (_syncKey.back() > 1) {
-                if (!(vCodeTable == 3 && containUnicodeCompoundApp(FRONT_APP))) {
-                    PostBackspace();
-                }
-            }
+            for (NSUInteger press = RemovalOfLastLetter().backspaces; press > 1; press--)
+                PostBackspace();
             _syncKey.pop_back();
         }
     }
@@ -589,11 +583,9 @@ extern "C" {
         PostEvent(eventVkeyUp);
         
         if (IS_DOUBLE_CODE(vCodeTable) && !_syncKey.empty()) { //VNI or Unicode Compound
-            if (_syncKey.back() > 1) {
-                if (!(vCodeTable == 3 && containUnicodeCompoundApp(FRONT_APP))) {
-                    PostEvent(eventVkeyDown);
-                    PostEvent(eventVkeyUp);
-                }
+            for (NSUInteger press = RemovalOfLastLetter().selectionSteps; press > 1; press--) {
+                PostEvent(eventVkeyDown);
+                PostEvent(eventVkeyUp);
             }
             _syncKey.pop_back();
         }
@@ -945,10 +937,9 @@ extern "C" {
                         _syncKey.clear();
                     } else if (pData->extCode == 2) { //delete key
                         if (_syncKey.size() > 0) {
-                            if (_syncKey.back() > 1 && (vCodeTable == 2 || !containUnicodeCompoundApp(FRONT_APP))) {
-                                //send one more backspace
+                            //the user's backspace took the first press
+                            for (NSUInteger press = RemovalOfLastLetter().backspaces; press > 1; press--)
                                 PostBackspace();
-                            }
                             _syncKey.pop_back();
                         }
                        
