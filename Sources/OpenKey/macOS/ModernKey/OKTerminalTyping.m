@@ -83,15 +83,32 @@ static NSArray<NSString*>* TerminalBundleIds(void) {
 }
 
 + (BOOL)isCodeEditorBundleId:(nullable NSString*)bundleId {
-    return NO;
+    static NSSet<NSString*>* editors;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        editors = [NSSet setWithArray:@[@"com.microsoft.vscode",
+                                        @"com.microsoft.vscodeinsiders",
+                                        @"com.vscodium",
+                                        @"com.visualstudio.code.oss",
+                                        @"com.todesktop.230313mzl4w4u92",     //Cursor
+                                        @"com.exafunction.windsurf"]];
+    });
+    return bundleId.length > 0 && [editors containsObject:bundleId.lowercaseString];
 }
 
 + (BOOL)isIntegratedTerminalDescription:(nullable NSString*)description {
-    return NO;
+    static NSString* const word = @"terminal";
+    NSString* lowered = description.lowercaseString;
+    if (![lowered hasPrefix:word])
+        return NO;
+    //"Terminal", "Terminal 1, zsh" - but not "Terminals"
+    return lowered.length == word.length ||
+           ![[NSCharacterSet letterCharacterSet] characterIsMember:[lowered characterAtIndex:word.length]];
 }
 
 + (OKTypingPlan*)planForTarget:(OKTypingTarget*)target {
-    BOOL terminal = !target.spotlightVisible && [self isTerminalBundleId:target.bundleId];
+    BOOL terminal = !target.spotlightVisible &&
+                    ([self isTerminalBundleId:target.bundleId] || target.integratedTerminal);
     return [[OKTypingPlan alloc] initWithAllowsAutocompleteWorkaround:!terminal
                                                  oneCharacterPerEvent:terminal
                                                     syntheticLockstep:terminal];
