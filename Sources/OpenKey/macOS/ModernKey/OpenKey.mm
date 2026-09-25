@@ -15,6 +15,7 @@
 #import "OKAppExclusionList.h"
 #import "OKTerminalTyping.h"
 #import "OKSpotlightDetector.h"
+#import "OKInputSourceFilter.h"
 
 #define FRONT_APP [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier
 #define OTHER_CONTROL_KEY (_flag & kCGEventFlagMaskCommand) || (_flag & kCGEventFlagMaskControl) || \
@@ -111,11 +112,37 @@ extern "C" {
 
     void InvalidateSpotlightState();
 
+    //Whether the selected system input source is not English, for the "turn
+    //Vietnamese off in other languages" setting. The callback used to ask the
+    //Text Input Sources API on every key down and up (about 7 us each, over-
+    //releasing a string it did not own and leaking the source when it was not
+    //English); the answer only changes with the input source, so it is read
+    //when that happens - the TIS notification, app switches and start up.
+    bool _inputSourceIsForeign = false;
+
+    void RefreshInputSourceLanguage() {
+        TISInputSourceRef source = TISCopyCurrentKeyboardInputSource();
+        if (source == NULL) {
+            _inputSourceIsForeign = false;
+            return;
+        }
+        NSArray* languages = (__bridge NSArray*)TISGetInputSourceProperty(source, kTISPropertyInputSourceLanguages);
+        _inputSourceIsForeign = [OKInputSourceFilter shouldBypassForLanguages:languages];
+        CFRelease(source);
+    }
+
+    static void InputSourceChanged(CFNotificationCenterRef center, void* observer, CFNotificationName name,
+                                   const void* object, CFDictionaryRef userInfo) {
+        RefreshInputSourceLanguage();
+    }
+
     //Re-read on every app activation. The list is small and app switches happen
     //at human speed, so there is nothing to cache - and reading it fresh means
     //edits made in the panel take effect the moment the user switches away.
     void ReloadAppExclusionState() {
         InvalidateSpotlightState();
+        //macOS can switch the input source per document when the app changes
+        RefreshInputSourceLanguage();
         bool wasExcluded = _isFrontAppExcluded;
         NSArray* entries = [OKAppExclusionList entriesFromDefaults:[NSUserDefaults standardUserDefaults]];
         _isFrontAppExcluded = [OKAppExclusionList entries:entries containBundleId:FRONT_APP];
@@ -181,6 +208,10 @@ extern "C" {
         if (engineInited)
             return;
         engineInited = true;
+
+        CFNotificationCenterAddObserver(CFNotificationCenterGetDistributedCenter(), NULL, InputSourceChanged,
+                                        kTISNotifySelectedKeyboardInputSourceChanged, NULL,
+                                        CFNotificationSuspensionBehaviorDeliverImmediately);
 
         myEventSource = CGEventSourceCreate(kCGEventSourceStatePrivate);
         pData = (vKeyHookState*)vKeyInit();
@@ -825,23 +856,8 @@ extern "C" {
         }
 
         //if "turn off Vietnamese when in other language" mode on
-        if(vOtherLanguage){
-            TISInputSourceRef isource = TISCopyCurrentKeyboardInputSource();
-            if ( isource != NULL )
-            {
-                CFArrayRef languages = (CFArrayRef) TISGetInputSourceProperty(isource, kTISPropertyInputSourceLanguages);
-                
-                if (CFArrayGetCount(languages) > 0) {
-                    CFStringRef langRef = (CFStringRef)CFArrayGetValueAtIndex(languages, 0);
-                    NSString *currentLanguage = (__bridge NSString *)langRef;
-                    if(![currentLanguage isLike:@"en"]){
-                        return event;
-                    }
-                    CFRelease(langRef);
-                    CFRelease(isource);
-                }
-            }
-        }
+        if (vOtherLanguage && _inputSourceIsForeign)
+            return event;
         
         //handle keyboard
         if (type == kCGEventKeyDown) {
