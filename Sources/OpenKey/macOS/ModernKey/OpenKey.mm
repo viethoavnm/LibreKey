@@ -119,7 +119,7 @@ extern "C" {
         return lockstep;
     }
 
-    void InvalidateSpotlightState();
+    void InvalidateFocusState();
 
     //Whether the selected system input source is not English, for the "turn
     //Vietnamese off in other languages" setting. The callback used to ask the
@@ -149,7 +149,7 @@ extern "C" {
     //at human speed, so there is nothing to cache - and reading it fresh means
     //edits made in the panel take effect the moment the user switches away.
     void ReloadAppExclusionState() {
-        InvalidateSpotlightState();
+        InvalidateFocusState();
         [Lockstep() reset];
         //macOS can switch the input source per document when the app changes
         RefreshInputSourceLanguage();
@@ -282,14 +282,45 @@ extern "C" {
     //Reading the window list takes about half a millisecond and a correction
     //asked up to three times. The answer is kept for two seconds, and dropped as
     //soon as something that can open or close Spotlight happens - see
-    //InvalidateSpotlightState - so it is read about once per Spotlight session.
+    //InvalidateFocusState - so it is read about once per Spotlight session.
     static OKSpotlightDetector* SpotlightCache() {
         static OKSpotlightDetector* cache = [[OKSpotlightDetector alloc] initWithLifetime:2.0];
         return cache;
     }
 
-    void InvalidateSpotlightState() {
+    //Whether the focused element is a code editor's terminal panel. Asking is
+    //an Accessibility round trip to the editor, so the answer is cached like
+    //Spotlight's and dropped on the same events (Ctrl+` toggles the panel).
+    static NSTimeInterval _terminalPanelCheckedAt = -1;
+    static BOOL _terminalPanelFocused = NO;
+
+    BOOL FocusedElementIsTerminalPanel() {
+        NSTimeInterval now = [NSProcessInfo processInfo].systemUptime;
+        if (_terminalPanelCheckedAt >= 0 && now >= _terminalPanelCheckedAt && now - _terminalPanelCheckedAt < 2.0)
+            return _terminalPanelFocused;
+
+        _terminalPanelFocused = NO;
+        AXUIElementRef systemWide = AXUIElementCreateSystemWide();
+        //a hung editor must not hold the tap callback until macOS disables it
+        AXUIElementSetMessagingTimeout(systemWide, 0.1);
+        CFTypeRef focused = NULL;
+        if (AXUIElementCopyAttributeValue(systemWide, kAXFocusedUIElementAttribute, &focused) == kAXErrorSuccess && focused) {
+            CFTypeRef description = NULL;
+            if (AXUIElementCopyAttributeValue((AXUIElementRef)focused, kAXDescriptionAttribute, &description) == kAXErrorSuccess && description) {
+                if (CFGetTypeID(description) == CFStringGetTypeID())
+                    _terminalPanelFocused = [OKTerminalTyping isIntegratedTerminalDescription:(__bridge NSString*)description];
+                CFRelease(description);
+            }
+            CFRelease(focused);
+        }
+        CFRelease(systemWide);
+        _terminalPanelCheckedAt = now;
+        return _terminalPanelFocused;
+    }
+
+    void InvalidateFocusState() {
         [SpotlightCache() invalidate];
+        _terminalPanelCheckedAt = -1;
     }
 
     BOOL isSpotlightVisible() {
@@ -307,10 +338,13 @@ extern "C" {
     //switch: Spotlight comes and goes without the front app changing.
     void RefreshTypingPlan() {
         NSString* frontApp = FRONT_APP;
-        //Walking the window list costs, and only a terminal needs the answer.
-        BOOL spotlightVisible = [OKTerminalTyping isTerminalBundleId:frontApp] && isSpotlightVisible();
+        //only a code editor has a terminal panel worth asking Accessibility about
+        BOOL integratedTerminal = [OKTerminalTyping isCodeEditorBundleId:frontApp] && FocusedElementIsTerminalPanel();
+        //and only a terminal needs to know about Spotlight
+        BOOL spotlightVisible = ([OKTerminalTyping isTerminalBundleId:frontApp] || integratedTerminal) && isSpotlightVisible();
         OKTypingTarget* target = [[OKTypingTarget alloc] initWithBundleId:frontApp
-                                                         spotlightVisible:spotlightVisible];
+                                                         spotlightVisible:spotlightVisible
+                                                       integratedTerminal:integratedTerminal];
         OKTypingPlan* plan = [OKTerminalTyping planForTarget:target];
         _allowsAutocompleteWorkaround = plan.allowsAutocompleteWorkaround;
         _oneCharacterPerEvent = plan.oneCharacterPerEvent;
@@ -798,10 +832,11 @@ extern "C" {
         _flag = CGEventGetFlags(event);
         _keycode = (CGKeyCode)CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
 
-        //Cmd+Space, Esc, Return and clicks are how Spotlight opens and closes
+        //Cmd+Space, Esc, Return and clicks are how Spotlight opens and closes,
+        //and how focus moves between an editor and its terminal panel
         if (type == kCGEventFlagsChanged || type == kCGEventLeftMouseDown || type == kCGEventRightMouseDown ||
             (type == kCGEventKeyDown && (_keycode == KEY_ESC || _keycode == KEY_RETURN || _keycode == KEY_ENTER))) {
-            InvalidateSpotlightState();
+            InvalidateFocusState();
         }
         
         if (type == kCGEventKeyDown && vPerformLayoutCompat) {
