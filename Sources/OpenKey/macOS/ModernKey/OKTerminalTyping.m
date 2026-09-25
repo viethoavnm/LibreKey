@@ -79,7 +79,7 @@ static NSArray<NSString*>* TerminalBundleIds(void) {
     BOOL terminal = !target.spotlightVisible && [self isTerminalBundleId:target.bundleId];
     return [[OKTypingPlan alloc] initWithAllowsAutocompleteWorkaround:!terminal
                                                  oneCharacterPerEvent:terminal
-                                                    syntheticLockstep:NO];
+                                                    syntheticLockstep:terminal];
 }
 
 @end
