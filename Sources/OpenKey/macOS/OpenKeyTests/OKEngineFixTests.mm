@@ -287,4 +287,18 @@
     XCTAssertEqualObjects(@(OKTypeKeys("aaaa", noSpelling).text.c_str()), @"aaa");
 }
 
+#pragma mark - Space after a backspace, two-unit code tables
+
+/// The space kept the delete code of the backspace before it, so the host took
+/// it for one more delete: it dropped the length of the last letter and, when
+/// that letter took two units (VNI ấ = a + á), sent a backspace through half of
+/// it. VNI shows each unit as its own Latin-1 character.
+- (void)testSpaceAfterBackspaceKeepsTheLetterBeforeIt {
+    OKTypingSettings vni;
+    vni.codeTable = 2;
+    XCTAssertEqualObjects(@(OKTypeKeys("aasb{BS} ", vni).text.c_str()), @"a\u00E1 ");
+    //and the letter still comes off whole afterwards
+    XCTAssertEqualObjects(@(OKTypeKeys("aasb{BS} {BS}{BS}", vni).text.c_str()), @"");
+}
+
 @end
