@@ -515,6 +515,11 @@ void vKeyResetState() {
     hMacroData.clear();
 }
 
+vOutputCheckOut vCheckOutput(const vOutputCheckIn& in) {
+    vOutputCheckOut out = {};
+    return out;
+}
+
 void checkCorrectVowel(vector<vector<Uint16>>& charset, int& i, int& k, const Uint16& markKey) {
     //ignore "qu" case
     if (_index >= 2 && CHR(_index-1) == KEY_U && CHR(_index-2) == KEY_Q) {
