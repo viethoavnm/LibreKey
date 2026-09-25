@@ -19,12 +19,12 @@
 - (void)testOtherLanguagesPassKeysThrough {
     XCTAssertTrue([OKInputSourceFilter shouldBypassForLanguages:@[@"vi"]]);
     XCTAssertTrue([OKInputSourceFilter shouldBypassForLanguages:@[@"ja"]]);
-    XCTAssertTrue([OKInputSourceFilter shouldBypassForLanguages:@[@"fr", @"de"]]);
+    XCTAssertTrue(([OKInputSourceFilter shouldBypassForLanguages:@[@"fr", @"de"]]));
 }
 
 /// A layout that lists English among its languages is still an English layout.
 - (void)testEnglishAnywhereInTheListCounts {
-    XCTAssertFalse([OKInputSourceFilter shouldBypassForLanguages:@[@"de", @"en"]]);
+    XCTAssertFalse(([OKInputSourceFilter shouldBypassForLanguages:@[@"de", @"en"]]));
 }
 
 /// "english-like" is not English: only en and en-XX are.
