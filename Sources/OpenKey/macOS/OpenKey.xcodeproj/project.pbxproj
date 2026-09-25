@@ -56,6 +56,7 @@
 		AA020000000000000000004C /* OKEventStamper.m in Sources */ = {isa = PBXBuildFile; fileRef = AA010000000000000000001F /* OKEventStamper.m */; };
 		AA020000000000000000004E /* OKLockstep.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000061 /* OKLockstep.m */; };
 		AA0200000000000000000055 /* OKCompoundDeletion.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000063 /* OKCompoundDeletion.m */; };
+		AA0200000000000000000057 /* OKAutocompleteGuard.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000065 /* OKAutocompleteGuard.m */; };
 		AA0200000000000000000008 /* OKTerminalTypingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0200000000000000000014 /* OKTerminalTypingTests.m */; };
 		AA0200000000000000000009 /* Engine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23E2E49A2314FD3A006CCC3E /* Engine.cpp */; };
 		AA020000000000000000000A /* Vietnamese.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23E2E49B2314FD3A006CCC3E /* Vietnamese.cpp */; };
@@ -88,6 +89,7 @@
 		AA010000000000000000000D /* OKEventStamper.m in Sources */ = {isa = PBXBuildFile; fileRef = AA010000000000000000001F /* OKEventStamper.m */; };
 		AA010000000000000000000E /* OKLockstep.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000061 /* OKLockstep.m */; };
 		AA010000000000000000000F /* OKCompoundDeletion.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000063 /* OKCompoundDeletion.m */; };
+		AA0100000000000000000066 /* OKAutocompleteGuard.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0100000000000000000065 /* OKAutocompleteGuard.m */; };
 		AA0100000000000000000001 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 237559B52204156000FB8CB9 /* AppDelegate.m */; };
 		AA0100000000000000000002 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 237559BD2204156000FB8CB9 /* main.m */; };
 		AA0100000000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 237559B72204156000FB8CB9 /* Assets.xcassets */; };
@@ -229,6 +231,8 @@
 		AA0100000000000000000061 /* OKLockstep.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKLockstep.m; sourceTree = "<group>"; };
 		AA0100000000000000000062 /* OKCompoundDeletion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKCompoundDeletion.h; sourceTree = "<group>"; };
 		AA0100000000000000000063 /* OKCompoundDeletion.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKCompoundDeletion.m; sourceTree = "<group>"; };
+		AA0100000000000000000064 /* OKAutocompleteGuard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OKAutocompleteGuard.h; sourceTree = "<group>"; };
+		AA0100000000000000000065 /* OKAutocompleteGuard.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OKAutocompleteGuard.m; sourceTree = "<group>"; };
 		AA0100000000000000000010 /* LibreKeyHelper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LibreKeyHelper.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -346,6 +350,8 @@
 				AA0100000000000000000061 /* OKLockstep.m */,
 				AA0100000000000000000062 /* OKCompoundDeletion.h */,
 				AA0100000000000000000063 /* OKCompoundDeletion.m */,
+				AA0100000000000000000064 /* OKAutocompleteGuard.h */,
+				AA0100000000000000000065 /* OKAutocompleteGuard.m */,
 			);
 			path = ModernKey;
 			sourceTree = "<group>";
@@ -603,6 +609,7 @@
 				AA010000000000000000000D /* OKEventStamper.m in Sources */,
 				AA010000000000000000000E /* OKLockstep.m in Sources */,
 				AA010000000000000000000F /* OKCompoundDeletion.m in Sources */,
+				AA0100000000000000000066 /* OKAutocompleteGuard.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -631,6 +638,7 @@
 				AA020000000000000000004C /* OKEventStamper.m in Sources */,
 				AA020000000000000000004E /* OKLockstep.m in Sources */,
 				AA0200000000000000000055 /* OKCompoundDeletion.m in Sources */,
+				AA0200000000000000000057 /* OKAutocompleteGuard.m in Sources */,
 				AA0200000000000000000008 /* OKTerminalTypingTests.m in Sources */,
 				AA0200000000000000000009 /* Engine.cpp in Sources */,
 				AA020000000000000000000A /* Vietnamese.cpp in Sources */,
