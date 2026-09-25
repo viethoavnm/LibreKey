@@ -334,6 +334,27 @@
     XCTAssertEqualObjects([self restoring:"text "], @"text ");
 }
 
+/// A swallowed key in a word that still has a mark (the w of "worry" is ư):
+/// the restore wrote the keys without the swallowed r.
+- (void)testMarkedWordWithASwallowedKeyIsRestoredWhole {
+    XCTAssertEqualObjects([self restoring:"worry "], @"worry ");
+    XCTAssertEqualObjects([self restoring:"swiss "], @"swiss ");
+}
+
+/// z took the mark off, so no mark was left and no key was missing either,
+/// yet the word on screen is not what was typed.
+- (void)testWordWhoseMarkWasTakenOffIsRestored {
+    XCTAssertEqualObjects([self restoring:"arizona "], @"arizona ");
+}
+
+/// Backspacing into an earlier word brings the word back but not its keys: a
+/// restore then wrote another word's keys over it - the whole of "tiếng" went.
+- (void)testWordTakenBackFromHistoryIsNeverWrittenOver {
+    XCTAssertEqualObjects([self restoring:"tieengs ab{BS}{BS}{BS}k "], @"tiếngk ");
+    //right after the space the keys are still the word's own
+    XCTAssertEqualObjects([self restoring:"tieengs {BS}k "], @"tieengsk ");
+}
+
 /// Vietnamese comes first: a real word is never restored.
 - (void)testVietnameseWordsAreNotRestored {
     XCTAssertEqualObjects([self restoring:"khoong "], @"không ");
