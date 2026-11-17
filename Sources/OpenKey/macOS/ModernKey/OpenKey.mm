@@ -480,19 +480,19 @@ extern "C" {
     
     void OnActiveAppChanged() { //use for smart switch key; improved on Sep 28th, 2019
         queryFrontMostApp();
-        _languageTemp = getAppInputMethodStatus(string(_frontMostApp.UTF8String), vLanguage | (vCodeTable << 1));
-        if ((_languageTemp & 0x01) != vLanguage) { //for input method
+        _languageTemp = getAppInputMethodStatus(string(_frontMostApp.UTF8String), (vLanguage & 0x03) | (vCodeTable << 2));
+        if ((_languageTemp & 0x03) != vLanguage) { //for input method
             if (_languageTemp != -1) {
-                vLanguage = _languageTemp;
-                [appDelegate onImputMethodChanged:NO];
+                vLanguage = (_languageTemp & 0x03);
+                [appDelegate setInputMethodIndex:vLanguage willNotify:NO];
                 startNewSession();
             } else {
                 saveSmartSwitchKeyData();
             }
         }
-        if (vRememberCode && (_languageTemp >> 1) != vCodeTable) { //for remember table code feature
+        if (vRememberCode && (_languageTemp >> 2) != vCodeTable) { //for remember table code feature
             if (_languageTemp != -1) {
-                [appDelegate onCodeTableChanged:(_languageTemp >> 1)];
+                [appDelegate onCodeTableChanged:(_languageTemp >> 2)];
             } else {
                 saveSmartSwitchKeyData();
             }
@@ -503,15 +503,21 @@ extern "C" {
         onTableCodeChange();
         if (vRememberCode) {
             queryFrontMostApp();
-            setAppInputMethodStatus(string(_frontMostApp.UTF8String), vLanguage | (vCodeTable << 1));
+            setAppInputMethodStatus(string(_frontMostApp.UTF8String), (vLanguage & 0x03) | (vCodeTable << 2));
             saveSmartSwitchKeyData();
         }
     }
     
     void OnInputMethodChanged() {
+        if (vLanguage != 2) {
+#if LIBREKEY_HAS_RIME
+            RimeEngine::instance().clearComposition();
+            [[CandidateWindowController sharedController] hideWindow];
+#endif
+        }
         if (vUseSmartSwitchKey) {
             queryFrontMostApp();
-            setAppInputMethodStatus(string(_frontMostApp.UTF8String), vLanguage | (vCodeTable << 1));
+            setAppInputMethodStatus(string(_frontMostApp.UTF8String), (vLanguage & 0x03) | (vCodeTable << 2));
             saveSmartSwitchKeyData();
         }
     }

@@ -419,6 +419,9 @@
 /* Class = "NSButtonCell"; title = "Tiếng Việt"; ObjectID = "qSg-7a-q1T"; */
 "qSg-7a-q1T.title" = "Tiếng Việt";
 
+/* Class = "NSButtonCell"; title = "Pinyin (Tiếng Trung)"; ObjectID = "Py0-Cl-Pin"; */
+"Py0-Cl-Pin.title" = "Pinyin (Tiếng Trung)";
+
 /* Class = "NSMenuItem"; title = "Check Spelling While Typing"; ObjectID = "rbD-Rh-wIN"; */
 "rbD-Rh-wIN.title" = "Check Spelling While Typing";
 

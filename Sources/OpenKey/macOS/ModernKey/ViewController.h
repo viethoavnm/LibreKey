@@ -34,6 +34,7 @@
 
 @property (weak) IBOutlet NSButton *VietButton;
 @property (weak) IBOutlet NSButton *EngButton;
+@property (weak) IBOutlet NSButton *PinyinButton;
 
 @property (weak) IBOutlet NSButton *FreeMarkButton;
 @property (weak) IBOutlet NSButton *UseModernOrthography;

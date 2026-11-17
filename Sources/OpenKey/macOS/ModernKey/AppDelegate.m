@@ -497,17 +497,21 @@ extern bool convertToolDontAlertWhenCompleted;
     //once in applicationDidFinishLaunching and from the control panel toggle.
 }
 
--(void)onImputMethodChanged:(BOOL)willNotify {
-    NSInteger intInputMethod = [[NSUserDefaults standardUserDefaults] integerForKey:@"InputMethod"];
-    intInputMethod = (intInputMethod + 1) % 3;
-    vLanguage = (int)intInputMethod;
-    [[NSUserDefaults standardUserDefaults] setInteger:intInputMethod forKey:@"InputMethod"];
+-(void)setInputMethodIndex:(int)index willNotify:(BOOL)willNotify {
+    vLanguage = index;
+    [[NSUserDefaults standardUserDefaults] setInteger:index forKey:@"InputMethod"];
 
     [self fillData];
     [viewController fillData];
     
     if (willNotify)
         OnInputMethodChanged();
+}
+
+-(void)onImputMethodChanged:(BOOL)willNotify {
+    NSInteger intInputMethod = [[NSUserDefaults standardUserDefaults] integerForKey:@"InputMethod"];
+    intInputMethod = (intInputMethod + 1) % 3;
+    [self setInputMethodIndex:(int)intInputMethod willNotify:willNotify];
 }
 
 #pragma mark -StatusBar menu action

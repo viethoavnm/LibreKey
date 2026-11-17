@@ -168,7 +168,15 @@ extern int vPerformLayoutCompat;
 }
 
 - (IBAction)onLanguageChanged:(id)sender {
-    [appDelegate onInputMethodSelected];
+    if (sender == self.VietButton) {
+        [appDelegate setInputMethodIndex:1 willNotify:YES];
+    } else if (sender == self.EngButton) {
+        [appDelegate setInputMethodIndex:0 willNotify:YES];
+    } else if (sender == self.PinyinButton) {
+        [appDelegate setInputMethodIndex:2 willNotify:YES];
+    } else {
+        [appDelegate onInputMethodSelected];
+    }
 }
 
 - (IBAction)onRestart:(id)sender {
@@ -425,11 +433,9 @@ extern int vPerformLayoutCompat;
     NSInteger value;
     
     NSInteger intInputMethod = [[NSUserDefaults standardUserDefaults] integerForKey:@"InputMethod"];
-    if (intInputMethod == 1) {
-        self.VietButton.state = NSControlStateValueOn;
-    } else if (intInputMethod == 0) {
-        self.EngButton.state = NSControlStateValueOn;
-    }
+    self.VietButton.state = (intInputMethod == 1) ? NSControlStateValueOn : NSControlStateValueOff;
+    self.EngButton.state = (intInputMethod == 0) ? NSControlStateValueOn : NSControlStateValueOff;
+    self.PinyinButton.state = (intInputMethod == 2) ? NSControlStateValueOn : NSControlStateValueOff;
     
     NSInteger intInputType = [[NSUserDefaults standardUserDefaults] integerForKey:@"InputType"];
     [self.popupInputType selectItemAtIndex:intInputType];

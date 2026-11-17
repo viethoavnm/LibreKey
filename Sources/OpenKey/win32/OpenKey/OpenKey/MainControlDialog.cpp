@@ -1,4 +1,4 @@
-﻿/*----------------------------------------------------------
+/*----------------------------------------------------------
 OpenKey - The Cross platform Open source Vietnamese Keyboard application.
 
 Copyright (C) 2019 Mai Vu Tuyen
@@ -350,8 +350,8 @@ void MainControlDialog::fillData() {
     setSwitchKeyText(textSwitchKey, (vSwitchKeyStatus >> 24) & 0xFF);
     SendMessage(checkBeep, BM_SETCHECK, HAS_BEEP(vSwitchKeyStatus) ? 1 : 0, 0);
 
-    SendMessage(checkVietnamese, BM_SETCHECK, vLanguage, 0);
-    SendMessage(checkEnglish, BM_SETCHECK, !vLanguage, 0);
+    SendMessage(checkVietnamese, BM_SETCHECK, vLanguage == 1 ? 1 : 0, 0);
+    SendMessage(checkEnglish, BM_SETCHECK, vLanguage == 0 ? 1 : 0, 0);
 
     SendMessage(checkModernOrthorgraphy, BM_SETCHECK, vUseModernOrthography ? 1 : 0, 0);
     SendMessage(checkFixRecommendBrowser, BM_SETCHECK, vFixRecommendBrowser ? 1 : 0, 0);

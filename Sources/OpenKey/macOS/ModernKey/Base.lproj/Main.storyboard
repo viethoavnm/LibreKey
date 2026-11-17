@@ -988,7 +988,7 @@
                                 </connections>
                             </button>
                             <button toolTip="Chế độ gõ Tiếng Anh" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yUA-UQ-mxx">
-                                <rect key="frame" x="295" y="1050" width="66" height="18"/>
+                                <rect key="frame" x="235" y="1050" width="66" height="18"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <buttonCell key="cell" type="radio" title="English" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="Tt6-ic-NdA">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -996,6 +996,17 @@
                                 </buttonCell>
                                 <connections>
                                     <action selector="onLanguageChanged:" target="XfG-lQ-9wD" id="5L9-e1-CX0"/>
+                                </connections>
+                            </button>
+                            <button toolTip="Chế độ gõ Pinyin (Tiếng Trung)" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Py0-Bt-Pin">
+                                <rect key="frame" x="325" y="1050" width="160" height="18"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <buttonCell key="cell" type="radio" title="Pinyin (Tiếng Trung)" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="Py0-Cl-Pin">
+                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="onLanguageChanged:" target="XfG-lQ-9wD" id="Py0-Ac-Pin"/>
                                 </connections>
                             </button>
                             <button verticalHuggingPriority="750" fixedFrame="YES" imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="o65-tK-iPq">
@@ -1713,6 +1724,7 @@
                         <outlet property="UseModernOrthography" destination="r8q-NU-lqe" id="lmX-Q6-FBh"/>
                         <outlet property="VersionInfo" destination="bXh-ai-gk3" id="jxu-Bo-Ajq"/>
                         <outlet property="VietButton" destination="qjz-9i-VOQ" id="Jpa-0e-ZDo"/>
+                        <outlet property="PinyinButton" destination="Py0-Bt-Pin" id="Py0-Ot-Pin"/>
                         <outlet property="appOK" destination="S26-ZU-sFD" id="f3J-H0-epQ"/>
                         <outlet property="permissionWarning" destination="5SM-Mt-ady" id="MSR-ei-1L6"/>
                         <outlet property="popupCode" destination="9pW-S5-fU9" id="xHD-cL-Ohl"/>

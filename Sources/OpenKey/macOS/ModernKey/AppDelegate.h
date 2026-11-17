@@ -14,6 +14,7 @@
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 
 -(void)onImputMethodChanged:(BOOL)willNotify;
+-(void)setInputMethodIndex:(int)index willNotify:(BOOL)willNotify;
 -(void)onInputMethodSelected;
 
 -(void)askPermission;
