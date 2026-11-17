@@ -1103,7 +1103,7 @@ extern "C" {
                     }
 
                     // Update Candidate Window
-                    if (ui_state.has_menu && (ui_state.num_candidates > 0 || !ui_state.preedit.empty())) {
+                    if (!ui_state.preedit.empty() || (ui_state.has_menu && ui_state.num_candidates > 0)) {
                         NSMutableArray<NSString *> *cands = [NSMutableArray array];
                         for (const auto& c : ui_state.candidates) {
                             [cands addObject:[NSString stringWithUTF8String:c.text.c_str()]];

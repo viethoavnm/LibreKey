@@ -30,6 +30,7 @@ struct RimeCandidateItem {
 
 struct RimeUIState {
     bool has_menu = false;
+    std::string raw_input;
     std::string preedit;
     int highlighted_index = 0;
     int num_candidates = 0;

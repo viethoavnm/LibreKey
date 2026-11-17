@@ -70,10 +70,17 @@ void RimeEngine::fetchUIState(RimeUIState& out_ui_state) {
     out_ui_state = RimeUIState();
     if (!is_initialized_ || !session_id_ || !api_) return;
 
+    const char* raw = api_->get_input(session_id_);
+    if (raw && raw[0] != '\0') {
+        out_ui_state.raw_input = raw;
+    }
+
     RIME_STRUCT(RimeContext, ctx);
     if (api_->get_context(session_id_, &ctx)) {
         if (ctx.composition.preedit && ctx.composition.preedit[0] != '\0') {
             out_ui_state.preedit = ctx.composition.preedit;
+        } else if (!out_ui_state.raw_input.empty()) {
+            out_ui_state.preedit = out_ui_state.raw_input;
         }
 
         if (ctx.menu.num_candidates > 0) {
@@ -98,6 +105,9 @@ void RimeEngine::fetchUIState(RimeUIState& out_ui_state) {
             out_ui_state.has_menu = true;
         }
         api_->free_context(&ctx);
+    } else if (!out_ui_state.raw_input.empty()) {
+        out_ui_state.preedit = out_ui_state.raw_input;
+        out_ui_state.has_menu = true;
     }
 }
 

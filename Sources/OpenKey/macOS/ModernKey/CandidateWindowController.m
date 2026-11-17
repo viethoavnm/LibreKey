@@ -6,12 +6,14 @@
 //
 
 #import "CandidateWindowController.h"
+#import <ApplicationServices/ApplicationServices.h>
 
 @interface CandidateWindowController ()
 
 @property (nonatomic, strong) NSVisualEffectView *visualEffectView;
 @property (nonatomic, strong) NSTextField *preeditLabel;
-@property (nonatomic, strong) NSStackView *candidatesStackView;
+@property (nonatomic, strong) NSBox *separatorBox;
+@property (nonatomic, strong) NSView *candidatesContainer;
 @property (nonatomic, strong) NSTextField *pageLabel;
 
 @end
@@ -28,7 +30,7 @@
 }
 
 - (instancetype)init {
-    NSRect initialRect = NSMakeRect(100, 100, 320, 64);
+    NSRect initialRect = NSMakeRect(100, 100, 320, 68);
     NSPanel *panel = [[NSPanel alloc] initWithContentRect:initialRect
                                                 styleMask:NSWindowStyleMaskNonactivatingPanel | NSWindowStyleMaskBorderless
                                                   backing:NSBackingStoreBuffered
@@ -53,42 +55,37 @@
 
     _visualEffectView = [[NSVisualEffectView alloc] initWithFrame:contentView.bounds];
     _visualEffectView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    _visualEffectView.material = NSVisualEffectMaterialHUDWindow;
+    _visualEffectView.material = NSVisualEffectMaterialPopover;
     _visualEffectView.state = NSVisualEffectStateActive;
     _visualEffectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
     _visualEffectView.wantsLayer = YES;
-    _visualEffectView.layer.cornerRadius = 8.0;
+    _visualEffectView.layer.cornerRadius = 10.0;
     _visualEffectView.layer.masksToBounds = YES;
-    _visualEffectView.layer.borderWidth = 1.0;
-    _visualEffectView.layer.borderColor = [NSColor colorWithWhite:1.0 alpha:0.15].CGColor;
+    _visualEffectView.layer.borderWidth = 0.5;
+    _visualEffectView.layer.borderColor = [NSColor colorWithWhite:1.0 alpha:0.2].CGColor;
     [contentView addSubview:_visualEffectView];
 
-    // Main vertical layout
-    NSStackView *mainStack = [[NSStackView alloc] initWithFrame:NSInsetRect(contentView.bounds, 10, 8)];
-    mainStack.orientation = NSUserInterfaceLayoutOrientationVertical;
-    mainStack.alignment = NSLayoutAttributeLeading;
-    mainStack.spacing = 4.0;
-    mainStack.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    [_visualEffectView addSubview:mainStack];
-
-    // Preedit Label
+    // Preedit Label (Latin text)
     _preeditLabel = [NSTextField labelWithString:@""];
-    _preeditLabel.font = [NSFont monospacedSystemFontOfSize:13 weight:NSFontWeightMedium];
+    _preeditLabel.font = [NSFont systemFontOfSize:14 weight:NSFontWeightSemibold];
     _preeditLabel.textColor = [NSColor systemBlueColor];
-    [mainStack addArrangedSubview:_preeditLabel];
+    _preeditLabel.lineBreakMode = NSLineBreakByTruncatingTail;
+    [_visualEffectView addSubview:_preeditLabel];
 
-    // Candidates horizontal stack
-    _candidatesStackView = [[NSStackView alloc] init];
-    _candidatesStackView.orientation = NSUserInterfaceLayoutOrientationHorizontal;
-    _candidatesStackView.alignment = NSLayoutAttributeCenterY;
-    _candidatesStackView.spacing = 10.0;
-    [mainStack addArrangedSubview:_candidatesStackView];
+    // Separator line
+    _separatorBox = [[NSBox alloc] initWithFrame:NSZeroRect];
+    _separatorBox.boxType = NSBoxSeparator;
+    [_visualEffectView addSubview:_separatorBox];
+
+    // Candidates container
+    _candidatesContainer = [[NSView alloc] initWithFrame:NSZeroRect];
+    [_visualEffectView addSubview:_candidatesContainer];
 
     // Page indicator
     _pageLabel = [NSTextField labelWithString:@""];
     _pageLabel.font = [NSFont systemFontOfSize:11 weight:NSFontWeightRegular];
     _pageLabel.textColor = [NSColor secondaryLabelColor];
-    [_candidatesStackView addArrangedSubview:_pageLabel];
+    [_candidatesContainer addSubview:_pageLabel];
 }
 
 - (void)updateWithPreedit:(NSString *)preedit
@@ -103,122 +100,317 @@
             return;
         }
 
-        self.preeditLabel.stringValue = preedit ?: @"";
+        BOOL hasPreedit = (preedit.length > 0);
+        BOOL hasCandidates = (candidates.count > 0);
 
-        // Remove old candidate views except pageLabel
-        NSArray *subviews = [self.candidatesStackView.arrangedSubviews copy];
+        self.preeditLabel.stringValue = preedit ?: @"";
+        self.preeditLabel.hidden = !hasPreedit;
+
+        // Clear existing candidate subviews (except pageLabel)
+        NSArray *subviews = [self.candidatesContainer.subviews copy];
         for (NSView *v in subviews) {
             if (v != self.pageLabel) {
-                [self.candidatesStackView removeArrangedSubview:v];
                 [v removeFromSuperview];
             }
         }
 
-        // Add new candidates
+        // Fonts matching macOS Apple Pinyin style
+        NSFont *preeditFont = [NSFont systemFontOfSize:14 weight:NSFontWeightSemibold];
+        NSFont *numFont = [NSFont systemFontOfSize:12 weight:NSFontWeightRegular];
+        NSFont *numHighlightFont = [NSFont systemFontOfSize:12 weight:NSFontWeightMedium];
+        NSFont *candFont = [NSFont systemFontOfSize:15 weight:NSFontWeightRegular];
+        NSFont *candHighlightFont = [NSFont systemFontOfSize:15 weight:NSFontWeightMedium];
+        NSFont *pageFont = [NSFont systemFontOfSize:11 weight:NSFontWeightRegular];
+
+        CGFloat candX = 0.0;
+        const CGFloat candRowHeight = 26.0;
+
         for (NSInteger i = 0; i < candidates.count; i++) {
             NSString *candText = candidates[i];
-            NSString *itemText = [NSString stringWithFormat:@"%ld. %@", (long)(i + 1), candText];
+            BOOL isHighlighted = (i == highlightIndex);
 
-            NSTextField *label = [NSTextField labelWithString:itemText];
-            if (i == highlightIndex) {
-                label.font = [NSFont systemFontOfSize:14 weight:NSFontWeightBold];
-                label.textColor = [NSColor whiteColor];
-                label.wantsLayer = YES;
-                label.layer.backgroundColor = [NSColor colorWithRed:0.0 green:0.48 blue:1.0 alpha:0.5].CGColor;
-                label.layer.cornerRadius = 4.0;
-            } else {
-                label.font = [NSFont systemFontOfSize:14 weight:NSFontWeightRegular];
-                label.textColor = [NSColor colorWithWhite:0.9 alpha:1.0];
+            NSString *numStr = [NSString stringWithFormat:@"%ld.", (long)(i + 1)];
+            NSDictionary *numAttrs = @{NSFontAttributeName: isHighlighted ? numHighlightFont : numFont};
+            NSSize numSize = [numStr sizeWithAttributes:numAttrs];
+
+            NSDictionary *candAttrs = @{NSFontAttributeName: isHighlighted ? candHighlightFont : candFont};
+            NSSize candSize = [candText sizeWithAttributes:candAttrs];
+
+            CGFloat pillPadH = isHighlighted ? 7.0 : 4.0;
+            CGFloat itemWidth = pillPadH + numSize.width + 4.0 + candSize.width + pillPadH;
+
+            // Container pill view
+            NSView *itemView = [[NSView alloc] initWithFrame:NSMakeRect(candX, 0, itemWidth, candRowHeight)];
+            itemView.wantsLayer = YES;
+            if (isHighlighted) {
+                itemView.layer.backgroundColor = [NSColor controlAccentColor].CGColor;
+                itemView.layer.cornerRadius = 5.0;
             }
-            // Insert before pageLabel
-            [self.candidatesStackView insertArrangedSubview:label atIndex:i];
+
+            // Number label
+            CGFloat numY = (candRowHeight - numSize.height) / 2.0;
+            NSTextField *numLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(pillPadH, numY, numSize.width, numSize.height)];
+            numLabel.stringValue = numStr;
+            numLabel.font = isHighlighted ? numHighlightFont : numFont;
+            numLabel.textColor = isHighlighted ? [NSColor colorWithWhite:1.0 alpha:0.85] : [NSColor secondaryLabelColor];
+            numLabel.editable = NO;
+            numLabel.bordered = NO;
+            numLabel.drawsBackground = NO;
+            [itemView addSubview:numLabel];
+
+            // Candidate Chinese text label
+            CGFloat candY = (candRowHeight - candSize.height) / 2.0;
+            NSTextField *candLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(pillPadH + numSize.width + 4.0, candY, candSize.width, candSize.height)];
+            candLabel.stringValue = candText;
+            candLabel.font = isHighlighted ? candHighlightFont : candFont;
+            candLabel.textColor = isHighlighted ? [NSColor whiteColor] : [NSColor labelColor];
+            candLabel.editable = NO;
+            candLabel.bordered = NO;
+            candLabel.drawsBackground = NO;
+            [itemView addSubview:candLabel];
+
+            [self.candidatesContainer addSubview:itemView];
+            candX += itemWidth + 10.0;
         }
 
+        // Page indicator
         if (pageNo > 0 || !isLastPage) {
-            self.pageLabel.stringValue = [NSString stringWithFormat:@"[%ld]", (long)(pageNo + 1)];
+            NSString *pageStr = [NSString stringWithFormat:@"‹ %ld ›", (long)(pageNo + 1)];
+            self.pageLabel.stringValue = pageStr;
+            NSSize pageSize = [pageStr sizeWithAttributes:@{NSFontAttributeName: pageFont}];
+            CGFloat pageY = (candRowHeight - pageSize.height) / 2.0;
+            self.pageLabel.frame = NSMakeRect(candX + 2.0, pageY, pageSize.width, pageSize.height);
             self.pageLabel.hidden = NO;
+            candX += pageSize.width + 4.0;
         } else {
             self.pageLabel.hidden = YES;
         }
 
-        // Compute needed size
-        [self.candidatesStackView layoutSubtreeIfNeeded];
-        NSSize targetSize = [self.window.contentView fittingSize];
-        CGFloat width = MAX(targetSize.width + 24, 180.0);
-        CGFloat height = MAX(targetSize.height + 16, 56.0);
+        CGFloat candRowWidth = candX;
 
-        NSRect frame = self.window.frame;
-        frame.size = NSMakeSize(width, height);
-        [self.window setFrame:frame display:YES];
+        // Measure preedit width
+        NSSize preeditSize = hasPreedit ? [preedit sizeWithAttributes:@{NSFontAttributeName: preeditFont}] : NSZeroSize;
+        CGFloat contentWidth = MAX(preeditSize.width, candRowWidth);
+        const CGFloat padH = 12.0;
+        CGFloat windowWidth = MAX(contentWidth + padH * 2.0, 160.0);
 
-        [self updatePositionNearCaret];
+        // Layout heights
+        const CGFloat padV = 8.0;
+        const CGFloat preeditH = hasPreedit ? 18.0 : 0.0;
+        const CGFloat separatorH = (hasPreedit && hasCandidates) ? 1.0 : 0.0;
+        const CGFloat spacing = (hasPreedit && hasCandidates) ? 6.0 : 0.0;
+        const CGFloat candH = hasCandidates ? candRowHeight : 0.0;
+
+        CGFloat windowHeight;
+        if (hasPreedit && hasCandidates) {
+            windowHeight = padV + candH + spacing + separatorH + spacing + preeditH + padV;
+        } else if (hasCandidates) {
+            windowHeight = padV + candH + padV;
+        } else {
+            windowHeight = padV + preeditH + padV;
+        }
+
+        // Position subviews inside VisualEffectView (bottom-up coordinates)
+        CGFloat currentY = padV;
+        if (hasCandidates) {
+            self.candidatesContainer.frame = NSMakeRect(padH, currentY, candRowWidth, candH);
+            self.candidatesContainer.hidden = NO;
+            currentY += candH + spacing;
+        } else {
+            self.candidatesContainer.hidden = YES;
+        }
+
+        if (hasPreedit && hasCandidates) {
+            self.separatorBox.frame = NSMakeRect(padH, currentY, windowWidth - padH * 2.0, 1.0);
+            self.separatorBox.hidden = NO;
+            currentY += 1.0 + spacing;
+        } else {
+            self.separatorBox.hidden = YES;
+        }
+
+        if (hasPreedit) {
+            self.preeditLabel.frame = NSMakeRect(padH, currentY, windowWidth - padH * 2.0, preeditH);
+            self.preeditLabel.hidden = NO;
+        } else {
+            self.preeditLabel.hidden = YES;
+        }
+
+        // Position window near caret
+        NSSize winSize = NSMakeSize(windowWidth, windowHeight);
+        NSPoint origin = [self calculateCaretPositionForSize:winSize];
+        [self.window setFrame:NSMakeRect(origin.x, origin.y, winSize.width, winSize.height) display:YES];
         [self.window orderFrontRegardless];
     });
 }
 
-- (void)updatePositionNearCaret {
+- (NSPoint)calculateCaretPositionForSize:(NSSize)windowSize {
     NSRect targetRect = NSZeroRect;
     BOOL foundCaret = NO;
 
-    AXUIElementRef systemWide = AXUIElementCreateSystemWide();
-    if (systemWide) {
-        AXUIElementRef focusedElement = NULL;
-        if (AXUIElementCopyAttributeValue(systemWide, kAXFocusedUIElementAttribute, (CFTypeRef *)&focusedElement) == kAXErrorSuccess && focusedElement) {
-            AXValueRef rangeValue = NULL;
-            if (AXUIElementCopyAttributeValue(focusedElement, kAXSelectedTextRangeAttribute, (CFTypeRef *)&rangeValue) == kAXErrorSuccess && rangeValue) {
-                CFRange range;
-                if (AXValueGetValue(rangeValue, kAXValueCFRangeType, &range)) {
+    // 1. Query frontmost application directly
+    NSRunningApplication *frontApp = [[NSWorkspace sharedWorkspace] frontmostApplication];
+    pid_t pid = frontApp ? frontApp.processIdentifier : 0;
+
+    if (pid > 0) {
+        AXUIElementRef appElement = AXUIElementCreateApplication(pid);
+        if (appElement) {
+            AXUIElementSetMessagingTimeout(appElement, 0.15);
+            AXUIElementRef focusedElement = NULL;
+            if (AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute, (CFTypeRef *)&focusedElement) == kAXErrorSuccess && focusedElement) {
+                AXValueRef rangeValue = NULL;
+                if (AXUIElementCopyAttributeValue(focusedElement, kAXSelectedTextRangeAttribute, (CFTypeRef *)&rangeValue) == kAXErrorSuccess && rangeValue) {
+                    CFRange range;
+                    if (AXValueGetValue(rangeValue, kAXValueCFRangeType, &range)) {
+                        // Attempt bounds for current range
+                        AXValueRef boundsValue = NULL;
+                        if (AXUIElementCopyParameterizedAttributeValue(focusedElement, kAXBoundsForRangeParameterizedAttribute, rangeValue, (CFTypeRef *)&boundsValue) == kAXErrorSuccess && boundsValue) {
+                            CGRect rect;
+                            if (AXValueGetValue(boundsValue, kAXValueCGRectType, &rect)) {
+                                if (rect.size.height > 0) {
+                                    targetRect = NSRectFromCGRect(rect);
+                                    foundCaret = YES;
+                                }
+                            }
+                            CFRelease(boundsValue);
+                        }
+
+                        // If range has length 0 and bounds was empty, query previous character
+                        if (!foundCaret && range.location > 0) {
+                            CFRange prevRange = CFRangeMake(range.location - 1, 1);
+                            AXValueRef prevRangeValue = AXValueCreate(kAXValueCFRangeType, &prevRange);
+                            if (prevRangeValue) {
+                                AXValueRef prevBoundsValue = NULL;
+                                if (AXUIElementCopyParameterizedAttributeValue(focusedElement, kAXBoundsForRangeParameterizedAttribute, prevRangeValue, (CFTypeRef *)&prevBoundsValue) == kAXErrorSuccess && prevBoundsValue) {
+                                    CGRect rect;
+                                    if (AXValueGetValue(prevBoundsValue, kAXValueCGRectType, &rect)) {
+                                        if (rect.size.height > 0) {
+                                            targetRect = NSMakeRect(rect.origin.x + rect.size.width, rect.origin.y, 0, rect.size.height);
+                                            foundCaret = YES;
+                                        }
+                                    }
+                                    CFRelease(prevBoundsValue);
+                                }
+                                CFRelease(prevRangeValue);
+                            }
+                        }
+                    }
+                    CFRelease(rangeValue);
+                }
+
+                // If text range bounds failed, query element position and size as fallback
+                if (!foundCaret) {
+                    AXValueRef posValue = NULL;
+                    AXValueRef sizeValue = NULL;
+                    CGPoint pos = CGPointZero;
+                    CGSize size = CGSizeZero;
+                    if (AXUIElementCopyAttributeValue(focusedElement, kAXPositionAttribute, (CFTypeRef *)&posValue) == kAXErrorSuccess && posValue) {
+                        AXValueGetValue(posValue, kAXValueCGPointType, &pos);
+                        CFRelease(posValue);
+                        if (AXUIElementCopyAttributeValue(focusedElement, kAXSizeAttribute, (CFTypeRef *)&sizeValue) == kAXErrorSuccess && sizeValue) {
+                            AXValueGetValue(sizeValue, kAXValueCGSizeType, &size);
+                            CFRelease(sizeValue);
+                            if (size.height > 0) {
+                                targetRect = NSMakeRect(pos.x, pos.y, size.width, size.height);
+                                foundCaret = YES;
+                            }
+                        }
+                    }
+                }
+
+                CFRelease(focusedElement);
+            }
+            CFRelease(appElement);
+        }
+    }
+
+    // 2. Fallback query to systemWide element
+    if (!foundCaret) {
+        AXUIElementRef systemWide = AXUIElementCreateSystemWide();
+        if (systemWide) {
+            AXUIElementSetMessagingTimeout(systemWide, 0.1);
+            AXUIElementRef focusedElement = NULL;
+            if (AXUIElementCopyAttributeValue(systemWide, kAXFocusedUIElementAttribute, (CFTypeRef *)&focusedElement) == kAXErrorSuccess && focusedElement) {
+                AXValueRef rangeValue = NULL;
+                if (AXUIElementCopyAttributeValue(focusedElement, kAXSelectedTextRangeAttribute, (CFTypeRef *)&rangeValue) == kAXErrorSuccess && rangeValue) {
                     AXValueRef boundsValue = NULL;
                     if (AXUIElementCopyParameterizedAttributeValue(focusedElement, kAXBoundsForRangeParameterizedAttribute, rangeValue, (CFTypeRef *)&boundsValue) == kAXErrorSuccess && boundsValue) {
                         CGRect rect;
                         if (AXValueGetValue(boundsValue, kAXValueCGRectType, &rect)) {
-                            targetRect = NSRectFromCGRect(rect);
-                            foundCaret = YES;
+                            if (rect.size.height > 0) {
+                                targetRect = NSRectFromCGRect(rect);
+                                foundCaret = YES;
+                            }
                         }
                         CFRelease(boundsValue);
                     }
+                    CFRelease(rangeValue);
                 }
-                CFRelease(rangeValue);
+                CFRelease(focusedElement);
             }
-            CFRelease(focusedElement);
+            CFRelease(systemWide);
         }
-        CFRelease(systemWide);
     }
 
-    NSRect windowFrame = self.window.frame;
-    NSScreen *screen = [NSScreen mainScreen];
-    NSRect screenFrame = screen ? screen.visibleFrame : NSMakeRect(0, 0, 1440, 900);
+    // Convert Quartz coordinates to Cocoa coordinates
+    NSScreen *primaryScreen = [NSScreen screens].firstObject;
+    CGFloat primaryHeight = primaryScreen ? primaryScreen.frame.size.height : 900.0;
 
     NSPoint origin;
-    if (foundCaret && targetRect.size.width >= 0 && targetRect.size.height >= 0 && targetRect.origin.y > 0) {
-        // macOS AX coordinates: (0,0) is top-left, Cocoa coordinates: (0,0) is bottom-left
-        CGFloat cocoaY = screenFrame.size.height + screenFrame.origin.y - targetRect.origin.y;
+    if (foundCaret && targetRect.origin.y > 0) {
+        CGFloat caretBottomCocoa = primaryHeight - (targetRect.origin.y + targetRect.size.height);
+        CGFloat caretTopCocoa = primaryHeight - targetRect.origin.y;
+
         origin.x = targetRect.origin.x;
-        origin.y = cocoaY - windowFrame.size.height - 4;
-        if (origin.y < screenFrame.origin.y) {
-            origin.y = cocoaY + targetRect.size.height + 4;
+        origin.y = caretBottomCocoa - windowSize.height - 4.0;
+
+        // Target screen visible frame
+        NSScreen *targetScreen = nil;
+        for (NSScreen *s in [NSScreen screens]) {
+            if (NSPointInRect(NSMakePoint(origin.x, caretBottomCocoa), s.frame)) {
+                targetScreen = s;
+                break;
+            }
+        }
+        if (!targetScreen) targetScreen = [NSScreen mainScreen];
+        NSRect visibleFrame = targetScreen ? targetScreen.visibleFrame : NSMakeRect(0, 0, 1440, 900);
+
+        // Flip above caret if it goes below visible screen area
+        if (origin.y < NSMinY(visibleFrame)) {
+            origin.y = caretTopCocoa + 4.0;
+        }
+
+        // Clamp horizontally within visible frame
+        if (origin.x + windowSize.width > NSMaxX(visibleFrame) - 8.0) {
+            origin.x = NSMaxX(visibleFrame) - windowSize.width - 8.0;
+        }
+        if (origin.x < NSMinX(visibleFrame) + 8.0) {
+            origin.x = NSMinX(visibleFrame) + 8.0;
         }
     } else {
-        // Fallback to mouse location
+        // Fallback to mouse position
         NSPoint mouseLoc = [NSEvent mouseLocation];
-        origin.x = mouseLoc.x + 12;
-        origin.y = mouseLoc.y - windowFrame.size.height - 12;
+        NSScreen *targetScreen = [NSScreen mainScreen];
+        NSRect visibleFrame = targetScreen ? targetScreen.visibleFrame : NSMakeRect(0, 0, 1440, 900);
+
+        origin.x = mouseLoc.x + 12.0;
+        origin.y = mouseLoc.y - windowSize.height - 12.0;
+
+        if (origin.y < NSMinY(visibleFrame)) {
+            origin.y = mouseLoc.y + 16.0;
+        }
+        if (origin.x + windowSize.width > NSMaxX(visibleFrame) - 8.0) {
+            origin.x = NSMaxX(visibleFrame) - windowSize.width - 8.0;
+        }
+        if (origin.x < NSMinX(visibleFrame) + 8.0) {
+            origin.x = NSMinX(visibleFrame) + 8.0;
+        }
     }
 
-    // Clamp inside screen bounds
-    if (origin.x + windowFrame.size.width > NSMaxX(screenFrame)) {
-        origin.x = NSMaxX(screenFrame) - windowFrame.size.width - 8;
-    }
-    if (origin.x < NSMinX(screenFrame)) {
-        origin.x = NSMinX(screenFrame) + 8;
-    }
-    if (origin.y < NSMinY(screenFrame)) {
-        origin.y = NSMinY(screenFrame) + 8;
-    }
-    if (origin.y + windowFrame.size.height > NSMaxY(screenFrame)) {
-        origin.y = NSMaxY(screenFrame) - windowFrame.size.height - 8;
-    }
+    return origin;
+}
 
+- (void)updatePositionNearCaret {
+    NSPoint origin = [self calculateCaretPositionForSize:self.window.frame.size];
     [self.window setFrameOrigin:origin];
 }
 
