@@ -129,7 +129,7 @@ Kết quả đo A/B trên cùng một máy, cùng thời điểm, cùng hai tài
 | Bản | `LSMultipleInstancesProhibited` | Khi tài khoản khác đang giữ ứng dụng |
 |---|---|---|
 | OpenKey 2.0.5 | `true` | ❌ `-10829`, bị chặn hoàn toàn |
-| LibreKey 1.2.0 | `false` | ✅ chạy song song bình thường |
+| LibreKey 1.3.0 | `false` | ✅ chạy song song bình thường |
 
 ## Fork này lấy gì và sửa gì
 
@@ -180,6 +180,19 @@ trong ứng dụng ở tab *Thông tin*, chứ không chỉ nằm trong README n
 Chi tiết từng thay đổi nằm trong [CHANGELOG.md](CHANGELOG.md) và lịch sử commit.
 
 ## Tính năng riêng của LibreKey
+
+### Chế độ gõ Pinyin tiếng Trung giản thể (Simplified Chinese)
+
+LibreKey tích hợp thư viện **librime** (Rime Input Method Engine) cùng bộ từ điển tiếng Trung giản thể (`pinyin_simp`), hỗ trợ gõ Pinyin chuyển đổi thành chữ Hán trực tiếp:
+
+- **Chuyển đổi 3 ngôn ngữ linh hoạt:** Xoay vòng qua 3 chế độ **English (`E`) ➔ Tiếng Việt (`V`) ➔ Pinyin tiếng Trung (`中`)** chỉ với một phím tắt chuyển ngôn ngữ toàn cục, click biểu tượng trên Menu Bar, hoặc chọn trực tiếp trên Bảng điều khiển (Control Panel).
+- **Cửa sổ ứng viên (Candidate Window) phong cách Apple Pinyin:**
+  - Thiết kế dạng thanh ngang kính mờ (`NSVisualEffectMaterialPopover`), góc bo tròn 10pt chuẩn macOS.
+  - Hàng trên hiển thị chuỗi chữ Latin đang gõ (preedit) với màu sắc rõ nét.
+  - Hàng dưới hiển thị danh sách từ ứng viên chữ Hán; từ được chọn mặc định nằm trong viên thuốc (pill capsule) màu xanh macOS native.
+  - Dùng phím **Space** hoặc các phím số **1–5** để chọn chữ Hán xuất ra màn hình.
+  - **Tự động bám sát con trỏ soạn thảo (Caret tracking):** Cửa sổ ứng viên luôn xuất hiện chính xác ngay dưới dấu nháy gõ trên mọi ứng dụng (TextEdit, Safari, Chrome, VS Code, Notes, Slack, v.v.) qua Accessibility API, và tự động lật lên phía trên nếu vị trí gõ sát mép dưới màn hình.
+- **Tự chứa toàn bộ thư viện (Standalone):** Bản phát hành tự động nhúng toàn bộ các dylib phụ thuộc (`librime`, `glog`, `leveldb`, `opencc`, `yaml-cpp`, `marisa`, `snappy`, `gflags`) vào trong bundle, người dùng chỉ cần tải về và chạy ngay mà không cần cài đặt Homebrew hay thư viện ngoài.
 
 ### Loại trừ ứng dụng
 
