@@ -11,7 +11,7 @@
 **Bộ gõ tiếng Việt cho macOS và Windows. Bản macOS chạy được trên máy có nhiều
 tài khoản người dùng.**
 
-Phiên bản hiện tại: **1.2.0** · macOS 10.13+ (Universal) và Windows (x86/x64) · GPL v3
+Phiên bản hiện tại: **1.3.0** · macOS 10.13+ (Universal) và Windows (x86/x64) · GPL v3
 
 ![Bảng điều khiển LibreKey](docs/screenshots/panel-bo-go.png)
 
@@ -258,8 +258,8 @@ một máy Windows
 
 | | |
 |---|---|
-| Phiên bản | **1.2.0** (build 3) |
-| Ngày phát hành | 16/08/2026 |
+| Phiên bản | **1.3.0** (build 4) |
+| Ngày phát hành | 17/11/2026 |
 | Yêu cầu | macOS 10.13 (High Sierra) trở lên · Windows 7 trở lên |
 | Kiến trúc | macOS: Universal (`arm64` + `x86_64`) · Windows: `x86` và `x64` |
 | Bundle ID | `vn.viethoavnm.librekey` |

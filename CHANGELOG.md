@@ -4,8 +4,22 @@ LibreKey là bản fork của [OpenKey](https://github.com/tuyenvm/OpenKey) do M
 Tuyên viết, phát hành theo giấy phép GPL v3. Nhật ký thay đổi của OpenKey nằm ở
 kho gốc; file này chỉ ghi những gì LibreKey khác đi.
 
-## Chưa phát hành
+## 1.3.0 — 17/11/2026
 
+- **Chế độ gõ Pinyin tiếng Trung giản thể (Simplified Chinese Pinyin).** Tích hợp
+  thư viện `librime` và bộ từ điển `pinyin_simp`, hỗ trợ chuyển đổi pinyin sang
+  chữ Hán trực tiếp.
+  - *Chuyển đổi 3 ngôn ngữ linh hoạt:* Hỗ trợ xoay vòng tiếng Anh (`E`), tiếng
+    Việt (`V`), và Pinyin tiếng Trung (`中`) qua phím tắt, icon trên Menu Bar,
+    hoặc chọn trực tiếp tại Bảng điều khiển (Control Panel).
+  - *Cửa sổ gợi ý (Candidate Window) phong cách Apple Pinyin:*
+    - Dạng thanh ngang mờ (frosted popover HUD) chuẩn macOS, tự động bám sát con
+      trỏ soạn thảo (Caret tracking) qua Accessibility API trên mọi ứng dụng.
+    - Hiển thị chuỗi chữ Latin gõ vào (preedit) ở hàng trên và danh sách ứng viên
+      chữ Hán ở hàng dưới với viên thuốc highlight màu xanh macOS native.
+  - *Đóng gói độc lập (Self-contained standalone):* Tự động bundle toàn bộ các
+    dylib phụ thuộc (`librime`, `libglog`, `libleveldb`, `libopencc`, v.v.) vào
+    `Contents/Frameworks/`, không yêu cầu người dùng phải cài đặt Homebrew.
 - **Cài bằng Homebrew trên macOS.** Cask nằm ở tap riêng
   [viethoavnm/homebrew-librekey](https://github.com/viethoavnm/homebrew-librekey);
   `brew install --cask librekey` là đủ, nâng cấp về sau bằng `brew upgrade`.
