@@ -11,3 +11,4 @@
 
 # Xcode build output (README dùng -derivedDataPath build)
 /Sources/OpenKey/macOS/build/
+/dist/
