@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA0300000000000000000003 /* RimeEngine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA0300000000000000000002 /* RimeEngine.cpp */; };
+		AA0300000000000000000006 /* CandidateWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0300000000000000000005 /* CandidateWindowController.m */; };
+		AA0300000000000000000009 /* rime in Resources */ = {isa = PBXBuildFile; fileRef = AA0300000000000000000008 /* rime */; };
 		23136D92231FBD49000764E6 /* ConvertToolViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 23136D91231FBD49000764E6 /* ConvertToolViewController.mm */; };
 		232DB1E421FAED290049A0B5 /* StatusHighlighted.png in Resources */ = {isa = PBXBuildFile; fileRef = 232DB1E021FAED280049A0B5 /* StatusHighlighted.png */; };
 		232DB1E521FAED290049A0B5 /* Status.png in Resources */ = {isa = PBXBuildFile; fileRef = 232DB1E121FAED280049A0B5 /* Status.png */; };
@@ -126,6 +129,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AA0300000000000000000001 /* RimeEngine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RimeEngine.h; sourceTree = "<group>"; };
+		AA0300000000000000000002 /* RimeEngine.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RimeEngine.cpp; sourceTree = "<group>"; };
+		AA0300000000000000000004 /* CandidateWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CandidateWindowController.h; sourceTree = "<group>"; };
+		AA0300000000000000000005 /* CandidateWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CandidateWindowController.m; sourceTree = "<group>"; };
+		AA0300000000000000000008 /* rime */ = {isa = PBXFileReference; lastKnownFileType = folder; path = rime; sourceTree = "<group>"; };
 		23136D90231FBD49000764E6 /* ConvertToolViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ConvertToolViewController.h; sourceTree = "<group>"; };
 		23136D91231FBD49000764E6 /* ConvertToolViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ConvertToolViewController.mm; sourceTree = "<group>"; };
 		232DB1E021FAED280049A0B5 /* StatusHighlighted.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = StatusHighlighted.png; sourceTree = "<group>"; };
@@ -273,6 +281,7 @@
 		232DB1DF21FAED280049A0B5 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				AA0300000000000000000008 /* rime */,
 				2383405B2320F8170020F857 /* StartConvert@2x.png */,
 				238AF97022042EC600AEFA17 /* Icon.icns */,
 				238AF96822042E2500AEFA17 /* ThumbUp@2x.png */,
@@ -362,6 +371,8 @@
 				AA0100000000000000000065 /* OKAutocompleteGuard.m */,
 				AA0100000000000000000067 /* OKLayoutRemap.h */,
 				AA0100000000000000000068 /* OKLayoutRemap.m */,
+				AA0300000000000000000004 /* CandidateWindowController.h */,
+				AA0300000000000000000005 /* CandidateWindowController.m */,
 			);
 			path = ModernKey;
 			sourceTree = "<group>";
@@ -452,6 +463,8 @@
 				23E2E49A2314FD3A006CCC3E /* Engine.cpp */,
 				233C4A6F231F937900DD7052 /* ConvertTool.cpp */,
 				233C4A71231F938800DD7052 /* ConvertTool.h */,
+				AA0300000000000000000001 /* RimeEngine.h */,
+				AA0300000000000000000002 /* RimeEngine.cpp */,
 			);
 			name = engine;
 			path = ../engine;
@@ -578,6 +591,7 @@
 				232EDA5E21F1B33F0085D362 /* Assets.xcassets in Resources */,
 				232EDA6121F1B33F0085D362 /* Main.storyboard in Resources */,
 				2383405D2320F8170020F857 /* StartConvert@2x.png in Resources */,
+				AA0300000000000000000009 /* rime in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -623,6 +637,8 @@
 				AA010000000000000000000F /* OKCompoundDeletion.m in Sources */,
 				AA0100000000000000000066 /* OKAutocompleteGuard.m in Sources */,
 				AA0100000000000000000069 /* OKLayoutRemap.m in Sources */,
+				AA0300000000000000000003 /* RimeEngine.cpp in Sources */,
+				AA0300000000000000000006 /* CandidateWindowController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -833,16 +849,25 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
-				HEADER_SEARCH_PATHS = "";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"/opt/homebrew/opt/librime/include",
+				);
 				INFOPLIST_FILE = ModernKey/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
+					"/opt/homebrew/opt/librime/lib",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"/opt/homebrew/opt/librime/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MARKETING_VERSION = 1.2.0;
 				OTHER_LDFLAGS = (
-					"-lc++\n-lc++",
+					"-lc++",
+					"-lrime",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = vn.viethoavnm.librekey;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -859,16 +884,25 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
-				HEADER_SEARCH_PATHS = "";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"/opt/homebrew/opt/librime/include",
+				);
 				INFOPLIST_FILE = ModernKey/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
+					"/opt/homebrew/opt/librime/lib",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"/opt/homebrew/opt/librime/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MARKETING_VERSION = 1.2.0;
 				OTHER_LDFLAGS = (
-					"-lc++\n-lc++",
+					"-lc++",
+					"-lrime",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = vn.viethoavnm.librekey;
 				PRODUCT_NAME = "$(TARGET_NAME)";

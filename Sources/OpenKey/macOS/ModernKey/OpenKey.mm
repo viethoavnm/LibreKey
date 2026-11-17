@@ -21,6 +21,8 @@
 #import "OKCompoundDeletion.h"
 #import "OKAutocompleteGuard.h"
 #import "OKLayoutRemap.h"
+#import "RimeEngine.h"
+#import "CandidateWindowController.h"
 
 #define FRONT_APP [[NSWorkspace sharedWorkspace] frontmostApplication].bundleIdentifier
 #define OTHER_CONTROL_KEY (_flag & kCGEventFlagMaskCommand) || (_flag & kCGEventFlagMaskControl) || \
@@ -263,6 +265,21 @@ extern "C" {
         //init and load smart switch key data
         data = [prefs objectForKey:@"smartSwitchKey"];
         initSmartSwitchKey((Byte*)data.bytes, (int)data.length);
+
+        // Init Rime Engine for Chinese Pinyin
+        NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+        NSString *sharedDir = [resourcePath stringByAppendingPathComponent:@"rime"];
+        if (![[NSFileManager defaultManager] fileExistsAtPath:sharedDir]) {
+            // Fallback for development/testing environment
+            NSString *srcDir = [[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent];
+            sharedDir = [srcDir stringByAppendingPathComponent:@"Resources/rime"];
+        }
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
+        NSString *appSupport = [paths firstObject];
+        NSString *userDir = [appSupport stringByAppendingPathComponent:@"LibreKey/rime"];
+        [[NSFileManager defaultManager] createDirectoryAtPath:userDir withIntermediateDirectories:YES attributes:nil error:nil];
+
+        RimeEngine::instance().init(sharedDir.UTF8String, userDir.UTF8String);
     }
 
     void RequestNewSession() {
@@ -825,6 +842,8 @@ extern "C" {
     void switchLanguage() {
         if (vLanguage == 0)
             vLanguage = 1;
+        else if (vLanguage == 1)
+            vLanguage = 2;
         else
             vLanguage = 0;
         if (HAS_BEEP(vSwitchKeyStatus))
@@ -833,6 +852,10 @@ extern "C" {
         //like a click: what came before - a pending capital, VNI key lengths -
         //belongs to text typed in the other language
         RequestNewSession();
+        if (vLanguage != 2) {
+            RimeEngine::instance().clearComposition();
+            [[CandidateWindowController sharedController] hideWindow];
+        }
     }
     
     void handleMacro() {
@@ -1005,6 +1028,94 @@ extern "C" {
                 if (pData->code == vReplaceMaro) { //handle macro in english mode
                     handleMacro();
                     return NULL;
+                }
+            }
+            return event;
+        }
+
+        //If is in Chinese Pinyin mode
+        if (vLanguage == 2) {
+            if (type == kCGEventLeftMouseDown || type == kCGEventRightMouseDown) {
+                RimeEngine::instance().clearComposition();
+                [[CandidateWindowController sharedController] hideWindow];
+                return event;
+            }
+
+            if (type == kCGEventKeyDown) {
+                // Ignore modifier shortcuts (Cmd, Ctrl, Alt)
+                if ((_flag & kCGEventFlagMaskCommand) || (_flag & kCGEventFlagMaskControl) || (_flag & kCGEventFlagMaskAlternate)) {
+                    RimeEngine::instance().clearComposition();
+                    [[CandidateWindowController sharedController] hideWindow];
+                    return event;
+                }
+
+                int rime_keysym = 0;
+                if (_keycode == KEY_DELETE) {
+                    rime_keysym = 0xff08; // XK_BackSpace
+                } else if (_keycode == KEY_RETURN || _keycode == KEY_ENTER) {
+                    rime_keysym = 0xff0d; // XK_Return
+                } else if (_keycode == KEY_ESC) {
+                    rime_keysym = 0xff1b; // XK_Escape
+                } else if (_keycode == KEY_SPACE) {
+                    rime_keysym = 0x0020; // XK_space
+                } else if (_keycode == KEY_TAB) {
+                    rime_keysym = 0xff09; // XK_Tab
+                } else if (_keycode == KEY_LEFT) {
+                    rime_keysym = 0xff51; // XK_Left
+                } else if (_keycode == KEY_UP) {
+                    rime_keysym = 0xff52; // XK_Up
+                } else if (_keycode == KEY_RIGHT) {
+                    rime_keysym = 0xff53; // XK_Right
+                } else if (_keycode == KEY_DOWN) {
+                    rime_keysym = 0xff54; // XK_Down
+                } else {
+                    UniChar chars[4] = {0};
+                    UniCharCount length = 0;
+                    CGEventKeyboardGetUnicodeString(event, 4, &length, chars);
+                    if (length > 0) {
+                        rime_keysym = chars[0];
+                    }
+                }
+
+                if (rime_keysym != 0) {
+                    int rime_mask = 0;
+                    if (_flag & kCGEventFlagMaskShift) rime_mask |= (1 << 0);
+
+                    std::string out_commit;
+                    RimeUIState ui_state;
+                    bool handled = RimeEngine::instance().processKey(rime_keysym, rime_mask, out_commit, ui_state);
+
+                    // Output committed text if any
+                    if (!out_commit.empty()) {
+                        NSString *str = [NSString stringWithUTF8String:out_commit.c_str()];
+                        if (str.length > 0) {
+                            NSUInteger len = str.length;
+                            UniChar buffer[len];
+                            [str getCharacters:buffer range:NSMakeRange(0, len)];
+                            PostUnicodeString(buffer, (int)len);
+                        }
+                    }
+
+                    // Update Candidate Window
+                    if (ui_state.has_menu && (ui_state.num_candidates > 0 || !ui_state.preedit.empty())) {
+                        NSMutableArray<NSString *> *cands = [NSMutableArray array];
+                        for (const auto& c : ui_state.candidates) {
+                            [cands addObject:[NSString stringWithUTF8String:c.text.c_str()]];
+                        }
+                        NSString *preedit = [NSString stringWithUTF8String:ui_state.preedit.c_str()];
+                        [[CandidateWindowController sharedController] updateWithPreedit:preedit
+                                                                             candidates:cands
+                                                                              highlight:ui_state.highlighted_index
+                                                                                 pageNo:ui_state.page_no
+                                                                               pageSize:ui_state.page_size
+                                                                             isLastPage:ui_state.is_last_page];
+                    } else {
+                        [[CandidateWindowController sharedController] hideWindow];
+                    }
+
+                    if (handled) {
+                        return NULL;
+                    }
                 }
             }
             return event;

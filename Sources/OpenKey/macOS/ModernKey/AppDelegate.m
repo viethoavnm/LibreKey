@@ -432,11 +432,21 @@ extern bool convertToolDontAlertWhenCompleted;
     NSInteger grayIcon = [[NSUserDefaults standardUserDefaults] integerForKey:@"GrayIcon"];
     if (intInputMethod == 1) {
         [menuInputMethod setState:NSControlStateValueOn];
+        [menuInputMethod setTitle:@"Tiếng Việt"];
+        statusItem.button.title = @"";
         statusItem.button.image = [NSImage imageNamed:@"Status"];
         [statusItem.button.image setTemplate:(grayIcon ? YES : NO)];
         statusItem.button.alternateImage = [NSImage imageNamed:@"StatusHighlighted"];
+    } else if (intInputMethod == 2) {
+        [menuInputMethod setState:NSControlStateValueMixed];
+        [menuInputMethod setTitle:@"Pinyin (Tiếng Trung)"];
+        statusItem.button.image = nil;
+        statusItem.button.alternateImage = nil;
+        statusItem.button.title = @"中";
     } else {
         [menuInputMethod setState:NSControlStateValueOff];
+        [menuInputMethod setTitle:@"English"];
+        statusItem.button.title = @"";
         statusItem.button.image = [NSImage imageNamed:@"StatusEng"];
         [statusItem.button.image setTemplate:(grayIcon ? YES : NO)];
         statusItem.button.alternateImage = [NSImage imageNamed:@"StatusHighlightedEng"];
@@ -489,10 +499,7 @@ extern bool convertToolDontAlertWhenCompleted;
 
 -(void)onImputMethodChanged:(BOOL)willNotify {
     NSInteger intInputMethod = [[NSUserDefaults standardUserDefaults] integerForKey:@"InputMethod"];
-    if (intInputMethod == 0)
-        intInputMethod = 1;
-    else
-        intInputMethod = 0;
+    intInputMethod = (intInputMethod + 1) % 3;
     vLanguage = (int)intInputMethod;
     [[NSUserDefaults standardUserDefaults] setInteger:intInputMethod forKey:@"InputMethod"];
 
