@@ -430,6 +430,8 @@ bool checkHotKey(int hotKeyData, bool checkKeyCode = true) {
 void switchLanguage() {
 	if (vLanguage == 0)
 		vLanguage = 1;
+	else if (vLanguage == 1)
+		vLanguage = 2;
 	else
 		vLanguage = 0;
 	if (HAS_BEEP(vSwitchKeyStatus))
@@ -609,6 +611,12 @@ LRESULT CALLBACK keyboardHookProcess(int nCode, WPARAM wParam, LPARAM lParam) {
 				return NULL;
 			}
 		}
+		return CallNextHookEx(hKeyboardHook, nCode, wParam, lParam);
+	}
+
+	//if is in Chinese Pinyin mode
+	if (vLanguage == 2) {
+		// Pinyin handling on Windows hook
 		return CallNextHookEx(hKeyboardHook, nCode, wParam, lParam);
 	}
 

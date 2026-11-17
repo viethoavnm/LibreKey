@@ -8,6 +8,8 @@
 #include "RimeEngine.h"
 #include <iostream>
 
+#ifdef LIBREKEY_HAS_RIME
+
 RimeEngine::RimeEngine() {
     api_ = rime_get_api();
 }
@@ -158,3 +160,22 @@ void RimeEngine::clearComposition() {
         api_->clear_composition(session_id_);
     }
 }
+
+#else
+
+// Stubs when librime is not present (e.g. standard Windows MSBuild without rime SDK)
+RimeEngine::RimeEngine() {}
+RimeEngine::~RimeEngine() {}
+RimeEngine& RimeEngine::instance() {
+    static RimeEngine s_instance;
+    return s_instance;
+}
+bool RimeEngine::init(const std::string&, const std::string&) { return false; }
+void RimeEngine::cleanup() {}
+void RimeEngine::fetchUIState(RimeUIState&) {}
+bool RimeEngine::processKey(int, int, std::string&, RimeUIState&) { return false; }
+bool RimeEngine::selectCandidate(int, std::string&, RimeUIState&) { return false; }
+bool RimeEngine::changePage(bool, RimeUIState&) { return false; }
+void RimeEngine::clearComposition() {}
+
+#endif

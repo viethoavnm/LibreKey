@@ -10,7 +10,18 @@
 
 #include <string>
 #include <vector>
-#include <rime_api.h>
+
+#if defined(__has_include)
+#  if __has_include(<rime_api.h>)
+#    define LIBREKEY_HAS_RIME 1
+#    include <rime_api.h>
+#  endif
+#endif
+
+#ifndef LIBREKEY_HAS_RIME
+typedef uintptr_t RimeSessionId;
+struct RimeApi;
+#endif
 
 struct RimeCandidateItem {
     std::string text;
